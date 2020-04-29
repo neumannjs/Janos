@@ -84,15 +84,30 @@ module.exports = {
       githubProxy: {
         _scheme: 'oauth2',
         authorization_endpoint: 'https://github.com/login/oauth/authorize',
-        access_token_endpoint: 'http://localhost:7071/api/handler',
+        access_token_endpoint: 'http://localhost:7071/api/handler/',
         userinfo_endpoint: 'https://api.github.com/user',
-        scope: ['repo', 'user'],
+        scope: ['repo', 'read:user'],
         response_type: 'code',
         token_type: 'Bearer',
-        redirect_uri: 'http://localhost:7071/api/callback',
+        redirect_uri: 'http://localhost:7071/api/callback/',
         client_id: '93af288610e66a7a64a9',
         token_key: 'access_token',
-        state: encodeURI('http://localhost:3000/callback')
+        // TODO: The redirect url in the state should be dynamic
+        state: encodeURI('http://localhost:3000/callback/')
+      },
+      githubProxyCreateRepo: {
+        _scheme: 'oauth2',
+        authorization_endpoint: 'https://github.com/login/oauth/authorize',
+        access_token_endpoint: 'http://localhost:7071/api/handler/?reponame=test',
+        userinfo_endpoint: 'https://api.github.com/user',
+        scope: ['repo', 'read:user'],
+        response_type: 'code',
+        token_type: 'Bearer',
+        redirect_uri: 'http://localhost:7071/api/callback/',
+        client_id: '93af288610e66a7a64a9',
+        token_key: 'access_token',
+        // TODO: The redirect url in the state should be dynamic
+        state: encodeURI('http://localhost:3000/callback/')
       }
     }
   },
@@ -105,7 +120,8 @@ module.exports = {
     config: {
       errorHandler: (err, vm, info) => {
         vm.$storage.setState('error', err)
-      }
+      },
+      devtools: true
     }
   },
 
@@ -113,6 +129,8 @@ module.exports = {
   ** Build configuration
   */
   build: {
+    // publicPath: 'nuxt/',
+    // devtools: true,
     transpile: ['vuetify/lib'],
     plugins: [
       new VuetifyLoaderPlugin(),
@@ -164,6 +182,9 @@ module.exports = {
         })
         config.resolve.symlinks = false
       }
+      // if (ctx.isClient) {
+      //   config.devtool = 'source-map'
+      // }
     },
     // TODO: Make this work without plugin-transform-modules-commonjs, see: https://github.com/webpack/webpack/issues/4039
     babel: {
