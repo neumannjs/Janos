@@ -53,7 +53,8 @@ module.exports = {
     { src: '@/plugins/vuetify' },
     { src: '~plugins/nuxt-codemirror-plugin', ssr: false },
     { src: '~plugins/debounce-plugin' },
-    { src: '~plugins/best-base64-encoder-decoder' }
+    { src: '~plugins/best-base64-encoder-decoder' },
+    { src: '~/plugins/auth-error-listener.js' }
   ],
 
   /*
@@ -78,7 +79,6 @@ module.exports = {
       callback: '/callback',
       home: '/'
     },
-    errorListeners: ['~/plugins/auth-error-listener.js'],
     plugins: ['~/plugins/octokit-plugin'],
     strategies: {
       githubProxy: {
@@ -98,7 +98,8 @@ module.exports = {
       githubProxyCreateRepo: {
         _scheme: 'oauth2',
         authorization_endpoint: 'https://github.com/login/oauth/authorize',
-        access_token_endpoint: 'http://localhost:7071/api/handler/?reponame=test',
+        access_token_endpoint:
+          'http://localhost:7071/api/handler/?reponame=test',
         userinfo_endpoint: 'https://api.github.com/user',
         scope: ['repo', 'read:user'],
         response_type: 'code',
@@ -134,28 +135,28 @@ module.exports = {
     transpile: ['vuetify/lib'],
     plugins: [
       new VuetifyLoaderPlugin(),
-      new webpack.NormalModuleReplacementPlugin(/recursive-readdir/, function (
+      new webpack.NormalModuleReplacementPlugin(/recursive-readdir/, function(
         resource
       ) {
         resource.request = path.resolve(__dirname, './plugins/readdir')
       }),
-      new webpack.NormalModuleReplacementPlugin(/fs/, function (resource) {
+      new webpack.NormalModuleReplacementPlugin(/fs/, function(resource) {
         resource.request = path.resolve(__dirname, './plugins/fs')
       }),
-      new webpack.NormalModuleReplacementPlugin(/co-fs-extra/, function (
+      new webpack.NormalModuleReplacementPlugin(/co-fs-extra/, function(
         resource
       ) {
         resource.request = path.resolve(__dirname, './plugins/fs')
       }),
-      new webpack.NormalModuleReplacementPlugin(/require-one/, function (
+      new webpack.NormalModuleReplacementPlugin(/require-one/, function(
         resource
       ) {
         resource.request = path.resolve(__dirname, './plugins/require-one')
       }),
-      new webpack.NormalModuleReplacementPlugin(/rimraf/, function (resource) {
+      new webpack.NormalModuleReplacementPlugin(/rimraf/, function(resource) {
         resource.request = path.resolve(__dirname, './plugins/rimraf')
       }),
-      new webpack.NormalModuleReplacementPlugin(/stat-mode/, function (
+      new webpack.NormalModuleReplacementPlugin(/stat-mode/, function(
         resource
       ) {
         resource.request = path.resolve(__dirname, './plugins/stat-mode')
@@ -171,7 +172,7 @@ module.exports = {
     /*
     ** You can extend webpack config here
     */
-    extend (config, ctx) {
+    extend(config, ctx) {
       // Run ESLint on save
       if (ctx.isDev && ctx.isClient) {
         config.module.rules.push({
