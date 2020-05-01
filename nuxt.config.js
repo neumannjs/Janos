@@ -183,9 +183,9 @@ module.exports = {
         })
         config.resolve.symlinks = false
       }
-      // if (ctx.isClient) {
-      //   config.devtool = 'source-map'
-      // }
+      if (ctx.isDev) {
+        config.devtool = ctx.isClient ? 'source-map' : 'inline-source-map'
+      }
     },
     // TODO: Make this work without plugin-transform-modules-commonjs, see: https://github.com/webpack/webpack/issues/4039
     babel: {

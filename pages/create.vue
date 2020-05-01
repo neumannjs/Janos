@@ -20,7 +20,7 @@
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary">
+      <v-btn color="primary" @click="say()">
         Create
       </v-btn>
     </v-card-actions>
@@ -34,6 +34,11 @@ export default {
     }
   },
   layout: 'centered',
-  auth: false
+  auth: false,
+  methods: {
+    say: function() {
+      alert('hello')
+    }
+  }
 }
 </script>
