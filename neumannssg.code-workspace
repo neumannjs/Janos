@@ -1,0 +1,47 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "C:\\Repositories\\githubProxy"
+    },
+    {
+      "path": "C:\\Repositories\\neumannssg.wiki"
+    },
+    {
+      "path": "C:\\Repositories\\neumannssg-template"
+    },
+    {
+      "path": "C:\\Repositories\\NeumannSSG-testsite"
+    }
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "NeumannSSG-testsite",
+    "liveServer.settings.root": "/docs",
+    "editor.formatOnSave": true,
+    "vetur.validation.template": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": false
+    },
+    "eslint.format.enable": true,
+    "[javascript]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[html]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[vue]": {
+      "editor.defaultFormatter": "octref.vetur"
+    },
+    "vetur.format.defaultFormatter.js": "prettier-eslint",
+    "vetur.format.defaultFormatter.ts": "prettier-tslint",
+    "vetur.format.defaultFormatter.html": "prettyhtml"
+  }
+}
