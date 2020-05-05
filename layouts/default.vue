@@ -197,13 +197,20 @@ export default {
   },
   watch: {
     openTab: async function(val, oldVal) {
+      // Whenever the open tab changes, retreive the file contents and show it in the code editor.
       if (val !== null) {
+        // Retrieve file contents
         const file = await this.getFile(val)
+        this.active = [file]
+        // Update the code shown in the code editor with the contents of the file
         this.code = atob(file.content)
-        const extension = file.name.substring(file.name.indexOf('.') + 1)
+        // Check for a file extension
+        const extension = file.name.substring(file.name.lastIndexOf('.') + 1)
         if (this.files[extension]) {
+          // Change the mode of the code editor to match the file extension
           this.cmOption.mode = this.files[extension].mode
         } else {
+          // Default mode if file extension doesn't match
           this.cmOption.mode = this.files.default.mode
         }
       }
