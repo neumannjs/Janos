@@ -50,11 +50,12 @@ module.exports = {
   ** Plugins to load before mounting the App
   */
   plugins: [
-    { src: '@/plugins/vuetify' },
+    { src: '~/plugins/vuetify' },
     { src: '~plugins/nuxt-codemirror-plugin', ssr: false },
     { src: '~plugins/debounce-plugin' },
     { src: '~plugins/best-base64-encoder-decoder' },
-    { src: '~/plugins/auth-error-listener.js' }
+    { src: '~/plugins/auth-listener.js' }
+    // { src: '~/plugins/vuex-persist', ssr: false },
   ],
 
   /*
@@ -91,24 +92,7 @@ module.exports = {
         token_type: 'Bearer',
         redirect_uri: 'http://localhost:7071/api/callback/',
         client_id: '93af288610e66a7a64a9',
-        token_key: 'access_token',
-        // TODO: The redirect url in the state should be dynamic
-        state: encodeURI('http://localhost:3000/callback/')
-      },
-      githubProxyCreateRepo: {
-        _scheme: 'oauth2',
-        authorization_endpoint: 'https://github.com/login/oauth/authorize',
-        access_token_endpoint:
-          'http://localhost:7071/api/handler/?reponame=test',
-        userinfo_endpoint: 'https://api.github.com/user',
-        scope: ['repo', 'read:user'],
-        response_type: 'code',
-        token_type: 'Bearer',
-        redirect_uri: 'http://localhost:7071/api/callback/',
-        client_id: '93af288610e66a7a64a9',
-        token_key: 'access_token',
-        // TODO: The redirect url in the state should be dynamic
-        state: encodeURI('http://localhost:3000/callback/')
+        token_key: 'access_token'
       }
     }
   },
