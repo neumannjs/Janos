@@ -209,15 +209,20 @@ export default {
       }
     },
     active: function(val, oldVal) {
+      // Whenever the active item in the treeview changes, check whether a file
+      // should be opened.
       if (val.length > 0) {
+        // Try to find the active item in the openfiles, based on the path
         const index = this.openFiles.findIndex(f => f.path === val[0].path)
         if (index > -1) {
+          // Make the tab of the already open file active
           this.openTab = val[0].path
         } else if (
           val[0].type !== 'newfile' &&
           val[0].type !== 'newfolder' &&
           val[0].type !== 'tree'
         ) {
+          // open the filem (if it is an existing file)
           this.openTab = val[0].path
           this.openFiles.push({
             ...val[0]
@@ -228,6 +233,7 @@ export default {
   },
   methods: {
     closeTab: function(path) {
+      this.active = []
       const indexFileToClose = this.openFiles.findIndex(f => f.path === path)
       const indexOpenTab = this.openFiles.findIndex(f => f.path === path)
       if (indexFileToClose > -1) {
