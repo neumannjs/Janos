@@ -1,6 +1,6 @@
 <template>
-  <v-app dark>
-    <v-navigation-drawer v-model="drawer" :mini-variant="miniVariant" fixed app>
+  <v-app v-resize="onResize" dark>
+    <v-navigation-drawer ref="navDrawer" v-model="drawer" app>
       <v-toolbar flat height="48px">
         <v-list>
           <v-list-tile>
@@ -75,7 +75,7 @@
             </v-list-tile>
           </template>
           <v-list-tile-content>
-            openTab: {{ openTab }}
+            <!-- openTab: {{ openTab }}
             <br />
             fileName: {{ fileName }}
             <br />
@@ -87,14 +87,14 @@
             <br />
             openFiles: {{ openFiles }}
             <br />
-            open: {{ open }}
+            open: {{ open }}-->
           </v-list-tile-content>
         </v-list-group>
       </v-list>
     </v-navigation-drawer>
     <v-toolbar flat app height="48px">
-      <v-toolbar-side-icon @click="drawer = !drawer" />
-      <v-tabs v-model="openTab" color="transparent" slider-color="white">
+      <v-toolbar-side-icon @click="drawer = !drawer; resize()" />
+      <v-tabs v-show="openTab" v-model="openTab" color="transparent" slider-color="white">
         <v-tab
           v-for="file in openFiles"
           :key="file.path"
@@ -110,30 +110,39 @@
         </v-tab>
       </v-tabs>
       <v-spacer />
-      <v-switch v-model="devBuild" :label="devBuild ? 'development' : 'production'" />
-      <v-btn icon @click="runMetalsmith()">
-        <v-icon>mdi-anvil</v-icon>
-      </v-btn>
-      <v-btn icon @click="createGitTree()">
-        <v-icon>mdi-file-tree</v-icon>
-      </v-btn>
-      <v-btn icon @click="createGitCommit()">
-        <v-icon>mdi-source-commit</v-icon>
-      </v-btn>
-      <v-btn icon @click="logout()">
-        <v-icon>mdi-logout</v-icon>
-      </v-btn>
+      <v-toolbar-items>
+        <v-switch v-model="devBuild" :label="devBuild ? 'development' : 'production'" height="42" />
+        <v-btn icon @click="runMetalsmith()">
+          <v-icon>mdi-anvil</v-icon>
+        </v-btn>
+        <v-btn icon @click="createGitTree()">
+          <v-icon>mdi-file-tree</v-icon>
+        </v-btn>
+        <v-btn icon @click="createGitCommit()">
+          <v-icon>mdi-source-commit</v-icon>
+        </v-btn>
+        <v-btn icon @click="logout()">
+          <v-icon>mdi-logout</v-icon>
+        </v-btn>
+      </v-toolbar-items>
     </v-toolbar>
     <v-content>
-      <v-container fluid>
-        <v-layout fill-height>
-          <v-flex>
-            <codemirror v-model="code" v-debounce:500ms="onCodeChange" :options="cmOption" />
+      <v-container fluid fill-height>
+        <v-layout>
+          <v-flex ref="codeContainer" shrink>
+            <codemirror
+              v-show="openTab"
+              ref="cmEditor"
+              v-model="code"
+              v-debounce:500ms="onCodeChange"
+              :style="{ width: '500px' }"
+              :options="cmOption"
+            />
           </v-flex>
         </v-layout>
       </v-container>
     </v-content>
-    <v-footer :fixed="fixed" app>
+    <v-footer app>
       <span>&copy; 2019</span>
     </v-footer>
   </v-app>
@@ -151,10 +160,8 @@ export default {
       hoverTreeItem: '',
       clipped: false,
       drawer: false,
-      fixed: false,
       active: [],
       openFiles: [],
-      miniVariant: false,
       open: [],
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
@@ -176,9 +183,12 @@ export default {
         styleActiveLine: true,
         lineNumbers: true,
         line: true,
-        keyMap: 'sublime',
         mode: '',
-        theme: 'monokai'
+        theme: 'monokai',
+        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        keymap: 'sublime',
+        lineWrapping: true,
+        scrollbarStyle: 'native'
       }
     }
   },
@@ -193,6 +203,9 @@ export default {
       set: function() {
         this.switchDevBuild()
       }
+    },
+    codemirror: function() {
+      return this.$refs.cmEditor.codemirror
     }
   },
   watch: {
@@ -238,7 +251,18 @@ export default {
       }
     }
   },
+  mounted: function() {
+    this.onResize()
+  },
   methods: {
+    onResize: function() {
+      console.log(this.$refs.navDrawer)
+      let drawerWidth = this.drawer ? this.$refs.navDrawer.width : 0
+      if (window.innerWidth < this.$refs.navDrawer.mobileBreakPoint) {
+        drawerWidth = 0
+      }
+      this.codemirror.setSize(window.innerWidth - drawerWidth, null)
+    },
     closeTab: function(path) {
       this.active = []
       const indexFileToClose = this.openFiles.findIndex(f => f.path === path)
@@ -338,6 +362,10 @@ export default {
   text-align: left;
 }
 .CodeMirror {
-  height: 100% !important;
+  position: fixed !important;
+  height: calc(100% - 86px) !important;
+}
+html {
+  overflow-y: auto;
 }
 </style>
