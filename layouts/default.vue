@@ -1,6 +1,7 @@
 <template>
   <v-app v-resize="onResize" dark>
     <!-- Navigation drawers -->
+    <!-- Activity bar -->
     <v-navigation-drawer
       stateless
       permanent
@@ -10,12 +11,12 @@
       app
     >
       <v-list>
-        <v-list-tile @click="drawer = !drawer; resize()">
+        <v-list-tile @click="switchNav('explorer')">
           <v-list-tile-action>
             <fa :icon="['fas', 'copy']" style="font-size: 24px" />
           </v-list-tile-action>
         </v-list-tile>
-        <v-list-tile>
+        <v-list-tile @click="switchNav('github')">
           <v-list-tile-action>
             <fa :icon="['fab', 'github']" style="font-size: 24px" />
           </v-list-tile-action>
@@ -23,6 +24,8 @@
       </v-list>
     </v-navigation-drawer>
 
+    <!-- Navigation drawer container -->
+    <!-- Inside are the navigation drawers that are activated by the Activity bar -->
     <v-navigation-drawer
       ref="navDrawer"
       value="true"
@@ -34,7 +37,8 @@
     >
       <v-layout fill-height>
         <v-spacer />
-        <v-navigation-drawer v-model="drawer">
+        <!-- Repository explorer -->
+        <v-navigation-drawer v-show="activeNavbar == 'explorer'">
           <v-toolbar flat height="48px">
             <v-list>
               <v-list-tile>
@@ -110,22 +114,57 @@
                   <v-list-tile-title>Info</v-list-tile-title>
                 </v-list-tile>
               </template>
-              <v-list-tile-content>
-                <!-- openTab: {{ openTab }}
-            <br />
-            fileName: {{ fileName }}
-            <br />
-            hoverTab: {{ hoverTab }}
-            <br />
-            hoverTreeItem: {{ hoverTreeItem }}
-            <br />
-            active: {{ active }}
-            <br />
-            openFiles: {{ openFiles }}
-            <br />
-                open: {{ open }}-->
-              </v-list-tile-content>
+              <v-list-tile-content>{{ buttons.preview }}</v-list-tile-content>
             </v-list-group>
+          </v-list>
+        </v-navigation-drawer>
+
+        <!-- Github -->
+        <v-navigation-drawer v-show="activeNavbar == 'github'">
+          <v-toolbar flat height="48px">
+            <v-list>
+              <v-list-tile>
+                <v-list-tile-title class="title">Github</v-list-tile-title>
+              </v-list-tile>
+            </v-list>
+          </v-toolbar>
+          <v-list>
+            <v-list-tile>
+              <v-list-tile-content>
+                <v-switch
+                  v-model="devBuild"
+                  :label="devBuild ? 'development' : 'production'"
+                  height="42"
+                />
+              </v-list-tile-content>
+            </v-list-tile>
+            <v-list-tile @click="runMetalsmith()">
+              <v-list-tile-action>
+                <v-icon>mdi-anvil</v-icon>
+              </v-list-tile-action>
+
+              <v-list-tile-content>
+                <v-list-tile-title>Run MetalSmith</v-list-tile-title>
+              </v-list-tile-content>
+            </v-list-tile>
+            <v-list-tile @click="createGitTree()">
+              <v-list-tile-action>
+                <v-icon>mdi-file-tree</v-icon>
+              </v-list-tile-action>
+
+              <v-list-tile-content>
+                <v-list-tile-title>Create Git Tree</v-list-tile-title>
+              </v-list-tile-content>
+            </v-list-tile>
+            <v-list-tile @click="createGitCommit()">
+              <v-list-tile-action>
+                <v-icon>mdi-source-commit</v-icon>
+              </v-list-tile-action>
+
+              <v-list-tile-content>
+                <v-list-tile-title>Create Git Commit</v-list-tile-title>
+              </v-list-tile-content>
+            </v-list-tile>
           </v-list>
         </v-navigation-drawer>
       </v-layout>
@@ -133,7 +172,6 @@
 
     <!-- Tabs -->
     <v-toolbar flat app height="48px">
-      <v-toolbar-side-icon @click="drawer = !drawer; resize()" />
       <v-tabs v-show="openTab" v-model="openTab" color="transparent" slider-color="white">
         <v-tab
           v-for="file in openFiles"
@@ -151,15 +189,8 @@
       </v-tabs>
       <v-spacer />
       <v-toolbar-items>
-        <v-switch v-model="devBuild" :label="devBuild ? 'development' : 'production'" height="42" />
-        <v-btn icon @click="runMetalsmith()">
-          <v-icon>mdi-anvil</v-icon>
-        </v-btn>
-        <v-btn icon @click="createGitTree()">
-          <v-icon>mdi-file-tree</v-icon>
-        </v-btn>
-        <v-btn icon @click="createGitCommit()">
-          <v-icon>mdi-source-commit</v-icon>
+        <v-btn v-show="buttons.preview" icon>
+          <v-icon>pageview</v-icon>
         </v-btn>
         <v-btn icon @click="logout()">
           <v-icon>mdi-logout</v-icon>
@@ -205,11 +236,12 @@ export default {
       active: [],
       openFiles: [],
       open: [],
+      activeNavbar: 'explorer',
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
         json: { icon: 'mdi-json', mode: 'javascript' },
-        md: { icon: 'mdi-markdown', mode: 'markdown' },
+        md: { icon: 'mdi-markdown', mode: 'markdown', buttons: ['preview'] },
         pdf: { icon: 'mdi-file-pdf', mode: '' },
         png: { icon: 'mdi-file-image', mode: '' },
         txt: { icon: 'mdi-file-document-outline', mode: '' },
@@ -217,6 +249,9 @@ export default {
         njk: { icon: 'mdi-page-layout-body', mode: 'xml' },
         css: { icon: 'mdi-language-css3', mode: 'css' },
         default: { icon: 'mdi-file', mode: '' }
+      },
+      buttons: {
+        preview: false
       },
       code: '',
       cmOption: {
@@ -264,9 +299,24 @@ export default {
         if (this.files[extension]) {
           // Change the mode of the code editor to match the file extension
           this.cmOption.mode = this.files[extension].mode
+          // Show and hide buttons based on the file extension
+          for (let [key] of Object.entries(this.buttons)) {
+            if (this.files[extension].buttons) {
+              this.buttons[key] = this.files[extension].buttons.includes(key)
+            } else {
+              this.buttons[key] = false
+            }
+          }
         } else {
           // Default mode if file extension doesn't match
           this.cmOption.mode = this.files.default.mode
+          for (let [key] of Object.entries(this.buttons)) {
+            this.buttons[key] = false
+          }
+        }
+      } else {
+        for (let [key] of Object.entries(this.buttons)) {
+          this.buttons[key] = false
         }
       }
     },
@@ -298,13 +348,16 @@ export default {
   },
   methods: {
     onResize: function() {
-      console.log(this.$refs.navDrawer)
       this.$refs.navDrawer.width = this.drawer ? this.$refs.navDrawer.width : 80
       let drawerWidth = this.drawer ? this.$refs.navDrawer.width : 80
-      // if (window.innerWidth < this.$refs.navDrawer.mobileBreakPoint) {
-      //   drawerWidth = 80
-      // }
       this.codemirror.setSize(window.innerWidth - drawerWidth, null)
+    },
+    switchNav: function(navbar) {
+      if (this.activeNavbar === navbar || this.drawer == false) {
+        this.drawer = !this.drawer
+      }
+      this.activeNavbar = navbar
+      this.onResize()
     },
     closeTab: function(path) {
       this.active = []
