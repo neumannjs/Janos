@@ -91,7 +91,7 @@
                       @mouseout="hoverTreeItem = null"
                     >{{ item.name }}</span>
                   </template>
-                  <template v-slot:append="{ item, open }">
+                  <template v-slot:append="{ item }">
                     <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
                       <v-btn flat icon color="red" small @click.stop="onClickAddFileBtn(item)">
                         <v-icon
