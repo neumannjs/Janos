@@ -3,6 +3,7 @@
     <!-- Navigation drawers -->
     <!-- Activity bar -->
     <v-navigation-drawer
+      ref="activityBar"
       stateless
       permanent
       mini-variant
@@ -28,17 +29,17 @@
     <!-- Inside are the navigation drawers that are activated by the Activity bar -->
     <v-navigation-drawer
       ref="navDrawer"
-      value="true"
+      v-model="drawer"
       :mini-variant="!drawer"
       floating
-      stateless
+      :style="{transform: 'translateX(0px)'}"
       app
       width="380"
     >
       <v-layout fill-height>
         <v-spacer />
         <!-- Repository explorer -->
-        <v-navigation-drawer v-show="activeNavbar == 'explorer'">
+        <v-navigation-drawer v-show="activeNavbar == 'explorer'" v-model="drawer">
           <v-toolbar flat height="48px">
             <v-list>
               <v-list-tile>
@@ -114,13 +115,16 @@
                   <v-list-tile-title>Info</v-list-tile-title>
                 </v-list-tile>
               </template>
-              <v-list-tile-content>{{ buttons.preview }}</v-list-tile-content>
+              <v-list-tile-content>
+                split editor: {{ splitEditor }}
+                <br />
+              </v-list-tile-content>
             </v-list-group>
           </v-list>
         </v-navigation-drawer>
 
         <!-- Github -->
-        <v-navigation-drawer v-show="activeNavbar == 'github'">
+        <v-navigation-drawer v-show="activeNavbar == 'github'" v-model="drawer">
           <v-toolbar flat height="48px">
             <v-list>
               <v-list-tile>
@@ -189,7 +193,7 @@
       </v-tabs>
       <v-spacer />
       <v-toolbar-items>
-        <v-btn v-show="buttons.preview" icon>
+        <v-btn v-show="buttons.preview" icon @click="splitEditor = !splitEditor; onResize()">
           <v-icon>pageview</v-icon>
         </v-btn>
         <v-btn icon @click="logout()">
@@ -199,18 +203,22 @@
     </v-toolbar>
 
     <!-- Main content -->
-    <v-content>
+    <v-content :style="mainContentPadding">
       <v-container fluid fill-height>
-        <v-layout>
-          <v-flex ref="codeContainer" shrink>
+        <v-layout row>
+          <v-flex ref="codeContainer">
             <codemirror
               v-show="openTab"
               ref="cmEditor"
               v-model="code"
               v-debounce:500ms="onCodeChange"
-              :style="{ width: '500px' }"
               :options="cmOption"
             />
+          </v-flex>
+          <v-flex v-show="splitEditor" ref="previewWindow" xs6>
+            <v-card dark color="green darken-3">
+              <v-card-text>Right</v-card-text>
+            </v-card>
           </v-flex>
         </v-layout>
       </v-container>
@@ -237,6 +245,7 @@ export default {
       openFiles: [],
       open: [],
       activeNavbar: 'explorer',
+      splitEditor: false,
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
@@ -283,6 +292,11 @@ export default {
     },
     codemirror: function() {
       return this.$refs.cmEditor.codemirror
+    },
+    mainContentPadding: function() {
+      let leftPadding = this.drawer ? 380 : 80
+      leftPadding = window.innerWidth > 1264 ? leftPadding : 80
+      return { padding: '48px 0px 32px ' + leftPadding + 'px' }
     }
   },
   watch: {
@@ -348,9 +362,17 @@ export default {
   },
   methods: {
     onResize: function() {
-      this.$refs.navDrawer.width = this.drawer ? this.$refs.navDrawer.width : 80
-      let drawerWidth = this.drawer ? this.$refs.navDrawer.width : 80
-      this.codemirror.setSize(window.innerWidth - drawerWidth, null)
+      this.$refs.navDrawer.width = this.drawer
+        ? this.$refs.navDrawer.width
+        : this.$refs.activityBar.miniVariantWidth
+      let drawerWidth = this.drawer
+        ? this.$refs.navDrawer.width
+        : this.$refs.activityBar.miniVariantWidth
+      let codeContainerWidth = window.innerWidth - drawerWidth
+      codeContainerWidth = this.splitEditor
+        ? codeContainerWidth / 2
+        : codeContainerWidth
+      this.codemirror.setSize(codeContainerWidth, null)
     },
     switchNav: function(navbar) {
       if (this.activeNavbar === navbar || this.drawer == false) {
