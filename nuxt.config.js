@@ -49,7 +49,8 @@ module.exports = {
     { src: '~plugins/nuxt-codemirror-plugin', ssr: false },
     { src: '~plugins/debounce-plugin' },
     { src: '~plugins/best-base64-encoder-decoder' },
-    { src: '~/plugins/auth-listeners.js' }
+    { src: '~/plugins/auth-listeners' },
+    { src: '~/plugins/vue-friendly-iframe' }
     // { src: '~/plugins/vuex-persist', ssr: false },
   ],
 

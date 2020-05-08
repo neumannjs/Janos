@@ -75,6 +75,7 @@
     "prettier": "1.14.3",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
+    "vue-friendly-iframe": "^0.17.0",
     "vue-jest": "^3.0.2"
   }
 }

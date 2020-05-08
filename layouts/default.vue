@@ -216,9 +216,7 @@
             />
           </v-flex>
           <v-flex v-show="splitEditor" ref="previewWindow" xs6>
-            <v-card dark color="green darken-3">
-              <v-card-text>Right</v-card-text>
-            </v-card>
+            <preview url="https://nu.nl" :style="{width: '100%', height: '100%'}" />
           </v-flex>
         </v-layout>
       </v-container>
@@ -232,8 +230,12 @@
 
 <script>
 import { mapState, mapActions, mapMutations } from 'vuex'
+import Preview from '../components/preview'
 
 export default {
+  components: {
+    preview: Preview
+  },
   data() {
     return {
       fileName: '',
