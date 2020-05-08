@@ -175,7 +175,7 @@
     </v-navigation-drawer>
 
     <!-- Tabs -->
-    <v-toolbar flat app height="48px">
+    <v-toolbar ref="tabBar" flat app height="48px" :style="{ paddingLeft: leftPadding + 'px' }">
       <v-tabs v-show="openTab" v-model="openTab" color="transparent" slider-color="white">
         <v-tab
           v-for="file in openFiles"
@@ -203,7 +203,7 @@
     </v-toolbar>
 
     <!-- Main content -->
-    <v-content :style="mainContentPadding">
+    <v-content :style="{ padding: '48px 0px 32px ' + leftPadding + 'px' }">
       <v-container fluid fill-height>
         <v-layout row>
           <v-flex ref="codeContainer">
@@ -246,6 +246,7 @@ export default {
       open: [],
       activeNavbar: 'explorer',
       splitEditor: false,
+      leftPadding: 380,
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
@@ -292,11 +293,6 @@ export default {
     },
     codemirror: function() {
       return this.$refs.cmEditor.codemirror
-    },
-    mainContentPadding: function() {
-      let leftPadding = this.drawer ? 380 : 80
-      leftPadding = window.innerWidth > 1264 ? leftPadding : 80
-      return { padding: '48px 0px 32px ' + leftPadding + 'px' }
     }
   },
   watch: {
@@ -362,13 +358,19 @@ export default {
   },
   methods: {
     onResize: function() {
+      if (window.innerWidth < 1264) {
+        this.leftPadding = 80
+      } else {
+        this.leftPadding = this.drawer ? 380 : 80
+      }
       this.$refs.navDrawer.width = this.drawer
         ? this.$refs.navDrawer.width
         : this.$refs.activityBar.miniVariantWidth
-      let drawerWidth = this.drawer
-        ? this.$refs.navDrawer.width
-        : this.$refs.activityBar.miniVariantWidth
+      let drawerWidth =
+        window.innerWidth < 1264 ? 80 : this.$refs.navDrawer.width
       let codeContainerWidth = window.innerWidth - drawerWidth
+      console.log('containerWidth: ' + codeContainerWidth)
+      console.log('drawerWicth: ' + drawerWidth)
       codeContainerWidth = this.splitEditor
         ? codeContainerWidth / 2
         : codeContainerWidth
