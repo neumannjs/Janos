@@ -216,7 +216,10 @@
             />
           </v-flex>
           <v-flex v-show="splitEditor" ref="previewWindow" xs6>
-            <preview url="https://nu.nl" :style="{width: '100%', height: '100%'}" />
+            <preview
+              path="docs/posts/first-post/index.html"
+              :style="{width: '100%', height: '100%'}"
+            />
           </v-flex>
         </v-layout>
       </v-container>

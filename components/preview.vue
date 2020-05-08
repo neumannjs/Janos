@@ -1,17 +1,32 @@
 <template>
-  <vue-friendly-iframe :src="url" class-name="previewIFrame"></vue-friendly-iframe>
+  <iframe :srcDoc="srcDoc" class="previewIFrame" />
 </template>
 <script>
+import { mapActions } from 'vuex'
+
 export default {
   name: 'Preview',
   props: {
-    url: { type: String, default: null }
+    path: { type: String, default: null }
+  },
+  data() {
+    return {
+      srcDoc: ''
+    }
+  },
+  created() {
+    console.log('Get FILE!')
+    this.getFile(this.path).then(file => (this.srcDoc = atob(file.content)))
+  },
+  methods: {
+    ...mapActions('github', ['getFile'])
   }
 }
 </script>
 
 <style>
 .previewIFrame {
+  border: none;
   height: inherit;
   width: inherit;
 }
