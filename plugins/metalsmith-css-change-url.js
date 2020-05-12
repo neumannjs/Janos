@@ -1,4 +1,4 @@
-const debug = require('debug')('metalsmith-myplugin')
+const debug = require('debug')('plugins/metalsmith-css-change-url')
 const multimatch = require('multimatch')
 
 /*
@@ -15,7 +15,7 @@ module.exports = function(opts) {
     if (opts.rootpath !== '/') {
       for (const file in files) {
         if (multimatch(file, opts.pattern).length) {
-          debug('metalsmith-css-change-url working on: %s', file)
+          debug('working on: %s', file)
           const fileContents = new TextDecoder('utf-8').decode(
             files[file].contents
           )

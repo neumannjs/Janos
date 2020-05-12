@@ -3,6 +3,7 @@
 </template>
 <script>
 import { mapActions } from 'vuex'
+const debug = require('debug')('layouts/default')
 
 export default {
   name: 'Preview',
@@ -14,9 +15,16 @@ export default {
       srcDoc: ''
     }
   },
-  created() {
-    console.log('Get FILE!')
-    this.getFile(this.path).then(file => (this.srcDoc = atob(file.content)))
+  watch: {
+    path: function(val) {
+      debug(
+        'path updated, calling mapped action getFile from store/github, with path: ' +
+          this.path
+      )
+      if (this.path.length > 0) {
+        this.getFile(this.path).then(file => (this.srcDoc = atob(file.content)))
+      }
+    }
   },
   methods: {
     ...mapActions('github', ['getFile'])

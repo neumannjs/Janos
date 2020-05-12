@@ -1,12 +1,12 @@
 import Cookies from 'js-cookie'
+const debug = require('debug')('plugins/auth-listener')
 
 export default function({ $axios }) {
   $axios.onError(error => {
-    console.log('error listener')
-    console.log(error)
-    console.log(error.response)
+    debug('Error object: ' + error)
+    debug('error.response: ' + error.response)
     const sites = JSON.parse(error.response.data.info)
-    console.log(sites)
+    debug('error.response.data.info: ' + sites)
     if (error.response.status === 401) {
       if (sites.length === 1) {
         // TODO: (optional) If things get more complicated, we should move this data exchange through url paramaters to Vuex

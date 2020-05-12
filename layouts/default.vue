@@ -116,7 +116,7 @@
                 </v-list-tile>
               </template>
               <v-list-tile-content>
-                split editor: {{ splitEditor }}
+                preview path: {{ previewPath }}
                 <br />
               </v-list-tile-content>
             </v-list-group>
@@ -216,10 +216,7 @@
             />
           </v-flex>
           <v-flex v-show="splitEditor" ref="previewWindow" xs6>
-            <preview
-              path="docs/posts/first-post/index.html"
-              :style="{width: '100%', height: '100%'}"
-            />
+            <preview :path="previewPath" :style="{width: '100%', height: '100%'}" />
           </v-flex>
         </v-layout>
       </v-container>
@@ -234,6 +231,7 @@
 <script>
 import { mapState, mapActions, mapMutations } from 'vuex'
 import Preview from '../components/preview'
+const debug = require('debug')('layouts/default')
 
 export default {
   components: {
@@ -242,6 +240,7 @@ export default {
   data() {
     return {
       fileName: '',
+      previewPath: null,
       openTab: null,
       hoverTab: '',
       hoverTreeItem: '',
@@ -307,6 +306,7 @@ export default {
         // Retrieve file contents
         const file = await this.getFile(val)
         this.active = [file]
+        this.previewPath = file.builtFile ? file.builtFile : ''
         // Update the code shown in the code editor with the contents of the file
         this.code = atob(file.content)
         // Check for a file extension
@@ -374,8 +374,8 @@ export default {
       let drawerWidth =
         window.innerWidth < 1264 ? 80 : this.$refs.navDrawer.width
       let codeContainerWidth = window.innerWidth - drawerWidth
-      console.log('containerWidth: ' + codeContainerWidth)
-      console.log('drawerWicth: ' + drawerWidth)
+      debug('onResize, containerWidth: ' + codeContainerWidth)
+      debug('onResize, drawerWidth: ' + drawerWidth)
       codeContainerWidth = this.splitEditor
         ? codeContainerWidth / 2
         : codeContainerWidth

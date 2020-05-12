@@ -1,3 +1,4 @@
+const debug = require('debug')('store/github')
 const sha1 = require('js-sha1')
 const Hash = require('sha.js/sha1')
 const Metalsmith = require('metalsmith')
@@ -15,6 +16,8 @@ const htmlmin = require('metalsmith-html-minifier')
 const tags = require('metalsmith-tags')
 const { isBinary } = require('istextorbinary')
 const cssChangeUrl = require('../plugins/metalsmith-css-change-url')
+const sourceUrl = require('../plugins/metalsmith-sourceurl')
+const writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
 const pkg = require('../package.json')
 
 export const state = () => ({
@@ -88,9 +91,12 @@ export const mutations = {
       folder.children = []
     }
   },
-  updateFileContent(state, { content, path }) {
+  updateFileContent(state, { content, path, builtFile }) {
     const file = state.fileContents.find(f => f.path === path)
     file.content = content
+    if (builtFile) {
+      file.builtFile = builtFile
+    }
     calculateSha1(file)
   },
   switchDevBuild(state) {
@@ -118,7 +124,7 @@ export const actions = {
         recursive: 1
       })
       const fileTree = []
-      console.log(result.data.tree)
+      debug('getFileTree result.data.tree: %j', result.data.tree)
       result.data.tree.forEach(object => {
         if (object.type === 'blob') {
           object.binary = isBinary(object.path)
@@ -152,13 +158,14 @@ export const actions = {
     })
   },
 
-  updateFileContent({ commit, dispatch, state }, { content, path }) {
+  updateFileContent({ commit, dispatch, state }, { content, path, builtFile }) {
     return new Promise(async (resolve, reject) => {
       let file = await dispatch('getFile', path)
       if (file !== undefined) {
         commit('updateFileContent', {
           content,
-          path
+          path,
+          builtFile
         })
       } else {
         const fileTree = JSON.parse(JSON.stringify(state.fileTree))
@@ -207,19 +214,18 @@ export const actions = {
           ...result.data
         }
         if (path.indexOf('.md') > -1) {
-          console.log('getfile')
-          console.log(path)
-          console.log(fileObject.size)
-          console.log(fileObject.sha)
+          debug('getFile: %s', path)
+          debug('getFile, file size: %i', fileObject.size)
+          debug('getFile, file sha: %s', fileObject.sha)
           const raw = atob(fileObject.content)
-          console.log(raw.length)
+          debug('getFile, length of raw content: ' + raw.length)
           const bytes = new Uint8Array(raw.length)
           for (let i = 0; i < raw.length; i++) {
             bytes[i] = raw.charCodeAt(i)
           }
           const wrapObject = wrap('blob', bytes.buffer)
-          console.log(shasum(wrapObject))
-          console.log(sha1(wrapObject))
+          debug('getFile, shasum of wrapObject: %s', shasum(wrapObject))
+          debug('getFile, sha1 of wrapObject: %s', sha1(wrapObject))
         }
         commit('addFile', fileObject)
       }
@@ -283,7 +289,7 @@ export const actions = {
         this.$octoKit,
         { owner: rootState.auth.user.login, repo: state.repo }
       ).then(async gitTree => {
-        console.log(gitTree)
+        debug('createGitTree: %j', gitTree)
         const result = await this.$octoKit.git.createTree({
           owner: rootState.auth.user.login,
           repo: state.repo,
@@ -350,6 +356,7 @@ export const actions = {
         .source('src')
         .destination('docs')
         .clean(!state.devBuild)
+        .use(sourceUrl())
         .use(
           publish({
             draft: state.devBuild,
@@ -432,6 +439,7 @@ export const actions = {
             destination: '/docs'
           })
         )
+        .use(writeBuiltUrl())
         .use(
           cssChangeUrl({
             rootpath: siteMeta.rootpath
@@ -442,10 +450,13 @@ export const actions = {
         ms.use(htmlmin())
       }
 
-      ms.build(function(err) {
+      // TODO: The build functions does not call the callback, or doesn't return the files parameter. Bug in Metalsmith?
+      ms.process(function(err, files) {
         if (err) {
+          debug('runMetalsmith build error: %o', err)
           throw err
         }
+        debug('runMetalsmith: build files object: %o', files)
       })
 
       resolve()
@@ -547,7 +558,7 @@ function createGitTreeRecursive(filetree, editedFiles, octokit, octokitConfig) {
               encoding: 'base64'
             })
             .then(result => {
-              console.log(result)
+              debug('createGitTreeRecursive octokit.git.createBlob: %j', result)
               ret.push({
                 path: filetree[i].path,
                 mode: filetree[i].mode,
@@ -569,7 +580,10 @@ function createGitTreeRecursive(filetree, editedFiles, octokit, octokitConfig) {
       }
     }
     const interval = setInterval(function() {
-      console.log('wait ' + todo)
+      debug(
+        'createGitTreeRecursive: Still waiting for %i octokit.git.createBlob calls to finish.',
+        todo
+      )
       if (todo === 0) {
         clearInterval(interval)
         resolve(ret)

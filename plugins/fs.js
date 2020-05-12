@@ -1,3 +1,4 @@
+const debug = require('debug')('plugins/fs')
 const { isBinary } = require('istextorbinary')
 
 let store
@@ -36,9 +37,7 @@ module.exports = {
       path = path.substr(1)
     }
     if (path.indexOf('fonts/') > -1 || path.indexOf('.md') > -1) {
-      console.log('readfile')
-      console.log(path)
-      console.log(encoding)
+      debug('readFile fonts or md path: %s , encoding: %s', path, encoding)
     }
     store.dispatch('github/getFile', path).then(
       file => {
@@ -106,9 +105,7 @@ module.exports = {
     }
 
     if (path.indexOf('fonts/') > -1 || path.indexOf('.html') > -1) {
-      console.log('outputFile')
-      console.log(path)
-      console.log(encoding)
+      debug('outputFile fonts or html path: %s , encoding: %s', path, encoding)
     }
 
     store
@@ -118,7 +115,7 @@ module.exports = {
       })
       .then(
         result => {
-          console.log(result)
+          debug('github/updateFileContent result: %j', result)
         },
         err => {
           callback(err)
