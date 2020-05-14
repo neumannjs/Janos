@@ -18,6 +18,7 @@ const { isBinary } = require('istextorbinary')
 const cssChangeUrl = require('../plugins/metalsmith-css-change-url')
 const sourceUrl = require('../plugins/metalsmith-sourceurl')
 const writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
+const inlineSource = require('../plugins/metalsmith-inline-source')
 const pkg = require('../package.json')
 
 export const state = () => ({
@@ -445,13 +446,14 @@ export const actions = {
             rootpath: siteMeta.rootpath
           })
         )
+        .use(inlineSource())
 
       if (!state.devBuild) {
         ms.use(htmlmin())
       }
 
       // TODO: The build functions does not call the callback, or doesn't return the files parameter. Bug in Metalsmith?
-      ms.process(function(err, files) {
+      ms.build(function(err, files) {
         if (err) {
           debug('runMetalsmith build error: %o', err)
           throw err
