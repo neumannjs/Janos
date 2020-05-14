@@ -28,12 +28,16 @@ export const state = () => ({
   newTreeSha: '',
   parentCommitSha: '',
   fileContents: [],
-  devBuild: false
+  devBuild: true,
+  neumannssgSites: []
 })
 
 export const mutations = {
   setFileTree(state, payload) {
     state.fileTree = payload
+  },
+  setNeumannssgSites(state, payload) {
+    state.neumannssgSites = payload
   },
   setRepo(state, payload) {
     state.repo = payload
@@ -107,10 +111,34 @@ export const mutations = {
 
 export const actions = {
   async getRepo({ rootState, commit }) {
+    const pagesDomain = rootState.auth.user.login + '.github.io'
+    let pathName = window.location.pathname
+    let repoName = pathName.substr(0, pathName.indexOf('/admin'))
+    if (repoName.length == 0) {
+      repoName = pagesDomain
+    }
     const q = `user:${rootState.auth.user.login}+topic:neumannssg`
     const result = await this.$octoKit.search.repos({ q: q })
-    commit('setRepo', result.data.items[0].name)
-    return result.data.items[0].name
+    if (
+      result.data.items &&
+      result.data.items.some(repo => repo.name == repoName)
+    ) {
+      debug(
+        'Repository name  %s based on location path %s is a neumannssg repository',
+        repoName,
+        window.location.pathname
+      )
+      commit('setRepo', repoName)
+    } else if (result.data.items && process.env.APP_ENV == 'development') {
+      debug(
+        'Development mode: Picking first neumannssg repo from Github: %s',
+        result.data.items[0].name
+      )
+      repoName = result.data.items[0].name
+      commit('setRepo', repoName)
+    }
+    commit('setNeumannssgSites', result.data.items)
+    return repoName
   },
 
   async getFileTree(
@@ -335,9 +363,9 @@ export const actions = {
   },
 
   runMetalsmith({ rootState, state, dispatch }) {
-    const prodDomain = rootState.auth.user.login + '.github.io'
+    const pagesDomain = rootState.auth.user.login + '.github.io'
     let prodRootPath = null
-    if (prodDomain !== state.repo) {
+    if (pagesDomain !== state.repo) {
       prodRootPath = '/' + state.repo + '/'
     }
     const devHost = 'localhost'
@@ -348,7 +376,9 @@ export const actions = {
       description: 'A demonstration static site built using Neumann SSG',
       author: 'Gijs van Dam',
       contact: 'https://twitter.com/gijswijs',
-      domain: state.devBuild ? 'http://' + devHost + ':' + devPort : prodDomain, // set domain
+      domain: state.devBuild
+        ? 'http://' + devHost + ':' + devPort
+        : pagesDomain, // set domain
       rootpath: state.devBuild ? '/' : prodRootPath // set absolute path (null for relative)
     }
     return new Promise((resolve, reject) => {

@@ -196,9 +196,7 @@
         <v-btn v-show="buttons.preview" icon @click="splitEditor = !splitEditor; onResize()">
           <v-icon>pageview</v-icon>
         </v-btn>
-        <v-btn icon @click="logout()">
-          <v-icon>mdi-logout</v-icon>
-        </v-btn>
+        <account :model="accountDialog" />
       </v-toolbar-items>
     </v-toolbar>
 
@@ -207,13 +205,15 @@
       <v-container fluid fill-height>
         <v-layout row>
           <v-flex ref="codeContainer">
-            <codemirror
-              v-show="openTab"
-              ref="cmEditor"
-              v-model="code"
-              v-debounce:500ms="onCodeChange"
-              :options="cmOption"
-            />
+            <v-card height="100%" width="100%" flat tile>
+              <codemirror
+                v-show="openTab"
+                ref="cmEditor"
+                v-model="code"
+                v-debounce:500ms="onCodeChange"
+                :options="cmOption"
+              />
+            </v-card>
           </v-flex>
           <v-flex v-show="splitEditor && buttons.preview" ref="previewWindow" xs6>
             <preview :path="previewPath" :style="{width: '100%', height: '100%'}" />
@@ -231,11 +231,13 @@
 <script>
 import { mapState, mapActions, mapMutations } from 'vuex'
 import Preview from '../components/preview'
+import Account from '../components/account'
 const debug = require('debug')('layouts/default')
 
 export default {
   components: {
-    preview: Preview
+    preview: Preview,
+    account: Account
   },
   data() {
     return {
@@ -251,6 +253,7 @@ export default {
       activeNavbar: 'explorer',
       splitEditor: false,
       leftPadding: 380,
+      accountDialog: false,
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
@@ -462,9 +465,6 @@ export default {
         content: this.$btoaUTF8(this.code),
         path: this.openTab
       })
-    },
-    logout: async function() {
-      await this.$auth.logout()
     },
     ...mapActions('github', [
       'addNodeToTree',

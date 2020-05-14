@@ -17,7 +17,13 @@
       </v-btn>
     </v-hover>
     <iframe :srcDoc="srcDoc" class="previewIFrame" />
-    <v-dialog v-model="fullscreen" fullscreen hide-overlay transition="dialog-right-transition">
+    <v-dialog
+      v-model="fullscreen"
+      lazy
+      fullscreen
+      hide-overlay
+      transition="dialog-right-transition"
+    >
       <v-card height="100%" width="100%" flat tile>
         <v-hover>
           <v-btn
