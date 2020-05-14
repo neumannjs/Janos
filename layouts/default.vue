@@ -215,7 +215,7 @@
               :options="cmOption"
             />
           </v-flex>
-          <v-flex v-show="splitEditor" ref="previewWindow" xs6>
+          <v-flex v-show="splitEditor && buttons.preview" ref="previewWindow" xs6>
             <preview :path="previewPath" :style="{width: '100%', height: '100%'}" />
           </v-flex>
         </v-layout>
@@ -334,6 +334,8 @@ export default {
           this.buttons[key] = false
         }
       }
+      // Preview pane might be closed, so a resize might be necessary
+      this.onResize()
     },
     active: function(val, oldVal) {
       // Whenever the active item in the treeview changes, check whether a file
@@ -376,9 +378,10 @@ export default {
       let codeContainerWidth = window.innerWidth - drawerWidth
       debug('onResize, containerWidth: ' + codeContainerWidth)
       debug('onResize, drawerWidth: ' + drawerWidth)
-      codeContainerWidth = this.splitEditor
-        ? codeContainerWidth / 2
-        : codeContainerWidth
+      codeContainerWidth =
+        this.splitEditor && this.buttons.preview
+          ? codeContainerWidth / 2
+          : codeContainerWidth
       this.codemirror.setSize(codeContainerWidth, null)
     },
     switchNav: function(navbar) {
