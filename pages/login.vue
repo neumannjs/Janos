@@ -5,7 +5,7 @@
 <script>
 export default {
   layout: 'centered',
-  auth: false,
+  auth: 'guest',
   mounted() {
     this.$auth.loginWith('githubProxy', {
       // TODO: This state should include a random nonce of sorts

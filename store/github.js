@@ -111,7 +111,7 @@ export const mutations = {
 
 export const actions = {
   async getRepo({ rootState, commit }) {
-    const pagesDomain = rootState.auth.user.login + '.github.io'
+    const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
     let pathName = window.location.pathname
     let repoName = pathName.substr(0, pathName.indexOf('/admin'))
     if (repoName.length == 0) {
@@ -137,8 +137,61 @@ export const actions = {
       repoName = result.data.items[0].name
       commit('setRepo', repoName)
     }
-    commit('setNeumannssgSites', result.data.items)
+    commit(
+      'setNeumannssgSites',
+      result.data.items.map(site => {
+        let adminUrl = ''
+        if (pagesDomain == repoName.toLowerCase()) {
+          adminUrl = 'https://' + pagesDomain + '/admin'
+        } else {
+          adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
+        }
+        return { name: site.name, url: adminUrl, active: site.name == repoName }
+      })
+    )
     return repoName
+  },
+
+  async createRepo({ rootState }, name) {
+    try {
+      const response = await this.$octoKit.repos.createUsingTemplate({
+        template_owner: process.env.APP_TEMPLATE_OWNER,
+        template_repo: process.env.APP_TEMPLATE_REPO,
+        name
+      })
+      debug('Create new NeumannSsg repo: %o', response)
+      if (response.status == 201) {
+        // repo is created, now add topic (to be able to distinguish neumannssg repo's later on)
+        const responseTopics = await this.$octoKit.repos.replaceAllTopics({
+          owner: rootState.auth.user.login,
+          repo: name,
+          names: ['neumannssg']
+        })
+        debug(
+          'Add topic neumannssg to repo %s/%s : %o',
+          rootState.auth.user.login,
+          name,
+          responseTopics
+        )
+        // enable pages
+        const responsePages = await this.$octoKit.repos.enablePagesSite({
+          owner: rootState.auth.user.login,
+          repo: name,
+          source: {
+            branche: 'master',
+            path: '/docs'
+          }
+        })
+        debug(
+          'Enable Github Pages for repo %s/%s : %o',
+          rootState.auth.user.login,
+          name,
+          responsePages
+        )
+      }
+    } catch (error) {
+      throw error
+    }
   },
 
   async getFileTree(

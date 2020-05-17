@@ -1,50 +1,33 @@
 <template>
-  <v-card class="elevation-12">
-    <v-toolbar color="primary" dark flat>
-      <v-toolbar-title>Create your own website</v-toolbar-title>
-    </v-toolbar>
-    <v-card-text
-      v-show="this.$route.query.reponame"
-    >The repository {{ this.$route.query.reponame }} for your personal page is still available. Alternatively you can provide a different name for your website.</v-card-text>
-    <v-card-text>
-      <v-form ref="form">
-        <v-text-field
-          v-model="reponame"
-          :rules="[rules.required]"
-          label="Name"
-          name="name"
-          prepend-icon="create"
-          type="text"
-        ></v-text-field>
-      </v-form>
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer />
-      <v-btn color="primary" @click="createRepo()">Create</v-btn>
-    </v-card-actions>
-  </v-card>
+  <CreateDialog
+    :repo-name="reponame"
+    :persistent="true"
+    :value="true"
+    @create="createRepo($event)"
+  />
 </template>
 
 <script>
 import Cookies from 'js-cookie'
+import CreateDialog from '../components/createDialog'
 
 export default {
+  components: {
+    CreateDialog
+  },
   data() {
     return {
-      reponame: this.$route.query.reponame,
-      rules: {
-        required: value => !!value || 'Required.'
-      }
+      reponame: this.$route.query.reponame
     }
   },
   layout: 'centered',
-  auth: false,
+  auth: 'guest',
   methods: {
-    createRepo: function() {
+    createRepo: function(value) {
       if (this.$refs.form.validate()) {
         Cookies.set(
           'accessTokenEndpoint',
-          'http://localhost:7071/api/handler/?reponame=' + this.reponame,
+          'http://localhost:7071/api/handler/?reponame=' + value,
           { expires: 1 }
         )
         this.$router.push('login')

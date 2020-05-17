@@ -21,7 +21,7 @@
     "@nuxtjs/auth": "^4.9.1",
     "@nuxtjs/axios": "^5.4.1",
     "@nuxtjs/dotenv": "^1.4.1",
-    "@octokit/rest": "^16.17.1",
+    "@octokit/rest": "^17.9.0",
     "cross-env": "^5.2.0",
     "debug": "^4.1.1",
     "istextorbinary": "^2.5.1",

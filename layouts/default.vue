@@ -231,7 +231,7 @@
 <script>
 import { mapState, mapActions, mapMutations } from 'vuex'
 import Preview from '../components/preview'
-import Account from '../components/account'
+import Account from '../components/accountDialog'
 const debug = require('debug')('layouts/default')
 
 export default {

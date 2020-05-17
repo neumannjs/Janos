@@ -1,4 +1,4 @@
-import Octokit from '@octokit/rest'
+import { Octokit } from '@octokit/rest'
 
 export default ({ store, app: { $auth } }, inject) => {
   if (!$auth.loggedIn) {

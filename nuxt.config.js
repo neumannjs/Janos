@@ -90,7 +90,7 @@ module.exports = {
       login: '/login',
       logout: '/',
       callback: '/callback',
-      home: '/'
+      home: '/admin'
     },
     plugins: ['~/plugins/octokit-plugin'],
     strategies: {
@@ -116,7 +116,7 @@ module.exports = {
   vue: {
     config: {
       errorHandler: (err, vm, info) => {
-        vm.$storage.setState('error', err)
+        console.log(`Error: ${err.toString()}\nInfo: ${info}`)
       },
       devtools: true
     }
