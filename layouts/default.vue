@@ -14,12 +14,12 @@
       <v-list>
         <v-list-tile @click="switchNav('explorer')">
           <v-list-tile-action>
-            <fa :icon="['fas', 'copy']" style="font-size: 24px" />
+            <v-icon medium>mdi-file-multiple</v-icon>
           </v-list-tile-action>
         </v-list-tile>
         <v-list-tile @click="switchNav('github')">
           <v-list-tile-action>
-            <fa :icon="['fab', 'github']" style="font-size: 24px" />
+            <v-icon medium>mdi-github</v-icon>
           </v-list-tile-action>
         </v-list-tile>
       </v-list>
@@ -223,7 +223,7 @@
     </v-content>
     <!-- Footer -->
     <v-footer fixed app :style="{ zIndex: '20' }">
-      <span>&copy; 2019</span>
+      <ftr></ftr>
     </v-footer>
   </v-app>
 </template>
@@ -232,12 +232,14 @@
 import { mapState, mapActions, mapMutations } from 'vuex'
 import Preview from '../components/preview'
 import Account from '../components/accountDialog'
+import Footer from '../components/footer'
 const debug = require('debug')('layouts/default')
 
 export default {
   components: {
     preview: Preview,
-    account: Account
+    account: Account,
+    ftr: Footer
   },
   data() {
     return {

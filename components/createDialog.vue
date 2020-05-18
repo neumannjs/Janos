@@ -35,7 +35,7 @@ export default {
   name: 'CreateDialog',
   props: {
     title: { type: String, default: 'Create your own website' },
-    repoName: { type: String, default: '' },
+    personalRepo: { type: String, default: '' },
     persistent: { type: Boolean, default: true },
     value: { type: Boolean, default: false }
   },
@@ -45,11 +45,8 @@ export default {
       rules: {
         required: value => !!value || 'Required.'
       },
-      personalRepo: ''
+      repoName: ''
     }
-  },
-  mounted: function() {
-    this.personalRepo = this.repoName
   },
   methods: {
     create: function(value) {

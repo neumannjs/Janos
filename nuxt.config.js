@@ -26,7 +26,7 @@ module.exports = {
       {
         rel: 'stylesheet',
         href:
-          'https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css'
+          'https://cdn.materialdesignicons.com/5.2.45/css/materialdesignicons.min.css'
       }
     ]
   },
@@ -60,23 +60,7 @@ module.exports = {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
     '@nuxtjs/auth',
-    '@nuxtjs/dotenv',
-    [
-      'nuxt-fontawesome',
-      {
-        component: 'fa',
-        imports: [
-          {
-            set: '@fortawesome/free-solid-svg-icons',
-            icons: ['fas']
-          },
-          {
-            set: '@fortawesome/free-brands-svg-icons',
-            icons: ['faGithub']
-          }
-        ]
-      }
-    ]
+    '@nuxtjs/dotenv'
   ],
   /*
   ** Axios module configuration

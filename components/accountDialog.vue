@@ -22,7 +22,7 @@
         <v-list dense>
           <v-list-tile
             v-for="site in neumannssgSites"
-            v-show="!site.active"
+            v-show="!site.active && site.neumannssg"
             :key="site.name"
             @click="redirect(site.url)"
           >
@@ -36,9 +36,10 @@
           </v-list-tile>
           <CreateDialog
             v-model="createDialog"
-            :repo-name="repoName"
+            :personal-repo="repoName"
             :persistent="false"
             title="Create new website"
+            lazy
             @create="createRepo($event)"
           />
           <v-list-tile @click="createDialog = true; dialog = false">
@@ -59,7 +60,7 @@
 <script>
 import { mapState, mapActions } from 'vuex'
 import CreateDialog from './createDialog'
-// const debug = require('debug')('components/accountDialog')
+const debug = require('debug')('components/accountDialog')
 
 export default {
   name: 'AccountDialog',
@@ -80,7 +81,12 @@ export default {
     ...mapState('auth', ['user']),
     ...mapState('github', ['neumannssgSites', 'repo'])
   },
-  created: function() {
+  updated: function() {
+    debug(
+      'Find %s.github.io in neumannssgSite: %o',
+      this.user.login,
+      this.neumannssgSites
+    )
     this.repoName = this.neumannssgSites.some(
       site => site.name == this.user.login + '.github.io'
     )

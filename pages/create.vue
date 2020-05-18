@@ -1,6 +1,6 @@
 <template>
   <CreateDialog
-    :repo-name="reponame"
+    :personal-repo="reponame"
     :persistent="true"
     :value="true"
     @create="createRepo($event)"

@@ -117,8 +117,8 @@ export const actions = {
     if (repoName.length == 0) {
       repoName = pagesDomain
     }
-    const q = `user:${rootState.auth.user.login}+topic:neumannssg`
-    const result = await this.$octoKit.search.repos({ q: q })
+    let q = `user:${rootState.auth.user.login}+topic:neumannssg`
+    let result = await this.$octoKit.search.repos({ q: q })
     if (
       result.data.items &&
       result.data.items.some(repo => repo.name == repoName)
@@ -137,18 +137,36 @@ export const actions = {
       repoName = result.data.items[0].name
       commit('setRepo', repoName)
     }
-    commit(
-      'setNeumannssgSites',
-      result.data.items.map(site => {
-        let adminUrl = ''
-        if (pagesDomain == repoName.toLowerCase()) {
-          adminUrl = 'https://' + pagesDomain + '/admin'
-        } else {
-          adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
-        }
-        return { name: site.name, url: adminUrl, active: site.name == repoName }
-      })
-    )
+    let neumannSsgSites = result.data.items.map(site => {
+      let adminUrl = ''
+      if (pagesDomain == repoName.toLowerCase()) {
+        adminUrl = 'https://' + pagesDomain + '/admin'
+      } else {
+        adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
+      }
+      return {
+        name: site.name,
+        url: adminUrl,
+        active: site.name == repoName,
+        neumannssg: true
+      }
+    })
+    q = `repo:${rootState.auth.user.login}/${pagesDomain}`
+    try {
+      result = await this.$octoKit.search.repos({ q: q })
+      if (result.data.items) {
+        neumannSsgSites.push({
+          name: pagesDomain,
+          url: 'https://' + pagesDomain + '/admin',
+          active: false,
+          neumannssg: false
+        })
+      }
+      debug('Search for personal Github Pages returned: %o', result)
+    } catch (error) {
+      debug('Search for personal Github Pages returned error: %o', error)
+    }
+    commit('setNeumannssgSites', neumannSsgSites)
     return repoName
   },
 
@@ -178,7 +196,7 @@ export const actions = {
           owner: rootState.auth.user.login,
           repo: name,
           source: {
-            branche: 'master',
+            branch: 'master',
             path: '/docs'
           }
         })
