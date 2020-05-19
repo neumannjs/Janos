@@ -170,7 +170,19 @@ export const actions = {
     return repoName
   },
 
-  async createRepo({ rootState }, name) {
+  async createRepo({ rootState, dispatch }, name) {
+    dispatch(
+      'status/addOrUpdateStatusItemAsync',
+      {
+        name: 'github',
+        text: 'Creating new repo',
+        icon: 'mdi-github',
+        button: false,
+        progress: { indeterminate: true }
+      },
+      { root: true }
+    )
+    debug('status: %o', rootState.status.statusItems)
     try {
       const response = await this.$octoKit.repos.createUsingTemplate({
         template_owner: process.env.APP_TEMPLATE_OWNER,
@@ -179,6 +191,17 @@ export const actions = {
       })
       debug('Create new NeumannSsg repo: %o', response)
       if (response.status == 201) {
+        dispatch(
+          'status/addOrUpdateStatusItemAsync',
+          {
+            name: 'github',
+            text: 'Add topic',
+            icon: 'mdi-github',
+            button: false,
+            progress: { indeterminate: false, value: 33 }
+          },
+          { root: true }
+        )
         // repo is created, now add topic (to be able to distinguish neumannssg repo's later on)
         const responseTopics = await this.$octoKit.repos.replaceAllTopics({
           owner: rootState.auth.user.login,
@@ -192,20 +215,78 @@ export const actions = {
           responseTopics
         )
         // enable pages
-        const responsePages = await this.$octoKit.repos.enablePagesSite({
-          owner: rootState.auth.user.login,
-          repo: name,
-          source: {
-            branch: 'master',
-            path: '/docs'
-          }
-        })
-        debug(
-          'Enable Github Pages for repo %s/%s : %o',
-          rootState.auth.user.login,
-          name,
-          responsePages
+        dispatch(
+          'status/addOrUpdateStatusItemAsync',
+          {
+            name: 'github',
+            text: 'Enable pages',
+            icon: 'mdi-github',
+            button: false,
+            progress: { indeterminate: false, value: 66 }
+          },
+          { root: true }
         )
+        try {
+          // This github call always throws an error, so we should ignore it
+          const responsePages = await this.$octoKit.repos.enablePagesSite({
+            owner: rootState.auth.user.login,
+            repo: name,
+            source: {
+              branch: 'master',
+              path: '/docs'
+            }
+          })
+          debug(
+            'Enabling Github Pages for %s/%s did not return an error (Github fixed this?). response : %o',
+            rootState.auth.user.login,
+            name,
+            responsePages
+          )
+        } catch (error) {
+          debug(
+            'Enabling Github Pages for %s/%s returned an eror (issue with Github API). error: %o',
+            rootState.auth.user.login,
+            name,
+            error
+          )
+        }
+        dispatch(
+          'status/addOrUpdateStatusItemAsync',
+          {
+            name: 'github',
+            text: 'new repo created',
+            icon: 'mdi-github',
+            button: false,
+            progress: { indeterminate: false, value: 100 }
+          },
+          { root: true }
+        )
+        const pagesDomain =
+          rootState.auth.user.login.toLowerCase() + '.github.io'
+        let repoUrl = 'https://' + pagesDomain + '/'
+        if (pagesDomain != name) {
+          repoUrl += name + '/'
+        }
+        dispatch(
+          'status/addNotificationAsync',
+          {
+            title: 'New repo created',
+            subTitle: `New repo created <a href="${repoUrl}admin" target="_blank">${name}</a>`
+          },
+          { root: true }
+        )
+        setTimeout(function() {
+          dispatch(
+            'status/addOrUpdateStatusItemAsync',
+            {
+              name: 'github',
+              text: 'idle',
+              icon: 'mdi-github',
+              button: false
+            },
+            { root: true }
+          )
+        }, 6000)
       }
     } catch (error) {
       throw error

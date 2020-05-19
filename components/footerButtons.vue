@@ -7,7 +7,7 @@
       flat
       small
       :style="{color: 'white !important', textTransform: 'none'}"
-      @click="item.click"
+      @click="$store.dispatch(item.dispatch)"
     >
       <v-icon
         v-show="item.icon"

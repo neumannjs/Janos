@@ -1,7 +1,7 @@
 <template>
   <v-layout row wrap>
-    <footer-buttons placement="left" :status-items="statusItemsLeft" />
-    <footer-buttons placement="right" :status-items="statusItemsRight" />
+    <footer-buttons placement="left" :status-items="leftStatusItems" />
+    <footer-buttons placement="right" :status-items="rightStatusItems" />
     <v-snackbar v-model="snackbar" bottom right :timeout="timeout" auto-height>
       <v-layout row>
         <v-flex xs12>
@@ -10,10 +10,12 @@
               <v-list-tile :key="index" :style="{background: 'transparent'}">
                 <v-list-tile-content>
                   <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-                  <v-list-tile-sub-title>{{ item.subTitle }}</v-list-tile-sub-title>
+                  <v-list-tile-sub-title>
+                    <span v-html="item.subTitle" />
+                  </v-list-tile-sub-title>
                 </v-list-tile-content>
                 <v-list-tile-action>
-                  <v-icon small color="red" @click="notifications.splice(index, 1)">close</v-icon>
+                  <v-icon small color="red" @click="removeNotificationAsync(index)">close</v-icon>
                 </v-list-tile-action>
               </v-list-tile>
               <v-divider :key="index"></v-divider>
@@ -26,7 +28,7 @@
                 <v-icon
                   small
                   :disabled="notifications.length === 0"
-                  @click="notifications=[]"
+                  @click="clearAllNotificationsAsync()"
                 >clear_all</v-icon>
                 <v-icon
                   v-show="notifications.length === 0"
@@ -44,6 +46,7 @@
 </template>
 
 <script>
+import { mapState, mapActions, mapGetters } from 'vuex'
 import FooterButtons from '../components/footerButtons'
 
 export default {
@@ -53,48 +56,26 @@ export default {
   },
   data() {
     return {
-      statusItems: [
-        {
-          button: true,
-          icon: 'mdi-github',
-          text: 'Creating new repo',
-          progress: {
-            value: 25
-          },
-          click: () => {
-            this.snackbar = true
-            this.notifications.push({
-              title: 'Snackbar',
-              subTitle: 'This is a new snackbar'
-            })
-          }
-        },
-        {
-          button: true,
-          icon: 'notifications',
-          right: true,
-          click: () => {
-            this.snackbar = true
-          }
-        }
-      ],
-      notifications: [
-        {
-          title: 'Title',
-          subTitle: 'subTitle'
-        }
-      ],
-      snackbar: false,
       timeout: 6000
     }
   },
   computed: {
-    statusItemsLeft: function() {
-      return this.statusItems.filter(item => !item.right)
-    },
-    statusItemsRight: function() {
-      return this.statusItems.filter(item => item.right)
+    ...mapState('status', ['statusItems', 'notifications']),
+    ...mapGetters('status', ['leftStatusItems', 'rightStatusItems']),
+    snackbar: {
+      set(snackbar) {
+        this.$store.commit('status/setSnackbar', snackbar)
+      },
+      get() {
+        return this.$store.state.status.snackbar
+      }
     }
+  },
+  methods: {
+    ...mapActions('status', [
+      'clearAllNotificationsAsync',
+      'removeNotificationAsync'
+    ])
   }
 }
 </script>

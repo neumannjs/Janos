@@ -50,7 +50,10 @@ export default {
   },
   methods: {
     create: function(value) {
-      this.$emit('create', value)
+      if (this.$refs.form.validate()) {
+        this.value = false
+        this.$emit('create', value)
+      }
     }
   }
 }
