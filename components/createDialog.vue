@@ -48,6 +48,13 @@ export default {
       repoName: ''
     }
   },
+  watch: {
+    personalRepo: function(val) {
+      if (val.length > 0) {
+        this.repoName = val
+      }
+    }
+  },
   methods: {
     create: function(value) {
       if (this.$refs.form.validate()) {

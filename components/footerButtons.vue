@@ -1,8 +1,8 @@
 <template>
   <v-flex xs6 :class="`text-xs-${placement}`">
     <v-btn
-      v-for="item in statusItems"
-      :key="item"
+      v-for="(item, index) in statusItems"
+      :key="index"
       :disabled="!item.button"
       flat
       small
@@ -17,7 +17,7 @@
       >{{ item.icon }}</v-icon>
       <v-progress-circular
         v-show="item.progress"
-        :indeterminate="item.progress ? item.progress.indeterminate : 'false'"
+        :indeterminate="item.progress ? item.progress.indeterminate : false"
         :value="item.progress ? item.progress.value : 0"
         size="16"
         class="mr-2"

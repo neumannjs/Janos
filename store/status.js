@@ -1,5 +1,4 @@
 import Vue from 'vue'
-const debug = require('debug')('store/status')
 
 export const state = () => ({
   statusItems: [
