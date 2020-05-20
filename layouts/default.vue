@@ -476,10 +476,11 @@ export default {
       'renameNode',
       'createGitTree',
       'createGitCommit',
-      'runMetalsmith',
       'getDevBuild'
     ]),
-    ...mapMutations('github', ['updateFileContent', 'switchDevBuild'])
+    ...mapMutations('github', ['updateFileContent']),
+    ...mapActions('metalsmith', ['runMetalsmith']),
+    ...mapMutations('metalsmith', ['switchDevBuild'])
   }
 }
 </script>
