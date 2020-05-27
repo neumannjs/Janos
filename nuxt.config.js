@@ -161,6 +161,19 @@ module.exports = {
           loader: 'eslint-loader',
           exclude: /(node_modules)/
         })
+        config.module.rules.push({
+          test: /node_modules\\metalsmith-tags\\lib\\index\.js$/,
+          loader: 'string-replace-loader',
+          options: {
+            search: 'var tag = String(rawTag).trim();',
+            replace: `var tag = ''
+            if (typeof rawTag === 'object') {
+              tag = String(rawTag.name).trim();
+            } else {
+              tag = String(rawTag).trim();
+            }`
+          }
+        })
         config.resolve.symlinks = false
       }
       if (ctx.isDev) {

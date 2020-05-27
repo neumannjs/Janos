@@ -10,7 +10,6 @@ export const state = () => ({
   newTreeSha: '',
   parentCommitSha: '',
   fileContents: [],
-  devBuild: true,
   neumannssgSites: []
 })
 

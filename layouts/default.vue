@@ -294,7 +294,7 @@ export default {
     }),
     devBuild: {
       get: function() {
-        return this.$store.state.github.devBuild
+        return this.$store.state.metalsmith.devBuild
       },
       set: function() {
         this.switchDevBuild()
@@ -475,8 +475,7 @@ export default {
       'addEmptyFile',
       'renameNode',
       'createGitTree',
-      'createGitCommit',
-      'getDevBuild'
+      'createGitCommit'
     ]),
     ...mapMutations('github', ['updateFileContent']),
     ...mapActions('metalsmith', ['runMetalsmith']),

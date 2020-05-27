@@ -1,26 +1,38 @@
 const debug = require('debug')('store/metalsmith')
 const Metalsmith = require('metalsmith')
-const layouts = require('metalsmith-layouts')
-const dateFilter = require('nunjucks-date-filter')
-const assets = require('metalsmith-assets')
-const rssfeed = require('metalsmith-feed')
-const htmlmin = require('metalsmith-html-minifier')
-const cssChangeUrl = require('../plugins/metalsmith-css-change-url')
-const sourceUrl = require('../plugins/metalsmith-sourceurl')
-const writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
-const inlineSource = require('../plugins/metalsmith-inline-source')
-const pkg = require('../package.json')
+const find = require('lodash/find')
+const merge = require('lodash/merge')
+const local = {}
+local.metalsmithLayouts = require('metalsmith-layouts')
+local.metalsmithTags = require('metalsmith-tags')
+local.metalsmithAssets = require('metalsmith-assets')
+local.metalsmithFeed = require('metalsmith-feed')
+local.metalsmithHtmlMinifier = require('metalsmith-html-minifier')
+local.cssChangeUrl = require('../plugins/metalsmith-css-change-url')
+local.sourceUrl = require('../plugins/metalsmith-sourceurl')
+local.writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
+local.inlineSource = require('../plugins/metalsmith-inline-source')
+/* eslint-disable no-unused-vars */
+const nunjucksDateFilter = require('nunjucks-date-filter')
+/* eslint-enable no-unused-vars */
 
-var load = (function() {
+let load = (function() {
   // Function which returns a function: https://davidwalsh.name/javascript-functions
   function _load(tag) {
     return function(url) {
       // This promise will be used by Promise.all to determine success or failure
       return new Promise(function(resolve, reject) {
         debug('Started loading %s', url)
-        var element = document.createElement(tag)
         var parent = 'body'
         var attr = 'src'
+        if (
+          document.querySelector(tag + '[' + attr + '="' + url + '"]') != null
+        ) {
+          debug('Script %s was already found in DOM', url)
+          resolve(url)
+          return
+        }
+        var element = document.createElement(tag)
 
         // Important success and error for the promise
         element.onload = function() {
@@ -53,10 +65,27 @@ var load = (function() {
 
   return {
     css: _load('link'),
-    js: _load('script'),
-    img: _load('img')
+    js: _load('script')
   }
 })()
+
+let getSource = function(prefix, dispatch) {
+  return function(name, callback) {
+    const fileName = prefix + name
+    dispatch('github/getFile', fileName, {
+      root: true
+    })
+      .then(file => {
+        callback(null, {
+          src: atob(file.content),
+          path: name
+        })
+      })
+      .catch(error => {
+        callback(error)
+      })
+  }
+}
 
 export const state = () => ({
   devBuild: true
@@ -70,15 +99,9 @@ export const mutations = {
 
 export const actions = {
   async runMetalsmith({ rootState, state, dispatch }) {
-    const pagesDomain = rootState.auth.user.login + '.github.io'
-    let prodRootPath = null
-    if (pagesDomain !== rootState.github.repo) {
-      prodRootPath = '/' + rootState.github.repo + '/'
-    }
-
     let metalsmithConfig = await dispatch(
       'github/getFile',
-      'src/metalsmith.json',
+      'layouts/metalsmith.json',
       {
         root: true
       }
@@ -93,148 +116,112 @@ export const actions = {
       'metalsmith-feed',
       'metalsmith-html-minifier',
       'metalsmith-layouts',
-      'metalsmith-assets'
+      'metalsmith-assets',
+      'metalsmith-tags'
     ]
+
+    let findPlugin = find(metalsmithConfig.plugins, 'metalsmith-layouts')
+    merge(findPlugin, {
+      'metalsmith-layouts': {
+        pattern: '**',
+        engineOptions: {
+          filters: {
+            date: nunjucksDateFilter
+          },
+          loaders: {
+            async: true,
+            getSource: getSource('layouts/', dispatch)
+          }
+        }
+      }
+    })
 
     //Get all plugin names from metalsmith.json file out of the repo
     //Filter all the local plugins
     //TODO: Force the localPlugins in the build, regardless of metalsmith.json
-    let cdnPlugins = metalsmithConfig.plugins
-      .map(plugin => Object.keys(plugin)[0])
-      .filter(name => !localPlugins.some(localName => localName === name))
-
-    cdnPlugins = cdnPlugins.map((plugin, index) => {
-      return metalsmithConfig.plugins[index].pkgVer
-        ? 'https://wzrd.in/standalone/' +
-            plugin +
+    metalsmithConfig.plugins.forEach((plugin, index) => {
+      if (
+        localPlugins.some(localName => localName === Object.keys(plugin)[0])
+      ) {
+        metalsmithConfig.plugins[index].local = true
+      } else {
+        metalsmithConfig.plugins[index].url = plugin.pkgVer
+          ? 'https://wzrd.in/standalone/' +
+            Object.keys(plugin)[0] +
             '@' +
-            metalsmithConfig.plugins[index].pkgVer
-        : 'https://wzrd.in/standalone/' + plugin + '@latest'
+            plugin.pkgVer
+          : 'https://wzrd.in/standalone/' + Object.keys(plugin)[0] + '@latest'
+        metalsmithConfig.plugins[index].local = false
+      }
     })
 
-    debug('Metalsmith plugins to be loaded %o', cdnPlugins)
+    debug('Metalsmith plugins to be loaded %o', metalsmithConfig.plugins)
 
-    let loadPlugins = cdnPlugins.map(load.js)
+    let cdnPlugins = metalsmithConfig.plugins.map(plugin => {
+      if (!plugin.local) {
+        return load.js(plugin.url)
+      }
+    })
 
     debug('Lazy load markdown plugins')
-    await Promise.all(loadPlugins)
+    await Promise.all(cdnPlugins)
     debug('Plugin loaded')
 
-    const siteMeta = {
-      version: pkg.version,
-      name: 'Neumann SSG',
-      description: 'A demonstration static site built using Neumann SSG',
-      author: 'Gijs van Dam',
-      contact: 'https://twitter.com/gijswijs',
-      domain:
-        process.env.APP_ENV === 'development'
-          ? process.env.APP_DEV_URL + ':' + process.env.APP_DEV_PORT
-          : pagesDomain, // set domain
-      rootpath: process.env.APP_ENV === 'development' ? '/' : prodRootPath // set absolute path (null for relative)
+    // overrule some metadat
+    if (process.env.APP_ENV === 'development') {
+      metalsmithConfig.metadata.domain =
+        process.env.APP_DEV_URL + ':' + process.env.APP_DEV_PORT
+      metalsmithConfig.metadata.rootpath = '/'
     }
-    const ms = Metalsmith('./')
-      .metadata(siteMeta)
-      .source('src')
-      .destination('docs')
-      .clean(!state.devBuild)
-      .use(sourceUrl())
-      .use(
-        window.metalsmithPublish({
-          draft: state.devBuild,
-          private: state.devBuild
-        })
-      )
-      .use(
-        window.metalsmithCollections({
-          posts: {
-            pattern: 'posts/**/*.md',
-            sortBy: 'date',
-            reverse: true
-          }
-        })
-      )
-      .use(window.metalsmithMarkdown())
-      .use(
-        window.metalsmithMore({
-          key: 'excerpt'
-        })
-      )
-      .use(window.metalsmithPermalinks())
-      .use(
-        window.metalsmithTags({
-          handle: 'tags',
-          path: 'topics/:tag/index.html',
-          pathPage: 'topics/:tag/:num/index.html',
-          perPage: 6,
-          layout: '/tag.njk',
-          sortBy: 'date',
-          reverse: true,
-          skipMetadata: false,
-          slug: {
-            mode: 'rfc3986'
-          }
-        })
-      )
-      .use(
-        layouts({
-          pattern: '**',
-          engineOptions: {
-            filters: {
-              date: dateFilter
-            },
-            loaders: {
-              async: true,
-              getSource: async function(name, callback) {
-                const fileName = 'layouts/' + name
-                try {
-                  const file = await dispatch('github/getFile', fileName, {
-                    root: true
-                  })
-                  callback(null, {
-                    src: atob(file.content),
-                    path: name
-                  })
-                } catch (e) {
-                  callback(e)
-                }
-              }
-            }
-          }
-        })
-      )
-      .use(
-        rssfeed({
-          collection: 'posts',
-          site_url: siteMeta.domain + (siteMeta.rootpath || ''),
-          title: siteMeta.name,
-          description: siteMeta.description
-        })
-      )
-      .use(
-        window.metalsmithMapsite({
-          hostname: siteMeta.domain + (siteMeta.rootpath || ''),
-          omitIndex: true
-        })
-      )
-      .use(
-        assets({
-          source: 'layouts/assets',
-          destination: '/docs'
-        })
-      )
-      .use(writeBuiltUrl())
-      .use(
-        cssChangeUrl({
-          rootpath: siteMeta.rootpath
-        })
-      )
-      .use(inlineSource())
 
-    if (!state.devBuild) {
-      ms.use(htmlmin())
+    let ms = Metalsmith('./')
+
+    if (metalsmithConfig.metadata) {
+      ms = ms.metadata(metalsmithConfig.metadata)
     }
+
+    if (metalsmithConfig.source) {
+      ms = ms.source(metalsmithConfig.source)
+    }
+
+    if (metalsmithConfig.destination) {
+      ms = ms.destination(metalsmithConfig.destination)
+    }
+
+    if (metalsmithConfig.hasOwnProperty('clean') && !state.devBuild) {
+      ms = ms.clean(metalsmithConfig.clean)
+    } else if (metalsmithConfig.hasOwnProperty('devClean') && state.devBuild) {
+      ms = ms.clean(metalsmithConfig.devClean)
+    }
+
+    metalsmithConfig.plugins.forEach(plugin => {
+      let pluginName = Object.keys(plugin)[0]
+      let pluginNameCamelCase = camelize(pluginName)
+      if (
+        !plugin.hasOwnProperty('dev') ||
+        (plugin.hasOwnProperty('dev') && plugin.dev === state.devBuild)
+      ) {
+        if (plugin.local) {
+          if (typeof plugin[pluginName] === 'boolean') {
+            ms = ms.use(local[pluginNameCamelCase]())
+          } else {
+            ms = ms.use(local[pluginNameCamelCase](plugin[pluginName]))
+          }
+          debug('Metalsmith configured with local plugin %s', pluginName)
+        } else {
+          if (typeof plugin[pluginName] === 'boolean') {
+            ms = ms.use(window[pluginNameCamelCase]())
+          } else {
+            ms = ms.use(window[pluginNameCamelCase](plugin[pluginName]))
+          }
+          debug('Metalsmith configured with remote plugin %s', pluginName)
+        }
+      }
+    })
 
     // TODO: The build functions does not call the callback, or doesn't return the files parameter. Bug in Metalsmith?
+    debug('Start build now')
+
     ms.build(function(err, files) {
       if (err) {
         debug('runMetalsmith build error: %o', err)
@@ -243,4 +230,15 @@ export const actions = {
       debug('runMetalsmith: build files object: %o', files)
     })
   }
+}
+
+function camelize(str) {
+  let arr = str.split('-')
+  let capital = arr.map(
+    (item, index) =>
+      index ? item.charAt(0).toUpperCase() + item.slice(1).toLowerCase() : item
+  )
+  let capitalString = capital.join('')
+
+  return capitalString
 }
