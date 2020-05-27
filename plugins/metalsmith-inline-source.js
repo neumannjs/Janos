@@ -18,7 +18,10 @@ let cssRe = new RegExp(/rel\s*=\s*["']{1}stylesheet["']{1}/)
 let imgRe = new RegExp(/<img/)
 
 function parse(htmlFile, files, destinationFolder = '') {
-  let html = new TextDecoder('utf-8').decode(htmlFile.data.contents)
+  let html = ''
+  if (htmlFile.data.contents.buffer instanceof ArrayBuffer) {
+    html = new TextDecoder('utf-8').decode(htmlFile.data.contents)
+  }
   let idx = 0
   let match = html.match(relativeUrlRe)
   let inlineFile, changed, findFile
