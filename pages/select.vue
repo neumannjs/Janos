@@ -6,12 +6,12 @@
     <v-card-text>
       <v-list two-line>
         <template v-for="(repo) in repos">
-          <v-list-tile :key="repo.name" @click="gotoRepo(repo.url)">
-            <v-list-tile-content>
-              <v-list-tile-title v-text="repo.name"></v-list-tile-title>
-              <v-list-tile-sub-title v-text="repo.url"></v-list-tile-sub-title>
-            </v-list-tile-content>
-          </v-list-tile>
+          <v-list-item :key="repo.name" @click="gotoRepo(repo.url)">
+            <v-list-item-content>
+              <v-list-item-title v-text="repo.name"></v-list-item-title>
+              <v-list-item-sub-title v-text="repo.url"></v-list-item-sub-title>
+            </v-list-item-content>
+          </v-list-item>
         </template>
       </v-list>
     </v-card-text>

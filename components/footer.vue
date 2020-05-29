@@ -7,25 +7,25 @@
         <v-col cols="12">
           <v-list two-line dense :style="{background: 'transparent'}">
             <template v-for="(item, index) in notifications">
-              <v-list-tile :key="index" :style="{background: 'transparent'}">
-                <v-list-tile-content>
-                  <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-                  <v-list-tile-sub-title>
+              <v-list-item :key="index" :style="{background: 'transparent'}">
+                <v-list-item-content>
+                  <v-list-item-title>{{ item.title }}</v-list-item-title>
+                  <v-list-item-sub-title>
                     <!-- eslint-disable-next-line -->
                     <span v-html="item.subTitle" />
-                  </v-list-tile-sub-title>
-                </v-list-tile-content>
-                <v-list-tile-action>
+                  </v-list-item-sub-title>
+                </v-list-item-content>
+                <v-list-item-action>
                   <v-icon small color="red" @click="removeNotificationAsync(index)">close</v-icon>
-                </v-list-tile-action>
-              </v-list-tile>
+                </v-list-item-action>
+              </v-list-item>
               <v-divider :key="index"></v-divider>
             </template>
-            <v-list-tile :style="{background: 'transparent'}">
-              <v-list-tile-content>
-                <v-list-tile-title>{{ notifications.length === 0 ? 'No new notifications' : 'Clear all notifications' }}</v-list-tile-title>
-              </v-list-tile-content>
-              <v-list-tile-action :style="{flexDirection: 'row', alignItems: 'center'}">
+            <v-list-item :style="{background: 'transparent'}">
+              <v-list-item-content>
+                <v-list-item-title>{{ notifications.length === 0 ? 'No new notifications' : 'Clear all notifications' }}</v-list-item-title>
+              </v-list-item-content>
+              <v-list-item-action :style="{flexDirection: 'row', alignItems: 'center'}">
                 <v-icon
                   small
                   :disabled="notifications.length === 0"
@@ -37,8 +37,8 @@
                   color="red"
                   @click="snackbar = false"
                 >close</v-icon>
-              </v-list-tile-action>
-            </v-list-tile>
+              </v-list-item-action>
+            </v-list-item>
           </v-list>
         </v-col>
       </v-row>

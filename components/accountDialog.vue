@@ -20,20 +20,20 @@
       <v-divider />
       <v-col>
         <v-list dense>
-          <v-list-tile
+          <v-list-item
             v-for="site in neumannssgSites"
             v-show="!site.active && site.neumannssg"
             :key="site.name"
             @click="redirect(site.url)"
           >
-            <v-list-tile-action>
+            <v-list-item-action>
               <v-icon>launch</v-icon>
-            </v-list-tile-action>
+            </v-list-item-action>
 
-            <v-list-tile-content>
-              <v-list-tile-title class="subheading" v-text="site.name"></v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
+            <v-list-item-content>
+              <v-list-item-title class="subheading" v-text="site.name"></v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
           <CreateDialog
             v-model="createDialog"
             :personal-repo="repoName"
@@ -42,15 +42,15 @@
             lazy
             @create="createRepo($event)"
           />
-          <v-list-tile @click="createDialog = true; dialog = false">
-            <v-list-tile-action>
+          <v-list-item @click="createDialog = true; dialog = false">
+            <v-list-item-action>
               <v-icon>add_box</v-icon>
-            </v-list-tile-action>
+            </v-list-item-action>
 
-            <v-list-tile-content>
-              <v-list-tile-title class="subheading">Create new website</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
+            <v-list-item-content>
+              <v-list-item-title class="subheading">Create new website</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list>
       </v-col>
     </v-row>
@@ -106,7 +106,7 @@ export default {
 </script>
 
 <style scoped>
->>> .v-dialog {
+::v-deep .v-dialog {
   top: 32px !important;
   right: 0 !important;
   position: absolute !important;

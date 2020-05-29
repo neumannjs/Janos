@@ -4,184 +4,180 @@
     <!-- Activity bar -->
     <v-navigation-drawer
       ref="activityBar"
-      stateless
       permanent
       mini-variant
       :style="{ zIndex: '10' }"
       value="true"
       app
     >
-      <v-list>
-        <v-list-tile @click="switchNav('explorer')">
-          <v-list-tile-action>
+      <v-list nav>
+        <v-list-item @click="switchNav('explorer')">
+          <v-list-item-action>
             <v-icon medium>mdi-file-multiple</v-icon>
-          </v-list-tile-action>
-        </v-list-tile>
-        <v-list-tile @click="switchNav('github')">
-          <v-list-tile-action>
+          </v-list-item-action>
+        </v-list-item>
+        <v-list-item @click="switchNav('github')">
+          <v-list-item-action>
             <v-icon medium>mdi-github</v-icon>
-          </v-list-tile-action>
-        </v-list-tile>
+          </v-list-item-action>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
-    <!-- Navigation drawer container -->
-    <!-- Inside are the navigation drawers that are activated by the Activity bar -->
+    <!-- Navigation drawers that are activated by the Activity bar -->
+
+    <!-- Repository explorer -->
     <v-navigation-drawer
-      ref="navDrawer"
+      v-show="activeNavbar == 'explorer'"
       v-model="drawer"
-      :mini-variant="!drawer"
-      floating
-      :style="{transform: 'translateX(0px)'}"
+      :style="{marginLeft: '56px'}"
+      width="300px"
       app
-      width="380"
     >
-      <v-row class="fill-height">
-        <v-spacer />
-        <!-- Repository explorer -->
-        <v-navigation-drawer v-show="activeNavbar == 'explorer'" v-model="drawer">
-          <v-toolbar flat height="48px">
-            <v-list>
-              <v-list-tile>
-                <v-list-tile-title class="title">Explorer</v-list-tile-title>
-              </v-list-tile>
-            </v-list>
-          </v-toolbar>
-          <v-list>
-            <v-list-group value="true">
-              <template v-slot:activator>
-                <v-list-tile>
-                  <v-list-tile-title>Repository</v-list-tile-title>
-                </v-list-tile>
+      <v-toolbar flat height="48px">
+        <v-list>
+          <v-list-item>
+            <v-list-item-title class="title">Explorer</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-toolbar>
+      <v-list nav>
+        <v-list-group value="true">
+          <template v-slot:activator>
+            <v-list-item>
+              <v-list-item-title>Repository</v-list-item-title>
+            </v-list-item>
+          </template>
+          <v-list-item-content>
+            <v-treeview
+              :open.sync="open"
+              :active.sync="active"
+              :items="items"
+              activatable
+              item-key="path"
+              open-on-click
+              return-object
+            >
+              <template v-slot:prepend="{ item, open }">
+                <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
+                  <v-icon v-if="item.type === 'tree'">{{ open ? 'mdi-folder-open' : 'mdi-folder' }}</v-icon>
+                  <v-icon
+                    v-else-if="files[item.name.substring(item.name.indexOf('.') + 1)]"
+                  >{{ files[item.name.substring(item.name.indexOf('.') + 1)].icon }}</v-icon>
+                  <v-icon v-else>{{ files['default'] }}</v-icon>
+                </span>
               </template>
-              <v-list-tile-content>
-                <v-treeview
-                  :open.sync="open"
-                  :active.sync="active"
-                  :items="items"
-                  activatable
-                  item-key="path"
-                  open-on-click
-                  return-object
-                >
-                  <template v-slot:prepend="{ item, open }">
-                    <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
-                      <v-icon
-                        v-if="item.type === 'tree'"
-                      >{{ open ? 'mdi-folder-open' : 'mdi-folder' }}</v-icon>
-                      <v-icon
-                        v-else-if="files[item.name.substring(item.name.indexOf('.') + 1)]"
-                      >{{ files[item.name.substring(item.name.indexOf('.') + 1)].icon }}</v-icon>
-                      <v-icon v-else>{{ files['default'] }}</v-icon>
-                    </span>
-                  </template>
-                  <template v-slot:label="{ item }">
-                    <span v-if="item.type === 'newfile' || item.type === 'newfolder'">
-                      <v-text-field
-                        v-model="fileName"
-                        required
-                        height="34px"
-                        autofocus
-                        @blur="onBlurFileInput(item, fileName)"
-                        @keydown.enter="$event.target.blur()"
-                      />
-                    </span>
-                    <span
-                      v-else
-                      @mouseover="hoverTreeItem = item.path"
-                      @mouseout="hoverTreeItem = null"
-                    >{{ item.name }}</span>
-                  </template>
-                  <template v-slot:append="{ item }">
-                    <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
-                      <v-btn flat icon color="red" small @click.stop="onClickUploadFileBtn(item)">
-                        <v-icon
-                          v-show="item.type === 'tree' && hoverTreeItem === item.path"
-                        >mdi-file-upload</v-icon>
-                      </v-btn>
-                      <v-btn flat icon color="red" small @click.stop="onClickAddFileBtn(item)">
-                        <v-icon
-                          v-show="item.type === 'tree' && hoverTreeItem === item.path"
-                        >mdi-file-plus</v-icon>
-                      </v-btn>
-                      <v-btn flat icon color="red" small @click.stop="onClickAddFolderBtn(item)">
-                        <v-icon
-                          v-show="item.type === 'tree' && hoverTreeItem === item.path"
-                        >mdi-folder-plus</v-icon>
-                      </v-btn>
-                    </span>
-                  </template>
-                </v-treeview>
-              </v-list-tile-content>
-            </v-list-group>
-            <v-list-group value="true">
-              <template v-slot:activator>
-                <v-list-tile>
-                  <v-list-tile-title>Info</v-list-tile-title>
-                </v-list-tile>
+              <template v-slot:label="{ item }">
+                <span v-if="item.type === 'newfile' || item.type === 'newfolder'">
+                  <v-text-field
+                    v-model="fileName"
+                    required
+                    height="34px"
+                    autofocus
+                    @blur="onBlurFileInput(item, fileName)"
+                    @keydown.enter="$event.target.blur()"
+                  />
+                </span>
+                <span
+                  v-else
+                  @mouseover="hoverTreeItem = item.path"
+                  @mouseout="hoverTreeItem = null"
+                >{{ item.name }}</span>
               </template>
-              <v-list-tile-content>
-                preview path: {{ previewPath }}
-                <br />
-              </v-list-tile-content>
-            </v-list-group>
-          </v-list>
-        </v-navigation-drawer>
+              <template v-slot:append="{ item }">
+                <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
+                  <v-btn flat icon color="red" small @click.stop="onClickUploadFileBtn(item)">
+                    <v-icon
+                      v-show="item.type === 'tree' && hoverTreeItem === item.path"
+                    >mdi-file-upload</v-icon>
+                  </v-btn>
+                  <v-btn flat icon color="red" small @click.stop="onClickAddFileBtn(item)">
+                    <v-icon
+                      v-show="item.type === 'tree' && hoverTreeItem === item.path"
+                    >mdi-file-plus</v-icon>
+                  </v-btn>
+                  <v-btn flat icon color="red" small @click.stop="onClickAddFolderBtn(item)">
+                    <v-icon
+                      v-show="item.type === 'tree' && hoverTreeItem === item.path"
+                    >mdi-folder-plus</v-icon>
+                  </v-btn>
+                </span>
+              </template>
+            </v-treeview>
+          </v-list-item-content>
+        </v-list-group>
+        <v-list-group value="true">
+          <template v-slot:activator>
+            <v-list-item>
+              <v-list-item-title>Info</v-list-item-title>
+            </v-list-item>
+          </template>
+          <v-list-item-content>
+            preview path: {{ previewPath }}
+            <br />
+          </v-list-item-content>
+        </v-list-group>
+      </v-list>
+    </v-navigation-drawer>
 
-        <!-- Github -->
-        <v-navigation-drawer v-show="activeNavbar == 'github'" v-model="drawer">
-          <v-toolbar flat height="48px">
-            <v-list>
-              <v-list-tile>
-                <v-list-tile-title class="title">Github</v-list-tile-title>
-              </v-list-tile>
-            </v-list>
-          </v-toolbar>
-          <v-list>
-            <v-list-tile>
-              <v-list-tile-content>
-                <v-switch
-                  v-model="devBuild"
-                  :label="devBuild ? 'development' : 'production'"
-                  height="42"
-                />
-              </v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile @click="runMetalsmith()">
-              <v-list-tile-action>
-                <v-icon>mdi-anvil</v-icon>
-              </v-list-tile-action>
+    <!-- Github -->
+    <v-navigation-drawer
+      v-show="activeNavbar == 'github'"
+      v-model="drawer"
+      :style="{marginLeft: '56px'}"
+      width="300px"
+      app
+    >
+      <v-toolbar flat height="48px">
+        <v-list>
+          <v-list-item>
+            <v-list-item-title class="title">Github</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-toolbar>
+      <v-list nav>
+        <v-list-item>
+          <v-list-item-content>
+            <v-switch
+              v-model="devBuild"
+              :label="devBuild ? 'development' : 'production'"
+              height="42"
+            />
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="runMetalsmith()">
+          <v-list-item-action>
+            <v-icon>mdi-anvil</v-icon>
+          </v-list-item-action>
 
-              <v-list-tile-content>
-                <v-list-tile-title>Run MetalSmith</v-list-tile-title>
-              </v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile @click="createGitTree()">
-              <v-list-tile-action>
-                <v-icon>mdi-file-tree</v-icon>
-              </v-list-tile-action>
+          <v-list-item-content>
+            <v-list-item-title>Run MetalSmith</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="createGitTree()">
+          <v-list-item-action>
+            <v-icon>mdi-file-tree</v-icon>
+          </v-list-item-action>
 
-              <v-list-tile-content>
-                <v-list-tile-title>Create Git Tree</v-list-tile-title>
-              </v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile @click="createGitCommit()">
-              <v-list-tile-action>
-                <v-icon>mdi-source-commit</v-icon>
-              </v-list-tile-action>
+          <v-list-item-content>
+            <v-list-item-title>Create Git Tree</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="createGitCommit()">
+          <v-list-item-action>
+            <v-icon>mdi-source-commit</v-icon>
+          </v-list-item-action>
 
-              <v-list-tile-content>
-                <v-list-tile-title>Create Git Commit</v-list-tile-title>
-              </v-list-tile-content>
-            </v-list-tile>
-          </v-list>
-        </v-navigation-drawer>
-      </v-row>
+          <v-list-item-content>
+            <v-list-item-title>Create Git Commit</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
     </v-navigation-drawer>
 
     <!-- Tabs -->
     <v-toolbar ref="tabBar" flat app height="48px" :style="{ paddingLeft: leftPadding + 'px' }">
-      <v-tabs v-show="openTab" v-model="openTab" color="transparent" slider-color="white">
+      <v-tabs v-show="openTab" v-model="openTab" slider-color="white">
         <v-tab
           v-for="file in openFiles"
           :key="file.path"
