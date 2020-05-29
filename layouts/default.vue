@@ -94,6 +94,11 @@
                   </template>
                   <template v-slot:append="{ item }">
                     <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
+                      <v-btn flat icon color="red" small @click.stop="onClickUploadFileBtn(item)">
+                        <v-icon
+                          v-show="item.type === 'tree' && hoverTreeItem === item.path"
+                        >mdi-file-upload</v-icon>
+                      </v-btn>
                       <v-btn flat icon color="red" small @click.stop="onClickAddFileBtn(item)">
                         <v-icon
                           v-show="item.type === 'tree' && hoverTreeItem === item.path"
@@ -267,6 +272,7 @@ export default {
         xls: { icon: 'mdi-file-excel', mode: '' },
         njk: { icon: 'mdi-page-layout-body', mode: 'xml' },
         css: { icon: 'mdi-language-css3', mode: 'css' },
+        hbs: { icon: 'mdi-code-braces-box', mode: 'handlebars' },
         default: { icon: 'mdi-file', mode: '' }
       },
       buttons: {
