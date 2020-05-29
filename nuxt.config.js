@@ -22,11 +22,6 @@ module.exports = {
         rel: 'stylesheet',
         href:
           'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons'
-      },
-      {
-        rel: 'stylesheet',
-        href:
-          'https://cdn.materialdesignicons.com/5.2.45/css/materialdesignicons.min.css'
       }
     ]
   },
@@ -35,11 +30,6 @@ module.exports = {
   ** Customize the progress-bar color
   */
   loading: { color: '#fff' },
-
-  /*
-  ** Global CSS
-  */
-  css: ['~/assets/style/app.styl'],
 
   /*
   ** Plugins to load before mounting the App
@@ -143,11 +133,6 @@ module.exports = {
       }),
       new webpack.NormalModuleReplacementPlugin(/uglify-js/, 'uglifyjs-browser')
     ],
-    loaders: {
-      stylus: {
-        import: ['~assets/style/variables.styl']
-      }
-    },
 
     /*
     ** You can extend webpack config here
