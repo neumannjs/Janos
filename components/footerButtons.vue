@@ -1,5 +1,5 @@
 <template>
-  <v-flex xs6 :class="`text-xs-${placement}`">
+  <v-col cols="6" :class="`text-xs-${placement}`">
     <v-btn
       v-for="(item, index) in statusItems"
       :key="index"
@@ -25,7 +25,7 @@
       />
       {{ item.text }}
     </v-btn>
-  </v-flex>
+  </v-col>
 </template>
 
 <script>

@@ -7,18 +7,18 @@
         </v-avatar>
       </v-btn>
     </template>
-    <v-layout column class="grey darken-3">
-      <div class="text-xs-center">
+    <v-row class="grey darken-3">
+      <div class="text-center">
         <v-avatar size="80" class="my-2">
           <img :src="user.avatar_url" :alt="user.login" />
         </v-avatar>
       </div>
-      <div class="text-xs-center">{{ repo }}</div>
-      <div class="text-xs-center my-2">
+      <div class="text-center">{{ repo }}</div>
+      <div class="text-center my-2">
         <v-btn round color="secondary" small @click="logout()">Sign out</v-btn>
       </div>
       <v-divider />
-      <v-flex>
+      <v-col>
         <v-list dense>
           <v-list-tile
             v-for="site in neumannssgSites"
@@ -52,8 +52,8 @@
             </v-list-tile-content>
           </v-list-tile>
         </v-list>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-dialog>
 </template>
 

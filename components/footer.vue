@@ -1,16 +1,17 @@
 <template>
-  <v-layout row wrap>
+  <v-row>
     <footer-buttons placement="left" :status-items="leftStatusItems" />
     <footer-buttons placement="right" :status-items="rightStatusItems" />
     <v-snackbar v-model="snackbar" bottom right :timeout="timeout" auto-height>
-      <v-layout row>
-        <v-flex xs12>
+      <v-row>
+        <v-col cols="12">
           <v-list two-line dense :style="{background: 'transparent'}">
             <template v-for="(item, index) in notifications">
               <v-list-tile :key="index" :style="{background: 'transparent'}">
                 <v-list-tile-content>
                   <v-list-tile-title>{{ item.title }}</v-list-tile-title>
                   <v-list-tile-sub-title>
+                    <!-- eslint-disable-next-line -->
                     <span v-html="item.subTitle" />
                   </v-list-tile-sub-title>
                 </v-list-tile-content>
@@ -39,10 +40,10 @@
               </v-list-tile-action>
             </v-list-tile>
           </v-list>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-snackbar>
-  </v-layout>
+  </v-row>
 </template>
 
 <script>

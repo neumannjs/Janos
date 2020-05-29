@@ -1,5 +1,5 @@
 <template>
-  <v-app v-resize="onResize" dark>
+  <v-app v-resize="onResize">
     <!-- Navigation drawers -->
     <!-- Activity bar -->
     <v-navigation-drawer
@@ -36,7 +36,7 @@
       app
       width="380"
     >
-      <v-layout fill-height>
+      <v-row class="fill-height">
         <v-spacer />
         <!-- Repository explorer -->
         <v-navigation-drawer v-show="activeNavbar == 'explorer'" v-model="drawer">
@@ -176,7 +176,7 @@
             </v-list-tile>
           </v-list>
         </v-navigation-drawer>
-      </v-layout>
+      </v-row>
     </v-navigation-drawer>
 
     <!-- Tabs -->
@@ -207,9 +207,9 @@
 
     <!-- Main content -->
     <v-content :style="{ padding: '48px 0px 32px ' + leftPadding + 'px' }">
-      <v-container fluid fill-height>
-        <v-layout row>
-          <v-flex ref="codeContainer">
+      <v-container class="fill-height" fluid>
+        <v-row>
+          <v-col ref="codeContainer">
             <v-card height="100%" width="100%" flat tile>
               <codemirror
                 v-show="openTab"
@@ -219,11 +219,11 @@
                 :options="cmOption"
               />
             </v-card>
-          </v-flex>
-          <v-flex v-show="splitEditor && buttons.preview" ref="previewWindow" xs6>
+          </v-col>
+          <v-col v-show="splitEditor && buttons.preview" ref="previewWindow" cols="6">
             <preview :path="previewPath" :style="{width: '100%', height: '100%'}" />
-          </v-flex>
-        </v-layout>
+          </v-col>
+        </v-row>
       </v-container>
     </v-content>
     <!-- Footer -->
