@@ -1,10 +1,10 @@
 <template>
-  <v-col cols="6" :class="`text-xs-${placement}`">
+  <v-col cols="6" :class="`text-${placement} py-0`">
     <v-btn
       v-for="(item, index) in statusItems"
       :key="index"
       :disabled="!item.button"
-      flat
+      text
       small
       :style="{color: 'white !important', textTransform: 'none'}"
       @click="$store.dispatch(item.dispatch)"

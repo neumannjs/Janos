@@ -12,14 +12,20 @@
     >
       <v-list nav>
         <v-list-item @click="switchNav('explorer')">
-          <v-list-item-action>
+          <v-list-item-icon>
             <v-icon medium>mdi-file-multiple</v-icon>
-          </v-list-item-action>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Explorer</v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
         <v-list-item @click="switchNav('github')">
-          <v-list-item-action>
+          <v-list-item-icon>
             <v-icon medium>mdi-github</v-icon>
-          </v-list-item-action>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>GitHub</v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
@@ -176,7 +182,7 @@
     </v-navigation-drawer>
 
     <!-- Tabs -->
-    <v-toolbar ref="tabBar" flat app height="48px" :style="{ paddingLeft: leftPadding + 'px' }">
+    <v-app-bar ref="tabBar" flat dense app :style="{ paddingLeft: leftPadding + 'px' }">
       <v-tabs v-show="openTab" v-model="openTab" slider-color="white">
         <v-tab
           v-for="file in openFiles"
@@ -199,14 +205,14 @@
         </v-btn>
         <account :model="accountDialog" />
       </v-toolbar-items>
-    </v-toolbar>
+    </v-app-bar>
 
     <!-- Main content -->
-    <v-content :style="{ padding: '48px 0px 32px ' + leftPadding + 'px' }">
+    <v-content class="fill-height" :style="{ padding: '48px 0px 0px ' + leftPadding + 'px' }">
       <v-container class="fill-height" fluid>
-        <v-row>
-          <v-col ref="codeContainer">
-            <v-card height="100%" width="100%" flat tile>
+        <v-row no-gutters class="fill-height">
+          <v-col ref="codeContainer" class="my-0">
+            <v-card class="fill-height" width="100%" flat tile>
               <codemirror
                 v-show="openTab"
                 ref="cmEditor"
@@ -223,8 +229,8 @@
       </v-container>
     </v-content>
     <!-- Footer -->
-    <v-footer fixed app :style="{ zIndex: '20' }">
-      <ftr></ftr>
+    <v-footer fixed app>
+      <ftr />
     </v-footer>
   </v-app>
 </template>
@@ -255,7 +261,7 @@ export default {
       open: [],
       activeNavbar: 'explorer',
       splitEditor: false,
-      leftPadding: 380,
+      leftPadding: 356,
       accountDialog: false,
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
@@ -373,18 +379,18 @@ export default {
   methods: {
     onResize: function() {
       if (window.innerWidth < 1264) {
-        this.leftPadding = 80
+        this.leftPadding = 56
       } else {
-        this.leftPadding = this.drawer ? 380 : 80
+        this.leftPadding = this.drawer ? 356 : 56
       }
-      this.$refs.navDrawer.width = this.drawer
-        ? this.$refs.navDrawer.width
-        : this.$refs.activityBar.miniVariantWidth
-      let drawerWidth =
-        window.innerWidth < 1264 ? 80 : this.$refs.navDrawer.width
-      let codeContainerWidth = window.innerWidth - drawerWidth
+      // this.$refs.navDrawer.width = this.drawer
+      //   ? this.$refs.navDrawer.width
+      //   : this.$refs.activityBar.miniVariantWidth
+      // let drawerWidth =
+      //   window.innerWidth < 1264 ? 80 : this.$refs.navDrawer.width
+      let codeContainerWidth = window.innerWidth - this.leftPadding
       debug('onResize, containerWidth: ' + codeContainerWidth)
-      debug('onResize, drawerWidth: ' + drawerWidth)
+      debug('onResize, drawerWidth: ' + this.leftPadding)
       codeContainerWidth =
         this.splitEditor && this.buttons.preview
           ? codeContainerWidth / 2
@@ -495,9 +501,9 @@ export default {
 }
 .CodeMirror {
   position: fixed !important;
-  height: calc(100% - 86px) !important;
+  height: calc(100% - 110px) !important;
 }
 html {
-  overflow-y: auto;
+  overflow-y: auto !important;
 }
 </style>
