@@ -90,7 +90,12 @@
                       {{ item.name }}
                       <v-spacer />
                       <span v-if="hover && item.type === 'tree'">
-                        <v-btn text icon color="red" @click.stop="onClickUploadFileBtn(item)">
+                        <v-btn
+                          text
+                          icon
+                          color="red"
+                          @click.stop="uploadParent = item; uploadDialog = true"
+                        >
                           <v-icon>mdi-file-upload</v-icon>
                         </v-btn>
                         <v-btn text icon color="red" small @click.stop="onClickAddFileBtn(item)">
@@ -119,6 +124,12 @@
           </v-list-item-content>
         </v-list-group>
       </v-list>
+      <upload
+        v-model="uploadDialog"
+        :parent="uploadParent"
+        :title="'Upload files to ' + uploadParent.name"
+        :persistent="false"
+      />
     </v-navigation-drawer>
 
     <!-- Github -->
@@ -239,6 +250,7 @@
 import { mapState, mapActions, mapMutations } from 'vuex'
 import Preview from '../components/preview'
 import Account from '../components/accountDialog'
+import Upload from '../components/uploadDialog'
 import Footer from '../components/footer'
 const debug = require('debug')('layouts/default')
 
@@ -246,6 +258,7 @@ export default {
   components: {
     preview: Preview,
     account: Account,
+    upload: Upload,
     ftr: Footer
   },
   data() {
@@ -262,6 +275,8 @@ export default {
       splitEditor: false,
       leftPadding: 356,
       accountDialog: false,
+      uploadDialog: false,
+      uploadParent: { name: '' },
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
@@ -387,11 +402,6 @@ export default {
       } else {
         this.leftPadding = this.drawer ? 356 : 56
       }
-      // this.$refs.navDrawer.width = this.drawer
-      //   ? this.$refs.navDrawer.width
-      //   : this.$refs.activityBar.miniVariantWidth
-      // let drawerWidth =
-      //   window.innerWidth < 1264 ? 80 : this.$refs.navDrawer.width
       let codeContainerWidth = window.innerWidth - this.leftPadding
       debug('onResize, containerWidth: ' + codeContainerWidth)
       debug('onResize, drawerWidth: ' + this.leftPadding)

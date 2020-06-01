@@ -1,6 +1,6 @@
 const debug = require('debug')('store/github')
 const sha1 = require('js-sha1')
-const Hash = require('sha.js/sha1')
+// const Hash = require('sha.js/sha1')
 const { isBinary } = require('istextorbinary')
 
 export const state = () => ({
@@ -372,20 +372,20 @@ export const actions = {
           ...treeFile,
           ...result.data
         }
-        if (path.indexOf('.md') > -1) {
-          debug('getFile: %s', path)
-          debug('getFile, file size: %i', fileObject.size)
-          debug('getFile, file sha: %s', fileObject.sha)
-          const raw = atob(fileObject.content)
-          debug('getFile, length of raw content: ' + raw.length)
-          const bytes = new Uint8Array(raw.length)
-          for (let i = 0; i < raw.length; i++) {
-            bytes[i] = raw.charCodeAt(i)
-          }
-          const wrapObject = wrap('blob', bytes.buffer)
-          debug('getFile, shasum of wrapObject: %s', shasum(wrapObject))
-          debug('getFile, sha1 of wrapObject: %s', sha1(wrapObject))
-        }
+        // if (path.indexOf('.md') > -1) {
+        //   debug('getFile: %s', path)
+        //   debug('getFile, file size: %i', fileObject.size)
+        //   debug('getFile, file sha: %s', fileObject.sha)
+        //   const raw = atob(fileObject.content)
+        //   debug('getFile, length of raw content: ' + raw.length)
+        //   const bytes = new Uint8Array(raw.length)
+        //   for (let i = 0; i < raw.length; i++) {
+        //     bytes[i] = raw.charCodeAt(i)
+        //   }
+        //   const wrapObject = wrap('blob', bytes.buffer)
+        //   debug('getFile, shasum of wrapObject: %s', shasum(wrapObject))
+        //   debug('getFile, sha1 of wrapObject: %s', sha1(wrapObject))
+        // }
         commit('addFile', fileObject)
       }
       return fileObject
@@ -664,9 +664,9 @@ function calculateSha1(file) {
 //   return str.length + (m ? m.length : 0)
 // }
 
-function shasum(buffer) {
-  return new Hash().update(buffer).digest('hex')
-}
+// function shasum(buffer) {
+//   return new Hash().update(buffer).digest('hex')
+// }
 
 function wrap(type, object) {
   return Buffer.concat([
