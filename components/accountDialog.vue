@@ -7,19 +7,29 @@
         </v-avatar>
       </v-btn>
     </template>
-    <v-row class="grey darken-3">
-      <div class="text-center">
-        <v-avatar size="80" class="my-2">
-          <img :src="user.avatar_url" :alt="user.login" />
-        </v-avatar>
-      </div>
-      <div class="text-center">{{ repo }}</div>
-      <div class="text-center my-2">
-        <v-btn round color="secondary" small @click="logout()">Sign out</v-btn>
-      </div>
-      <v-divider />
-      <v-col>
-        <v-list dense>
+    <v-card flat>
+      <v-card-title class="justify-center px-0">
+        <container>
+          <v-row no-gutters>
+            <v-col cols="12" class="text-center">
+              <v-avatar size="80" class="my-2">
+                <img :src="user.avatar_url" :alt="user.login" />
+              </v-avatar>
+            </v-col>
+          </v-row>
+          <v-row no-gutters>
+            <v-col cols="12" class="text-center">{{ repo }}</v-col>
+          </v-row>
+          <v-row no-gutters>
+            <v-col cols="12" class="text-center">
+              <v-btn round color="secondary" small @click="logout()">Sign out</v-btn>
+            </v-col>
+          </v-row>
+        </container>
+      </v-card-title>
+      <v-card-text class="pa-0">
+        <v-divider />
+        <v-list dense nav class="transparent">
           <v-list-item
             v-for="site in neumannssgSites"
             v-show="!site.active && site.neumannssg"
@@ -39,7 +49,6 @@
             :personal-repo="repoName"
             :persistent="false"
             title="Create new website"
-            lazy
             @create="createRepo($event)"
           />
           <v-list-item @click="createDialog = true; dialog = false">
@@ -52,8 +61,8 @@
             </v-list-item-content>
           </v-list-item>
         </v-list>
-      </v-col>
-    </v-row>
+      </v-card-text>
+    </v-card>
   </v-dialog>
 </template>
 
@@ -105,10 +114,16 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '~vuetify/src/styles/styles.sass';
+
 ::v-deep .v-dialog {
   top: 32px !important;
   right: 0 !important;
   position: absolute !important;
+}
+
+.v-card.theme--dark {
+  background-color: map-get($material-dark-elevation-colors, '16');
 }
 </style>

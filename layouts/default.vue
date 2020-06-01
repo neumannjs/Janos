@@ -65,12 +65,12 @@
               return-object
             >
               <template v-slot:prepend="{ item, open }">
-                <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
+                <span>
                   <v-icon v-if="item.type === 'tree'">{{ open ? 'mdi-folder-open' : 'mdi-folder' }}</v-icon>
                   <v-icon
                     v-else-if="files[item.name.substring(item.name.indexOf('.') + 1)]"
                   >{{ files[item.name.substring(item.name.indexOf('.') + 1)].icon }}</v-icon>
-                  <v-icon v-else>{{ files['default'] }}</v-icon>
+                  <v-icon v-else>{{ files['default'].icon }}</v-icon>
                 </span>
               </template>
               <template v-slot:label="{ item }">
@@ -84,29 +84,24 @@
                     @keydown.enter="$event.target.blur()"
                   />
                 </span>
-                <span
-                  v-else
-                  @mouseover="hoverTreeItem = item.path"
-                  @mouseout="hoverTreeItem = null"
-                >{{ item.name }}</span>
-              </template>
-              <template v-slot:append="{ item }">
-                <span @mouseover="hoverTreeItem = item.path" @mouseout="hoverTreeItem = null">
-                  <v-btn flat icon color="red" small @click.stop="onClickUploadFileBtn(item)">
-                    <v-icon
-                      v-show="item.type === 'tree' && hoverTreeItem === item.path"
-                    >mdi-file-upload</v-icon>
-                  </v-btn>
-                  <v-btn flat icon color="red" small @click.stop="onClickAddFileBtn(item)">
-                    <v-icon
-                      v-show="item.type === 'tree' && hoverTreeItem === item.path"
-                    >mdi-file-plus</v-icon>
-                  </v-btn>
-                  <v-btn flat icon color="red" small @click.stop="onClickAddFolderBtn(item)">
-                    <v-icon
-                      v-show="item.type === 'tree' && hoverTreeItem === item.path"
-                    >mdi-folder-plus</v-icon>
-                  </v-btn>
+                <span v-else>
+                  <v-hover v-slot:default="{ hover }">
+                    <div :style="{height: '38px'}" class="d-flex align-center">
+                      {{ item.name }}
+                      <v-spacer />
+                      <span v-if="hover && item.type === 'tree'">
+                        <v-btn text icon color="red" @click.stop="onClickUploadFileBtn(item)">
+                          <v-icon>mdi-file-upload</v-icon>
+                        </v-btn>
+                        <v-btn text icon color="red" small @click.stop="onClickAddFileBtn(item)">
+                          <v-icon>mdi-file-plus</v-icon>
+                        </v-btn>
+                        <v-btn text icon color="red" @click.stop="onClickAddFolderBtn(item)">
+                          <v-icon>mdi-folder-plus</v-icon>
+                        </v-btn>
+                      </span>
+                    </div>
+                  </v-hover>
                 </span>
               </template>
             </v-treeview>
@@ -193,7 +188,7 @@
           @mouseout="hoverTab = null"
         >
           {{ file.name }}
-          <v-btn flat icon color="red" small :ripple="false" @click="closeTab(file.path)">
+          <v-btn text icon color="red" small :ripple="false" @click="closeTab(file.path)">
             <v-icon v-show="hoverTab === file.path" small>close</v-icon>
           </v-btn>
         </v-tab>
@@ -222,7 +217,12 @@
               />
             </v-card>
           </v-col>
-          <v-col v-show="splitEditor && buttons.preview" ref="previewWindow" cols="6">
+          <v-col
+            v-show="splitEditor && buttons.preview"
+            ref="previewWindow"
+            cols="6"
+            class="calculatedHeight"
+          >
             <preview :path="previewPath" :style="{width: '100%', height: '100%'}" />
           </v-col>
         </v-row>
@@ -254,7 +254,6 @@ export default {
       previewPath: null,
       openTab: null,
       hoverTab: '',
-      hoverTreeItem: '',
       drawer: true,
       active: [],
       openFiles: [],
@@ -266,13 +265,18 @@ export default {
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
-        json: { icon: 'mdi-json', mode: 'javascript' },
-        md: { icon: 'mdi-markdown', mode: 'markdown', buttons: ['preview'] },
+        json: { icon: 'mdi-code-json', mode: 'javascript' },
+        md: {
+          icon: 'mdi-language-markdown',
+          mode: 'markdown',
+          buttons: ['preview']
+        },
         pdf: { icon: 'mdi-file-pdf', mode: '' },
         png: { icon: 'mdi-file-image', mode: '' },
         txt: { icon: 'mdi-file-document-outline', mode: '' },
         xls: { icon: 'mdi-file-excel', mode: '' },
         njk: { icon: 'mdi-page-layout-body', mode: 'xml' },
+        xml: { icon: 'mdi-xml', mode: 'xml' },
         css: { icon: 'mdi-language-css3', mode: 'css' },
         hbs: { icon: 'mdi-code-braces-box', mode: 'handlebars' },
         default: { icon: 'mdi-file', mode: '' }
@@ -501,7 +505,11 @@ export default {
 }
 .CodeMirror {
   position: fixed !important;
-  height: calc(100% - 110px) !important;
+  height: calc(100% - 88px) !important;
+}
+
+.calculatedHeight {
+  height: calc(100% - 40px) !important;
 }
 html {
   overflow-y: auto !important;

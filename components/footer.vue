@@ -2,18 +2,16 @@
   <v-row>
     <footer-buttons placement="left" :status-items="leftStatusItems" />
     <footer-buttons placement="right" :status-items="rightStatusItems" />
-    <v-snackbar v-model="snackbar" bottom right :timeout="timeout" auto-height>
-      <v-row>
+    <v-snackbar v-model="snackbar" bottom right :timeout="timeout" class="mb-10">
+      <v-row no-gutters class="px-0">
         <v-col cols="12">
-          <v-list two-line dense :style="{background: 'transparent'}">
+          <v-list two-line dense :style="{background: 'transparent'}" class="py-0">
             <template v-for="(item, index) in notifications">
               <v-list-item :key="index" :style="{background: 'transparent'}">
                 <v-list-item-content>
                   <v-list-item-title>{{ item.title }}</v-list-item-title>
-                  <v-list-item-sub-title>
-                    <!-- eslint-disable-next-line -->
-                    <span v-html="item.subTitle" />
-                  </v-list-item-sub-title>
+                  <!-- eslint-disable-next-line -->
+                  <v-list-item-sub-title v-html="item.subTitle" class="caption" />
                 </v-list-item-content>
                 <v-list-item-action>
                   <v-icon small color="red" @click="removeNotificationAsync(index)">close</v-icon>
@@ -80,9 +78,3 @@ export default {
   }
 }
 </script>
-
-<style>
-.v-snack__content {
-  padding: 0px;
-}
-</style>

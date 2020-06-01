@@ -1,6 +1,6 @@
 <template>
   <v-card height="100%" width="100%" flat tile>
-    <v-hover>
+    <v-hover v-show="!snackbar">
       <v-btn
         slot-scope="{ hover }"
         absolute
@@ -17,13 +17,7 @@
       </v-btn>
     </v-hover>
     <iframe :srcDoc="srcDoc" class="previewIFrame" />
-    <v-dialog
-      v-model="fullscreen"
-      lazy
-      fullscreen
-      hide-overlay
-      transition="dialog-right-transition"
-    >
+    <v-dialog v-model="fullscreen" fullscreen hide-overlay transition="dialog-right-transition">
       <v-card height="100%" width="100%" flat tile>
         <v-hover>
           <v-btn
@@ -47,7 +41,7 @@
   </v-card>
 </template>
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapState } from 'vuex'
 const debug = require('debug')('layouts/default')
 
 export default {
@@ -60,6 +54,9 @@ export default {
       srcDoc: '',
       fullscreen: false
     }
+  },
+  computed: {
+    ...mapState('status', ['snackbar'])
   },
   watch: {
     path: function(val) {
