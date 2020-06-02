@@ -288,6 +288,8 @@ export default {
         },
         pdf: { icon: 'mdi-file-pdf', mode: '' },
         png: { icon: 'mdi-file-image', mode: '' },
+        jpg: { icon: 'mdi-file-image', mode: '' },
+        jpeg: { icon: 'mdi-file-image', mode: '' },
         txt: { icon: 'mdi-file-document-outline', mode: '' },
         xls: { icon: 'mdi-file-excel', mode: '' },
         njk: { icon: 'mdi-page-layout-body', mode: 'xml' },
@@ -381,7 +383,8 @@ export default {
         } else if (
           val[0].type !== 'newfile' &&
           val[0].type !== 'newfolder' &&
-          val[0].type !== 'tree'
+          val[0].type !== 'tree' &&
+          val[0].binary === false
         ) {
           // open the filem (if it is an existing file)
           this.openTab = val[0].path
