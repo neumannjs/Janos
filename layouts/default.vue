@@ -11,6 +11,14 @@
       app
     >
       <v-list nav>
+        <v-list-item v-for="(drw, i) in drawers" :key="i" @click="switchNav(drw.name)">
+          <v-list-item-icon>
+            <v-icon medium v-text="drw.icon" />
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title v-text="drw.title" />
+          </v-list-item-content>
+        </v-list-item>
         <v-list-item @click="switchNav('explorer')">
           <v-list-item-icon>
             <v-icon medium>mdi-file-multiple</v-icon>
@@ -34,7 +42,7 @@
 
     <!-- Repository explorer -->
     <v-navigation-drawer
-      v-show="activeNavbar == 'explorer'"
+      v-show="activeDrawer == 'explorer'"
       v-model="drawer"
       :style="{marginLeft: '56px'}"
       width="300px"
@@ -134,7 +142,7 @@
 
     <!-- Github -->
     <v-navigation-drawer
-      v-show="activeNavbar == 'github'"
+      v-show="activeDrawer == 'github'"
       v-model="drawer"
       :style="{marginLeft: '56px'}"
       width="300px"
@@ -148,24 +156,6 @@
         </v-list>
       </v-toolbar>
       <v-list nav>
-        <v-list-item>
-          <v-list-item-content>
-            <v-switch
-              v-model="devBuild"
-              :label="devBuild ? 'development' : 'production'"
-              height="42"
-            />
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="runMetalsmith()">
-          <v-list-item-action>
-            <v-icon>mdi-anvil</v-icon>
-          </v-list-item-action>
-
-          <v-list-item-content>
-            <v-list-item-title>Run MetalSmith</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
         <v-list-item @click="createGitTree()">
           <v-list-item-action>
             <v-icon>mdi-file-tree</v-icon>
@@ -186,6 +176,9 @@
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
+
+    <!-- Metalsmith Drawer -->
+    <metalsmith-drawer :drawer="drawer" />
 
     <!-- Tabs -->
     <v-app-bar ref="tabBar" flat dense app :style="{ paddingLeft: leftPadding + 'px' }">
@@ -251,6 +244,7 @@ import { mapState, mapActions, mapMutations } from 'vuex'
 import Preview from '../components/preview'
 import Account from '../components/accountDialog'
 import Upload from '../components/uploadDialog'
+import MetalsmithDrawer from '../components/metalsmithDrawer'
 import Footer from '../components/footer'
 const debug = require('debug')('layouts/default')
 
@@ -259,7 +253,8 @@ export default {
     preview: Preview,
     account: Account,
     upload: Upload,
-    ftr: Footer
+    ftr: Footer,
+    metalsmithDrawer: MetalsmithDrawer
   },
   data() {
     return {
@@ -271,7 +266,6 @@ export default {
       active: [],
       openFiles: [],
       open: [],
-      activeNavbar: 'explorer',
       splitEditor: false,
       leftPadding: 356,
       accountDialog: false,
@@ -331,7 +325,8 @@ export default {
     },
     codemirror: function() {
       return this.$refs.cmEditor.codemirror
-    }
+    },
+    ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
     openTab: async function(val, oldVal) {
@@ -396,6 +391,7 @@ export default {
     }
   },
   mounted: function() {
+    this.setActiveDrawer('explorer')
     this.onResize()
   },
   methods: {
@@ -414,11 +410,12 @@ export default {
           : codeContainerWidth
       this.codemirror.setSize(codeContainerWidth, null)
     },
-    switchNav: function(navbar) {
-      if (this.activeNavbar === navbar || this.drawer == false) {
+    switchNav: function(drawer) {
+      debug('switchNav %s', drawer)
+      if (this.activeDrawer === drawer || this.drawer == false) {
         this.drawer = !this.drawer
       }
-      this.activeNavbar = navbar
+      this.setActiveDrawer(drawer)
       this.onResize()
     },
     closeTab: function(path) {
@@ -504,7 +501,8 @@ export default {
     ]),
     ...mapMutations('github', ['updateFileContent']),
     ...mapActions('metalsmith', ['runMetalsmith']),
-    ...mapMutations('metalsmith', ['switchDevBuild'])
+    ...mapMutations('metalsmith', ['switchDevBuild']),
+    ...mapMutations('navigation', ['setActiveDrawer'])
   }
 }
 </script>

@@ -88,6 +88,69 @@ export const mutations = {
 }
 
 export const actions = {
+  async searchTemplates({ rootState, commit }, searchTerm) {
+    let q = `${searchTerm}+topic:neumannssg-template`
+    let result = await this.$octoKit.search.repos({ q: q })
+    let templates = result.data.items.map(template => {
+      return {
+        name: template.name,
+        full_name: template.full_name,
+        thumbnail:
+          'https://raw.githubusercontent.com/' +
+          template.full_name +
+          '/master/thumbnail.jpg'
+      }
+    })
+    return templates
+  },
+  async addSubModule({ dispatch, commit, state }, fullName) {
+    debug('adding submodule %s', fullName)
+    let file = await dispatch('getFile', '.gitmodules')
+    if (file == undefined) {
+      // Create new .gitmodules file with module as content
+      debug('.gitmodules not found, adding .gitmodules.')
+      let node = {
+        mode: '100644',
+        path: '.gitmodules',
+        name: '.gitmodules',
+        size: 0,
+        type: 'blob',
+        url: '',
+        binary: false
+      }
+      commit('addNodeToTree', { parent: state.fileTree, node })
+      debug('.gitmodules node added to file tree.')
+      file = await commit('addFile', {
+        ...node,
+        content: btoa(
+          `[submodule "${fullName.substr(
+            fullName.indexOf('/') + 1
+          )}"]\n\tpath = layouts/${fullName.substr(
+            fullName.indexOf('/') + 1
+          )}\n\turl = https://github.com/${fullName}\n`
+        )
+      })
+      debug('.gitmodules file added.')
+    } else {
+      debug('.gitmodules found, check for module %s in contents.', fullName)
+      // Add module to existing .gitmodules file
+      let content = atob(file.content)
+      if (
+        content.indexOf(
+          `[submodule "${fullName.substr(fullName.indexOf('/') + 1)}"]`
+        ) == -1
+      ) {
+        debug('Module %s not found in .gitmodule, add to contents', fullName)
+        content += `\n[submodule "${fullName.substr(
+          fullName.indexOf('/') + 1
+        )}"]\n\tpath = layouts/${fullName.substr(
+          fullName.indexOf('/') + 1
+        )}\n\turl = https://github.com/${fullName}\n`
+        commit('updateFileContent', { content: btoa(content), path: file.path })
+        debug('Module %s added to .gitmodule.', fullName)
+      }
+    }
+  },
   async getRepo({ rootState, commit }) {
     const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
     let pathName = window.location.pathname
