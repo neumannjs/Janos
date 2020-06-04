@@ -103,53 +103,59 @@ export const actions = {
     })
     return templates
   },
-  async addSubModule({ dispatch, commit, state }, fullName) {
-    debug('adding submodule %s', fullName)
-    let file = await dispatch('getFile', '.gitmodules')
-    if (file == undefined) {
-      // Create new .gitmodules file with module as content
-      debug('.gitmodules not found, adding .gitmodules.')
-      let node = {
-        mode: '100644',
-        path: '.gitmodules',
-        name: '.gitmodules',
-        size: 0,
-        type: 'blob',
-        url: '',
-        binary: false
-      }
-      commit('addNodeToTree', { parent: state.fileTree, node })
-      debug('.gitmodules node added to file tree.')
-      file = await commit('addFile', {
-        ...node,
-        content: btoa(
-          `[submodule "${fullName.substr(
-            fullName.indexOf('/') + 1
-          )}"]\n\tpath = layouts/${fullName.substr(
-            fullName.indexOf('/') + 1
-          )}\n\turl = https://github.com/${fullName}\n`
+  async addSubTree({ dispatch, commit, state, rootState }, fullName) {
+    //Poor man's subtree command (it just copies files from one repo to another)
+    const owner = fullName.split('/')[0]
+    const repo = fullName.split('/')[1]
+    //create subfolder in layouts folder
+    addTreeItem(
+      'layouts/' + repo,
+      { mode: '040000', name: repo, path: 'layouts/' + repo, type: 'tree' },
+      state.fileTree
+    )
+    debug('Get git tree sha of the latest commit for %s.', fullName)
+    const resultCommits = await this.$octoKit.repos.listCommits({
+      owner,
+      repo,
+      per_page: 1
+    })
+    const tree_sha = resultCommits.data[0].commit.tree.sha
+    debug('Get git tree for repo %s wit tree sha %s.', fullName, tree_sha)
+    const result = await this.$octoKit.git.getTree({
+      owner,
+      repo,
+      tree_sha,
+      recursive: 1
+    })
+    result.data.tree.forEach(async object => {
+      object.path = 'layouts/' + repo + '/' + object.path
+      if (object.type === 'blob') {
+        //get blob
+        debug('Get blob for path %s with sha %s.', object.path, object.sha)
+        const blob = await this.$octoKit.git.getBlob({
+          owner,
+          repo,
+          file_sha: object.sha
+        })
+        //create blob
+        debug('Create blob for path %s.', object.path)
+        await this.$octoKit.git.createBlob({
+          owner: rootState.auth.user.login,
+          repo: state.repo,
+          content: blob.data.content,
+          encoding: 'base64'
+        })
+        object.binary = isBinary(
+          object.path,
+          Buffer.from(blob.data.content, 'base64')
         )
-      })
-      debug('.gitmodules file added.')
-    } else {
-      debug('.gitmodules found, check for module %s in contents.', fullName)
-      // Add module to existing .gitmodules file
-      let content = atob(file.content)
-      if (
-        content.indexOf(
-          `[submodule "${fullName.substr(fullName.indexOf('/') + 1)}"]`
-        ) == -1
-      ) {
-        debug('Module %s not found in .gitmodule, add to contents', fullName)
-        content += `\n[submodule "${fullName.substr(
-          fullName.indexOf('/') + 1
-        )}"]\n\tpath = layouts/${fullName.substr(
-          fullName.indexOf('/') + 1
-        )}\n\turl = https://github.com/${fullName}\n`
-        commit('updateFileContent', { content: btoa(content), path: file.path })
-        debug('Module %s added to .gitmodule.', fullName)
       }
-    }
+      debug('Add node in treeview for path %s.', object.path)
+      addTreeItem(object.path, object, state.fileTree)
+      dispatch('createGitTree').then(() => {
+        dispatch('createGitCommit')
+      })
+    })
   },
   async getRepo({ rootState, commit }) {
     const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
@@ -392,7 +398,7 @@ export const actions = {
       } else {
         const fileTree = JSON.parse(JSON.stringify(state.fileTree))
         const parent = findOrCreateParent(fileTree, path)
-        const contentIsBinary = isBinary(null, Buffer.from(content, 'base64'))
+        const contentIsBinary = isBinary(path, Buffer.from(content, 'base64'))
         commit('setFileTree', fileTree)
         const fileNode = await dispatch('addNodeToTree', {
           parent,
@@ -411,50 +417,52 @@ export const actions = {
   },
 
   async getFile({ rootState, state, commit }, path) {
-    const file = state.fileContents.find(f => f.path === path)
-    if (file !== undefined) {
-      return file
-    }
-    try {
-      let fileObject
-      const treeFile = findFileRecursive(state.fileTree, path)
-      if (treeFile !== undefined) {
-        // fileTree only contains files that are in the github repository, or that are manually created in the browser
-        const result = await this.$octoKit.git.getBlob({
-          owner: rootState.auth.user.login,
-          repo: state.repo,
-          file_sha: treeFile.sha
-        })
-        if (!('binary' in treeFile) || treeFile.binary === null) {
-          commit('setBinaryKey', {
-            file: treeFile,
-            isBinary: isBinary(null, Buffer.from(result.data.content, 'base64'))
+    let file = state.fileContents.find(f => f.path === path)
+    if (file == undefined) {
+      try {
+        const treeFile = findFileRecursive(state.fileTree, path)
+        if (treeFile !== undefined) {
+          // fileTree only contains files that are in the github repository, or that are manually created in the browser
+          const result = await this.$octoKit.git.getBlob({
+            owner: rootState.auth.user.login,
+            repo: state.repo,
+            file_sha: treeFile.sha
           })
+          if (!('binary' in treeFile) || treeFile.binary === null) {
+            commit('setBinaryKey', {
+              file: treeFile,
+              isBinary: isBinary(
+                path,
+                Buffer.from(result.data.content, 'base64')
+              )
+            })
+          }
+          file = {
+            ...treeFile,
+            ...result.data
+          }
+          // if (path.indexOf('.md') > -1) {
+          //   debug('getFile: %s', path)
+          //   debug('getFile, file size: %i', fileObject.size)
+          //   debug('getFile, file sha: %s', fileObject.sha)
+          //   const raw = atob(fileObject.content)
+          //   debug('getFile, length of raw content: ' + raw.length)
+          //   const bytes = new Uint8Array(raw.length)
+          //   for (let i = 0; i < raw.length; i++) {
+          //     bytes[i] = raw.charCodeAt(i)
+          //   }
+          //   const wrapObject = wrap('blob', bytes.buffer)
+          //   debug('getFile, shasum of wrapObject: %s', shasum(wrapObject))
+          //   debug('getFile, sha1 of wrapObject: %s', sha1(wrapObject))
+          // }
+          commit('addFile', file)
         }
-        fileObject = {
-          ...treeFile,
-          ...result.data
-        }
-        // if (path.indexOf('.md') > -1) {
-        //   debug('getFile: %s', path)
-        //   debug('getFile, file size: %i', fileObject.size)
-        //   debug('getFile, file sha: %s', fileObject.sha)
-        //   const raw = atob(fileObject.content)
-        //   debug('getFile, length of raw content: ' + raw.length)
-        //   const bytes = new Uint8Array(raw.length)
-        //   for (let i = 0; i < raw.length; i++) {
-        //     bytes[i] = raw.charCodeAt(i)
-        //   }
-        //   const wrapObject = wrap('blob', bytes.buffer)
-        //   debug('getFile, shasum of wrapObject: %s', shasum(wrapObject))
-        //   debug('getFile, sha1 of wrapObject: %s', sha1(wrapObject))
-        // }
-        commit('addFile', fileObject)
+      } catch (err) {
+        return err.message
       }
-      return fileObject
-    } catch (err) {
-      return err.message
     }
+    debug('getFile will return the following file object: %o', file)
+    return file
   },
 
   addNodeToTree({ commit }, { parent, name, type, binary }) {
@@ -626,6 +634,11 @@ function findFileRecursive(array, path) {
 }
 
 function createGitTreeRecursive(filetree, editedFiles, octokit, octokitConfig) {
+  // Better approach: Create blobs for all new and changed files.
+  // You can, but should not have to do anything with the shas, since they are already calculated here.
+  // Flatten the file tree, make sure every file's sha property reflects the current (changed sha).
+  // So, new_sha has to be changed. Maybe use old_sha instead.
+  // return the tree
   return new Promise(async (resolve, reject) => {
     const ret = []
     let todo = 0

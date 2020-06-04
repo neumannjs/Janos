@@ -55,11 +55,7 @@
             />
           </v-list-item-content>
         </v-list-item>
-        <v-list-item
-          v-for="(result, i) in results"
-          :key="i"
-          @click="addSubModule(result.full_name)"
-        >
+        <v-list-item v-for="(result, i) in results" :key="i" @click="addSubTree(result.full_name)">
           <v-list-item-content>
             <v-row no-gutters>
               <v-col>
@@ -127,7 +123,8 @@ export default {
     },
     ...mapMutations('metalsmith', ['switchDevBuild']),
     ...mapMutations('navigation', ['addDrawer']),
-    ...mapActions('github', ['searchTemplates', 'addSubModule'])
+    ...mapActions('github', ['searchTemplates', 'addSubTree']),
+    ...mapActions('metalsmith', ['runMetalsmith'])
   }
 }
 </script>

@@ -127,7 +127,7 @@
             </v-list-item>
           </template>
           <v-list-item-content>
-            preview path: {{ previewPath }}
+            No info
             <br />
           </v-list-item-content>
         </v-list-group>
@@ -208,29 +208,41 @@
 
     <!-- Main content -->
     <v-content class="fill-height" :style="{ padding: '48px 0px 0px ' + leftPadding + 'px' }">
-      <v-container class="fill-height" fluid>
-        <v-row no-gutters class="fill-height">
-          <v-col ref="codeContainer" class="my-0">
-            <v-card class="fill-height" width="100%" flat tile>
-              <codemirror
-                v-show="openTab"
-                ref="cmEditor"
-                v-model="code"
-                v-debounce:500ms="onCodeChange"
-                :options="cmOption"
-              />
-            </v-card>
-          </v-col>
-          <v-col
-            v-show="splitEditor && buttons.preview"
-            ref="previewWindow"
-            cols="6"
-            class="calculatedHeight"
-          >
-            <preview :path="previewPath" :style="{width: '100%', height: '100%'}" />
-          </v-col>
-        </v-row>
-      </v-container>
+      <v-tabs-items v-model="openTab" class="fill-height">
+        <v-tab-item
+          v-for="file in openFiles"
+          :key="file.path"
+          :value="`${file.path}`"
+          transition="false"
+          reverse-transition="false"
+          class="fill-height"
+        >
+          <v-container class="fill-height" fluid>
+            <v-row no-gutters class="fill-height">
+              <v-col ref="codeContainer" class="my-0">
+                <v-card class="fill-height" width="100%" flat tile>
+                  <codemirror
+                    v-if="!file.binary"
+                    :ref="`cmEditor-${file.path}`"
+                    v-debounce:500ms="onCodeChange"
+                    :value="file.content"
+                    :options="cmOption"
+                  />
+                  <v-card v-else flat tile class="pa-2">The contents of this file are binary</v-card>
+                </v-card>
+              </v-col>
+              <v-col
+                v-show="splitEditor && buttons.preview"
+                ref="previewWindow"
+                cols="6"
+                class="calculatedHeight"
+              >
+                <preview :path="file.builtFile" :style="{width: '100%', height: '100%'}" />
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-tab-item>
+      </v-tabs-items>
     </v-content>
     <!-- Footer -->
     <v-footer fixed app>
@@ -259,7 +271,6 @@ export default {
   data() {
     return {
       fileName: '',
-      previewPath: null,
       openTab: null,
       hoverTab: '',
       drawer: true,
@@ -323,21 +334,18 @@ export default {
         this.switchDevBuild()
       }
     },
-    codemirror: function() {
-      return this.$refs.cmEditor.codemirror
-    },
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
     openTab: async function(val, oldVal) {
-      // Whenever the open tab changes, retreive the file contents and show it in the code editor.
+      // Whenever the open tab changes, change `active`, check whether buttons should be shown
+      debug('openTab value changed from old: %s to new: %s', oldVal, val)
       if (val !== null) {
         // Retrieve file contents
-        const file = await this.getFile(val)
+        const file = this.openFiles[
+          this.openFiles.findIndex(f => f.path === val)
+        ]
         this.active = [file]
-        this.previewPath = file.builtFile ? file.builtFile : ''
-        // Update the code shown in the code editor with the contents of the file
-        this.code = atob(file.content)
         // Check for a file extension
         const extension = file.name.substring(file.name.lastIndexOf('.') + 1)
         if (this.files[extension]) {
@@ -366,7 +374,7 @@ export default {
       // Preview pane might be closed, so a resize might be necessary
       this.onResize()
     },
-    active: function(val, oldVal) {
+    active: async function(val, oldVal) {
       // Whenever the active item in the treeview changes, check whether a file
       // should be opened.
       if (val.length > 0) {
@@ -378,14 +386,16 @@ export default {
         } else if (
           val[0].type !== 'newfile' &&
           val[0].type !== 'newfolder' &&
-          val[0].type !== 'tree' &&
-          val[0].binary === false
+          val[0].type !== 'tree'
         ) {
-          // open the filem (if it is an existing file)
-          this.openTab = val[0].path
+          // open the file (if it is an existing file)
+          const file = await this.getFile(val[0].path)
           this.openFiles.push({
-            ...val[0]
+            ...val[0],
+            content: atob(file.content),
+            builtFile: file.builtFile
           })
+          this.openTab = val[0].path
         }
       }
     }
@@ -408,7 +418,16 @@ export default {
         this.splitEditor && this.buttons.preview
           ? codeContainerWidth / 2
           : codeContainerWidth
-      this.codemirror.setSize(codeContainerWidth, null)
+      this.openFiles.forEach(file => {
+        debug(
+          'resize editor for %o',
+          this.$refs['cmEditor-' + file.path][0].codemirror
+        )
+        this.$refs['cmEditor-' + file.path][0].codemirror.setSize(
+          codeContainerWidth,
+          null
+        )
+      })
     },
     switchNav: function(drawer) {
       debug('switchNav %s', drawer)
@@ -484,11 +503,12 @@ export default {
         this.removeFileFromTree(item)
       }
     },
-    onCodeChange: function() {
-      this.updateFileContent({
-        content: this.$btoaUTF8(this.code),
-        path: this.openTab
-      })
+    onCodeChange: function(value, event) {
+      debug('code change of with the following event %o.', event)
+      // this.updateFileContent({
+      //   content: this.$btoaUTF8(this.code),
+      //   path: this.openTab
+      // })
     },
     ...mapActions('github', [
       'addNodeToTree',

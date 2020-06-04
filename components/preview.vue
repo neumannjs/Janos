@@ -42,7 +42,7 @@
 </template>
 <script>
 import { mapActions, mapState } from 'vuex'
-const debug = require('debug')('layouts/default')
+const debug = require('debug')('components/preview')
 
 export default {
   name: 'Preview',
@@ -51,22 +51,21 @@ export default {
   },
   data() {
     return {
-      srcDoc: '',
-      fullscreen: false
+      fullscreen: false,
+      srcDoc: ''
     }
   },
   computed: {
     ...mapState('status', ['snackbar'])
   },
-  watch: {
-    path: function(val) {
-      debug(
-        'path updated, calling mapped action getFile from store/github, with path: ' +
-          this.path
+  mounted() {
+    if (this.path.length > 0) {
+      debug('Get Html for %s.', this.path)
+      return this.getFile(this.path).then(
+        file => (this.srcDoc = atob(file.content))
       )
-      if (this.path.length > 0) {
-        this.getFile(this.path).then(file => (this.srcDoc = atob(file.content)))
-      }
+    } else {
+      return ''
     }
   },
   methods: {
