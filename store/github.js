@@ -35,17 +35,22 @@ export const mutations = {
   addFile(state, payload) {
     const file = state.fileContents.find(f => f.path === payload.path)
     if (file === undefined) {
+      let entry = findFileRecursive(state.fileTree, payload.path)
+      entry.sha = calculateSha1(payload)
       calculateSha1(payload)
       state.fileContents.push(payload)
     }
   },
   addNodeToTree(state, { parent, node }) {
     if (parent.constructor === Array) {
-      parent.push(node)
-    } else if (parent.children) {
-      parent.children.push(node)
+      state.fileTree.push(node)
     } else {
-      parent.children = [node]
+      let parentRef = findFileRecursive(state.fileTree, parent.path)
+      if (parentRef.children) {
+        parentRef.children.push(node)
+      } else {
+        parentRef.children = [node]
+      }
     }
   },
   renameNode(state, { item, fileName }) {
@@ -83,6 +88,8 @@ export const mutations = {
     if (builtFile) {
       file.builtFile = builtFile
     }
+    let entry = findFileRecursive(state.fileTree, file.path)
+    entry.sha = calculateSha1(file)
     calculateSha1(file)
   }
 }
@@ -500,6 +507,7 @@ export const actions = {
   },
 
   removeFileFromTree({ state, commit }, file) {
+    debug('Remove file from tree with path %s', file.path)
     const parent = findParentRecursive(state.fileTree, file)
     commit('deleteFileFromTree', { parent, index: parent.indexOf(file) })
   },
@@ -511,24 +519,35 @@ export const actions = {
     })
   },
 
-  createGitTree({ rootState, state, commit }) {
-    return new Promise((resolve, reject) => {
-      createGitTreeRecursive(
-        state.fileTree,
-        state.fileContents,
-        this.$octoKit,
-        { owner: rootState.auth.user.login, repo: state.repo }
-      ).then(async gitTree => {
-        debug('createGitTree: %j', gitTree)
-        const result = await this.$octoKit.git.createTree({
+  async createGitTree({ rootState, state, commit }) {
+    let createBlobs = state.fileContents.map(editedFile => {
+      if (editedFile.newSha) {
+        return this.$octoKit.git.createBlob({
           owner: rootState.auth.user.login,
           repo: state.repo,
-          tree: gitTree
+          content: editedFile.content,
+          encoding: 'base64'
         })
-        commit('setNewTreeSha', result.data.sha)
-        resolve()
-      })
+      }
     })
+
+    await Promise.all(createBlobs)
+
+    debug('New blobs created')
+
+    let gitTree = flat(state.fileTree)
+
+    debug('Flattened fileTree: %o', gitTree)
+
+    const result = await this.$octoKit.git.createTree({
+      owner: rootState.auth.user.login,
+      repo: state.repo,
+      tree: gitTree
+    })
+
+    debug('gitTree created: %o', result.data)
+
+    commit('setNewTreeSha', result.data.sha)
   },
 
   createGitCommit({ rootState, state, commit }) {
@@ -565,6 +584,8 @@ export const actions = {
 }
 
 function findParentRecursive(array, file) {
+  // This function is sued to find and return the parent of a file.
+  // This is needed to delete the file itself, knowing the array it is contained by.
   if (array.findIndex(i => i.path === file.path) > -1) {
     return array
   }
@@ -579,25 +600,35 @@ function findParentRecursive(array, file) {
   }
 }
 
-function findOrCreateParent(parent, path) {
+function findOrCreateParent(tree, path) {
   if (path.indexOf('/') === -1) {
-    return parent
+    // The file is at the root, the parent is the tree itself
+    return tree
   } else {
     let array
-    if (parent.constructor === Array) {
-      array = parent
+    if (tree.constructor === Array) {
+      // We are at the root of the fileTree (which is an array itself)
+      // the array to use *is* the filetree
+      array = tree
     } else {
-      array = parent.children
+      // We are in a branche of the filetree.
+      // The array to use is the array that contains the children of the current branch
+      array = tree.children
     }
+    // Get the first folder of the path
     const folder = path.substring(0, path.indexOf('/'))
+    // Find that folder in the array
     const indexOfFolder = array.findIndex(
       i => i.name === folder && i.type === 'tree'
     )
     if (indexOfFolder === -1) {
-      // folder niet gevonden, maak folder
+      // Create the folder when it is not found
+      // UPDATE 20200625: I'm not sure whether this actually needed anymore.
+      // When bbuilt there were situations where the file got updated before the folder was created
+      // In these cases creating a folder that could not be found was useful.
       let folderPath = ''
-      if (parent.path) {
-        folderPath = parent.path
+      if (tree.path) {
+        folderPath = tree.path
       }
       const folderObject = {
         children: [],
@@ -633,68 +664,15 @@ function findFileRecursive(array, path) {
   }
 }
 
-function createGitTreeRecursive(filetree, editedFiles, octokit, octokitConfig) {
-  // Better approach: Create blobs for all new and changed files.
-  // You can, but should not have to do anything with the shas, since they are already calculated here.
-  // Flatten the file tree, make sure every file's sha property reflects the current (changed sha).
-  // So, new_sha has to be changed. Maybe use old_sha instead.
-  // return the tree
-  return new Promise(async (resolve, reject) => {
-    const ret = []
-    let todo = 0
-    for (let i = 0; i < filetree.length; i++) {
-      if (filetree[i].type === 'blob') {
-        todo += 1
-        const editedFile = editedFiles.find(f => f.path === filetree[i].path)
-        if (editedFile === undefined || !editedFile.newSha) {
-          ret.push({
-            path: filetree[i].path,
-            mode: filetree[i].mode,
-            type: filetree[i].type,
-            sha: filetree[i].sha
-          })
-          todo -= 1
-        } else {
-          octokit.git
-            .createBlob({
-              owner: octokitConfig.owner,
-              repo: octokitConfig.repo,
-              content: editedFile.content,
-              encoding: 'base64'
-            })
-            .then(result => {
-              debug('createGitTreeRecursive octokit.git.createBlob: %j', result)
-              ret.push({
-                path: filetree[i].path,
-                mode: filetree[i].mode,
-                type: filetree[i].type,
-                sha: result.data.sha
-              })
-              todo -= 1
-            })
-        }
-      }
-      if (filetree[i].children) {
-        const result = await createGitTreeRecursive(
-          filetree[i].children,
-          editedFiles,
-          octokit,
-          octokitConfig
-        )
-        ret.push(...result)
-      }
+function flat(array) {
+  var result = []
+  array.forEach(function(a) {
+    result.push(a)
+    if (Array.isArray(a.children)) {
+      result = result.concat(flat(a.children))
     }
-    const interval = setInterval(function() {
-      debug(
-        'createGitTreeRecursive: Still waiting for %i octokit.git.createBlob calls to finish.',
-        todo
-      )
-      if (todo === 0) {
-        clearInterval(interval)
-        resolve(ret)
-      }
-    }, 500)
   })
+  return result
 }
 
 function addTreeItem(path, object, array) {
@@ -733,6 +711,7 @@ function calculateSha1(file) {
   } else {
     file.newSha = sha
   }
+  return sha
 }
 
 // function lengthInUtf8Bytes(str) {
