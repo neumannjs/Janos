@@ -227,6 +227,7 @@
                     v-debounce:500ms="onCodeChange"
                     :value="file.content"
                     :options="cmOption"
+                    @ready="onResize()"
                   />
                   <v-card v-else flat tile class="pa-2">The contents of this file are binary</v-card>
                 </v-card>
@@ -402,7 +403,6 @@ export default {
   },
   mounted: function() {
     this.setActiveDrawer('explorer')
-    this.onResize()
   },
   methods: {
     onResize: function() {
@@ -419,23 +419,25 @@ export default {
           ? codeContainerWidth / 2
           : codeContainerWidth
       this.openFiles.forEach(file => {
-        debug(
-          'resize editor for %o',
-          this.$refs['cmEditor-' + file.path][0].codemirror
-        )
-        this.$refs['cmEditor-' + file.path][0].codemirror.setSize(
-          codeContainerWidth,
-          null
-        )
+        debug('resize editor for %s', 'cmEditor-' + file.path)
+        if (
+          this.$refs['cmEditor-' + file.path] &&
+          this.$refs['cmEditor-' + file.path][0]
+        ) {
+          this.$refs['cmEditor-' + file.path][0].codemirror.setSize(
+            codeContainerWidth,
+            null
+          )
+        }
       })
     },
     switchNav: function(drawer) {
       debug('switchNav %s', drawer)
       if (this.activeDrawer === drawer || this.drawer == false) {
         this.drawer = !this.drawer
+        this.onResize()
       }
       this.setActiveDrawer(drawer)
-      this.onResize()
     },
     closeTab: function(path) {
       this.active = []
