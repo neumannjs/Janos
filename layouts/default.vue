@@ -506,11 +506,13 @@ export default {
       }
     },
     onCodeChange: function(value, event) {
-      debug('code change of with the following event %o.', event)
-      // this.updateFileContent({
-      //   content: this.$btoaUTF8(this.code),
-      //   path: this.openTab
-      // })
+      debug('code change of file %s', this.openTab)
+      this.updateFileContent({
+        content: this.$btoaUTF8(
+          this.$refs['cmEditor-' + this.openTab][0].codemirror.doc.getValue()
+        ),
+        path: this.openTab
+      })
     },
     ...mapActions('github', [
       'addNodeToTree',
