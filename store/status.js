@@ -3,17 +3,11 @@ import Vue from 'vue'
 export const state = () => ({
   statusItems: [
     {
-      name: 'github',
-      button: false,
-      text: 'idle',
-      icon: 'mdi-github'
-    },
-    {
       name: 'notifications',
       button: true,
       icon: 'notifications',
       right: true,
-      dispatch: 'status/toggleSnackbarAsync'
+      dispatch: 'status/toggleSnackbar'
     }
   ],
   notifications: [],
@@ -55,24 +49,12 @@ export const mutations = {
 }
 
 export const actions = {
-  toggleSnackbarAsync({ commit }) {
+  toggleSnackbar({ commit }) {
     commit('toggleSnackbar')
   },
-  clearAllNotificationsAsync({ commit }) {
-    commit('clearAllNotifications')
-  },
-  removeNotificationAsync({ commit }, index) {
-    commit('removeNotification', index)
-  },
-  addNotificationAsync({ commit }, notification) {
+  addNotification({ commit }, notification) {
     commit('setSnackbar', true)
     commit('addNotification', notification)
-  },
-  removeStatusItemAsync({ commit }, name) {
-    commit('removeStatusItem', name)
-  },
-  addOrUpdateStatusItemAsync({ commit }, statusItem) {
-    commit('addOrUpdateStatusItem', statusItem)
   }
 }
 

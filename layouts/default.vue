@@ -127,7 +127,7 @@
             </v-list-item>
           </template>
           <v-list-item-content>
-            No info
+            {{ numberOfChangedFiles }}
             <br />
           </v-list-item-content>
         </v-list-group>
@@ -253,7 +253,7 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from 'vuex'
+import { mapState, mapActions, mapMutations, mapGetters } from 'vuex'
 import Preview from '../components/preview'
 import Account from '../components/accountDialog'
 import Upload from '../components/uploadDialog'
@@ -324,9 +324,6 @@ export default {
     }
   },
   computed: {
-    ...mapState('github', {
-      items: state => state.fileTree
-    }),
     devBuild: {
       get: function() {
         return this.$store.state.metalsmith.devBuild
@@ -335,6 +332,10 @@ export default {
         this.switchDevBuild()
       }
     },
+    ...mapGetters('github', ['numberOfChangedFiles']),
+    ...mapState('github', {
+      items: state => state.fileTree
+    }),
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
@@ -403,6 +404,21 @@ export default {
   },
   mounted: function() {
     this.setActiveDrawer('explorer')
+    this.addOrUpdateStatusItem({
+      name: 'github',
+      button: false,
+      text:
+        this.numberOfChangedFiles > 0
+          ? this.numberOfChangedFiles + ' file(s) changed'
+          : 'idle',
+      icon: 'mdi-github'
+    })
+    this.addOrUpdateStatusItem({
+      name: 'metalmsith',
+      button: false,
+      text: 'idle',
+      icon: 'mdi-anvil'
+    })
   },
   methods: {
     onResize: function() {
@@ -513,6 +529,13 @@ export default {
         ),
         path: this.openTab
       })
+      this.addOrUpdateStatusItem({
+        name: 'github',
+        button: false,
+        text:
+          this.numberOfChangedFiles > 0 ? this.numberOfChangedFiles : 'idle',
+        icon: 'mdi-github'
+      })
     },
     ...mapActions('github', [
       'addNodeToTree',
@@ -526,7 +549,8 @@ export default {
     ...mapMutations('github', ['updateFileContent']),
     ...mapActions('metalsmith', ['runMetalsmith']),
     ...mapMutations('metalsmith', ['switchDevBuild']),
-    ...mapMutations('navigation', ['setActiveDrawer'])
+    ...mapMutations('navigation', ['setActiveDrawer']),
+    ...mapMutations('status', ['addOrUpdateStatusItem'])
   }
 }
 </script>

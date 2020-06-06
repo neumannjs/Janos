@@ -14,7 +14,7 @@
                   <v-list-item-sub-title v-html="item.subTitle" class="caption" />
                 </v-list-item-content>
                 <v-list-item-action>
-                  <v-icon small color="red" @click="removeNotificationAsync(index)">close</v-icon>
+                  <v-icon small color="red" @click="removeNotification(index)">close</v-icon>
                 </v-list-item-action>
               </v-list-item>
               <v-divider :key="index"></v-divider>
@@ -27,7 +27,7 @@
                 <v-icon
                   small
                   :disabled="notifications.length === 0"
-                  @click="clearAllNotificationsAsync()"
+                  @click="clearAllNotifications()"
                 >clear_all</v-icon>
                 <v-icon
                   v-show="notifications.length === 0"
@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapGetters } from 'vuex'
+import { mapState, mapMutations, mapGetters } from 'vuex'
 import FooterButtons from '../components/footerButtons'
 
 export default {
@@ -71,10 +71,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions('status', [
-      'clearAllNotificationsAsync',
-      'removeNotificationAsync'
-    ])
+    ...mapMutations('status', ['clearAllNotifications', 'removeNotification'])
   }
 }
 </script>

@@ -1,3 +1,4 @@
+import Vue from 'vue'
 const debug = require('debug')('store/github')
 const sha1 = require('js-sha1')
 // const Hash = require('sha.js/sha1')
@@ -160,7 +161,9 @@ export const actions = {
       debug('Add node in treeview for path %s.', object.path)
       addTreeItem(object.path, object, state.fileTree)
       dispatch('createGitTree').then(() => {
-        dispatch('createGitCommit')
+        dispatch('createGitCommit', {
+          message: 'Copied repo ' + fullName + ' into layouts folder'
+        })
       })
     })
   },
@@ -224,9 +227,9 @@ export const actions = {
     return repoName
   },
 
-  async createRepo({ rootState, dispatch }, name) {
-    dispatch(
-      'status/addOrUpdateStatusItemAsync',
+  async createRepo({ rootState, commit, dispatch }, name) {
+    commit(
+      'status/addOrUpdateStatusItem',
       {
         name: 'github',
         text: 'Creating new repo',
@@ -245,8 +248,8 @@ export const actions = {
       })
       debug('Create new NeumannSsg repo: %o', response)
       if (response.status == 201) {
-        dispatch(
-          'status/addOrUpdateStatusItemAsync',
+        commit(
+          'status/addOrUpdateStatusItem',
           {
             name: 'github',
             text: 'Add topic',
@@ -269,8 +272,8 @@ export const actions = {
           responseTopics
         )
         // enable pages
-        dispatch(
-          'status/addOrUpdateStatusItemAsync',
+        commit(
+          'status/addOrUpdateStatusItem',
           {
             name: 'github',
             text: 'Enable pages',
@@ -304,8 +307,8 @@ export const actions = {
             error
           )
         }
-        dispatch(
-          'status/addOrUpdateStatusItemAsync',
+        commit(
+          'status/addOrUpdateStatusItem',
           {
             name: 'github',
             text: 'new repo created',
@@ -322,7 +325,7 @@ export const actions = {
           repoUrl += name + '/'
         }
         dispatch(
-          'status/addNotificationAsync',
+          'status/addNotification',
           {
             title: 'New repo created',
             subTitle: `New repo created <a href="${repoUrl}admin" target="_blank">${name}</a>`
@@ -330,8 +333,8 @@ export const actions = {
           { root: true }
         )
         setTimeout(function() {
-          dispatch(
-            'status/addOrUpdateStatusItemAsync',
+          commit(
+            'status/addOrUpdateStatusItem',
             {
               name: 'github',
               text: 'idle',
@@ -550,12 +553,12 @@ export const actions = {
     commit('setNewTreeSha', result.data.sha)
   },
 
-  createGitCommit({ rootState, state, commit }) {
+  createGitCommit({ rootState, state, commit }, { message }) {
     return new Promise(async (resolve, reject) => {
       let result = await this.$octoKit.git.createCommit({
         owner: rootState.auth.user.login,
         repo: state.repo,
-        message: 'Dit is een commit vanuit Vue',
+        message,
         tree: state.newTreeSha,
         parents: [state.parentCommitSha]
       })
@@ -580,6 +583,12 @@ export const actions = {
       }
       resolve()
     })
+  }
+}
+
+export const getters = {
+  numberOfChangedFiles: state => {
+    return state.fileContents.filter(file => file.newSha).length
   }
 }
 
@@ -704,12 +713,12 @@ function calculateSha1(file) {
   const sha = sha1(wrapObject)
   if (file.sha) {
     if (file.sha !== sha) {
-      file.newSha = sha
+      Vue.set(file, 'newSha', sha)
     } else if (file.newSha) {
-      delete file.newSha
+      Vue.delete(file, 'newSha')
     }
   } else {
-    file.newSha = sha
+    Vue.set(file, 'newSha', sha)
   }
   return sha
 }
