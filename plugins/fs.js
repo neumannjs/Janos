@@ -10,6 +10,21 @@ if (process.browser) {
 }
 
 module.exports = {
+  chmod: function chmod(path, mode, callback) {
+    if (!callback) {
+      return new Promise(function(resolve, reject) {
+        chmod(path, mode || {}, function(err) {
+          if (err) {
+            reject(err)
+          } else {
+            resolve()
+          }
+        })
+      })
+    }
+    // For now just ignore chmod and always call the callback with a null value (no error)
+    callback(null)
+  },
   readFile: function readFile(path, options, callback) {
     if (typeof options === 'function') {
       callback = options
@@ -83,7 +98,7 @@ module.exports = {
 
     if (!callback) {
       return new Promise(function(resolve, reject) {
-        outputFile(path, contents, function(err, data) {
+        outputFile(path, contents, encoding, function(err, data) {
           if (err) {
             reject(err)
           } else {
@@ -116,6 +131,7 @@ module.exports = {
       .then(
         result => {
           debug('github/updateFileContent result: %j', result)
+          callback(null, result)
         },
         err => {
           callback(err)
