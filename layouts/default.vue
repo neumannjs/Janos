@@ -156,16 +156,17 @@
         </v-list>
       </v-toolbar>
       <v-list nav>
-        <v-list-item @click="createGitTree()">
-          <v-list-item-action>
-            <v-icon>mdi-file-tree</v-icon>
-          </v-list-item-action>
-
+        <v-list-item>
           <v-list-item-content>
-            <v-list-item-title>Create Git Tree</v-list-item-title>
+            <v-textarea
+              v-model="commitMessage"
+              :auto-grow="true"
+              rows="1"
+              placeholder="Commit message"
+            />
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="createGitCommit()">
+        <v-list-item :disabled="commitMessage == '' || commitDisable" @click="createCommit">
           <v-list-item-action>
             <v-icon>mdi-source-commit</v-icon>
           </v-list-item-action>
@@ -283,6 +284,8 @@ export default {
       accountDialog: false,
       uploadDialog: false,
       uploadParent: { name: '' },
+      commitMessage: '',
+      commitDisable: false,
       files: {
         html: { icon: 'mdi-language-html5', mode: 'xml' },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
@@ -400,6 +403,17 @@ export default {
           this.openTab = val[0].path
         }
       }
+    },
+    numberOfChangedFiles: function() {
+      this.addOrUpdateStatusItem({
+        name: 'github',
+        button: false,
+        text:
+          this.numberOfChangedFiles > 0
+            ? this.numberOfChangedFiles + ' file(s) changed.'
+            : 'idle',
+        icon: 'mdi-github'
+      })
     }
   },
   mounted: function() {
@@ -407,20 +421,25 @@ export default {
     this.addOrUpdateStatusItem({
       name: 'github',
       button: false,
-      text:
-        this.numberOfChangedFiles > 0
-          ? this.numberOfChangedFiles + ' file(s) changed'
-          : 'idle',
+      text: 'idle',
       icon: 'mdi-github'
     })
     this.addOrUpdateStatusItem({
-      name: 'metalmsith',
+      name: 'metalsmith',
       button: false,
       text: 'idle',
       icon: 'mdi-anvil'
     })
   },
   methods: {
+    createCommit: async function() {
+      debug(this.commitMessage)
+      this.commitDisable = true
+      await this.createGitTree()
+      await this.createGitCommit({ message: this.commitMessage })
+      this.commitMessage = ''
+      this.commitDisable = false
+    },
     onResize: function() {
       if (window.innerWidth < 1264) {
         this.leftPadding = 56
@@ -528,13 +547,6 @@ export default {
           this.$refs['cmEditor-' + this.openTab][0].codemirror.doc.getValue()
         ),
         path: this.openTab
-      })
-      this.addOrUpdateStatusItem({
-        name: 'github',
-        button: false,
-        text:
-          this.numberOfChangedFiles > 0 ? this.numberOfChangedFiles : 'idle',
-        icon: 'mdi-github'
       })
     },
     ...mapActions('github', [

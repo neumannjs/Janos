@@ -523,8 +523,21 @@ export const actions = {
   },
 
   async createGitTree({ rootState, state, commit }) {
+    commit(
+      'status/addOrUpdateStatusItem',
+      {
+        name: 'github',
+        text: 'Create Git tree',
+        icon: 'mdi-github',
+        button: false,
+        progress: { indeterminate: true }
+      },
+      { root: true }
+    )
+
     let createBlobs = state.fileContents.map(editedFile => {
       if (editedFile.newSha) {
+        debug('Create blob for %s', editedFile.path)
         return this.$octoKit.git.createBlob({
           owner: rootState.auth.user.login,
           repo: state.repo,
@@ -538,41 +551,104 @@ export const actions = {
 
     debug('New blobs created')
 
-    let gitTree = flat(state.fileTree)
+    let gitTree = state.fileContents.map(editedFile => {
+      if (editedFile.newSha) {
+        return {
+          path: editedFile.path,
+          mode: editedFile.mode,
+          type: editedFile.type,
+          sha: editedFile.newSha
+        }
+      }
+    })
 
-    debug('Flattened fileTree: %o', gitTree)
+    debug('Changed tree objects: %o', gitTree)
 
     const result = await this.$octoKit.git.createTree({
       owner: rootState.auth.user.login,
       repo: state.repo,
-      tree: gitTree
+      tree: gitTree,
+      base_tree: state.treeSha
     })
 
     debug('gitTree created: %o', result.data)
 
     commit('setNewTreeSha', result.data.sha)
+
+    state.fileContents.forEach(file => {
+      if (file.newSha) {
+        Vue.delete(file, 'newSha')
+      }
+    })
+
+    return result
   },
 
-  createGitCommit({ rootState, state, commit }, { message }) {
-    return new Promise(async (resolve, reject) => {
-      let result = await this.$octoKit.git.createCommit({
-        owner: rootState.auth.user.login,
-        repo: state.repo,
-        message,
-        tree: state.newTreeSha,
-        parents: [state.parentCommitSha]
-      })
-      commit('setTreeSha', state.newTreeSha)
-      commit('setParentCommitSha', result.data.sha)
-      commit('setNewTreeSha', '')
-      result = await this.$octoKit.git.updateRef({
-        owner: rootState.auth.user.login,
-        repo: state.repo,
-        ref: 'heads/master',
-        sha: result.data.sha
-      })
-      resolve()
+  async createGitCommit({ rootState, state, commit, getters }, { message }) {
+    commit(
+      'status/addOrUpdateStatusItem',
+      {
+        name: 'github',
+        text: 'Create Git commit',
+        icon: 'mdi-github',
+        button: false,
+        progress: { indeterminate: false, value: 50 }
+      },
+      { root: true }
+    )
+    debug(
+      'Create commit for repo %s/%s and tree %s.',
+      rootState.auth.user.login,
+      state.repo,
+      state.newTreeSha
+    )
+    let result = await this.$octoKit.git.createCommit({
+      owner: rootState.auth.user.login,
+      repo: state.repo,
+      message,
+      tree: state.newTreeSha,
+      parents: [state.parentCommitSha]
     })
+    debug(
+      'New commit created for repo %s/%s with sha %s',
+      rootState.auth.user.login,
+      state.repo,
+      result.data.sha
+    )
+    commit('setTreeSha', state.newTreeSha)
+    commit('setParentCommitSha', result.data.sha)
+    commit('setNewTreeSha', '')
+    debug('Updated treeSha with value of newTreeSha: %s', state.treeSha)
+    result = await this.$octoKit.git.updateRef({
+      owner: rootState.auth.user.login,
+      repo: state.repo,
+      ref: 'heads/master',
+      sha: result.data.sha
+    })
+    debug('Updated reference of `heads/master` with result: %o', result)
+    commit(
+      'status/addOrUpdateStatusItem',
+      {
+        name: 'github',
+        text: 'Git commit created',
+        icon: 'mdi-github',
+        button: false,
+        progress: { indeterminate: false, value: 100 }
+      },
+      { root: true }
+    )
+    setTimeout(function() {
+      commit(
+        'status/addOrUpdateStatusItem',
+        {
+          name: 'github',
+          text: 'idle',
+          icon: 'mdi-github',
+          button: false
+        },
+        { root: true }
+      )
+    }, 6000)
   },
 
   clearFolder({ state, commit }, folder) {
@@ -671,17 +747,6 @@ function findFileRecursive(array, path) {
       }
     }
   }
-}
-
-function flat(array) {
-  var result = []
-  array.forEach(function(a) {
-    result.push(a)
-    if (Array.isArray(a.children)) {
-      result = result.concat(flat(a.children))
-    }
-  })
-  return result
 }
 
 function addTreeItem(path, object, array) {

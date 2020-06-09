@@ -98,7 +98,18 @@ export const mutations = {
 }
 
 export const actions = {
-  async runMetalsmith({ rootState, state, dispatch }) {
+  async runMetalsmith({ commit, state, dispatch }) {
+    commit(
+      'status/addOrUpdateStatusItem',
+      {
+        name: 'metalsmith',
+        button: false,
+        text: 'loading plugins...',
+        icon: 'mdi-anvil',
+        progress: { indeterminate: true }
+      },
+      { root: true }
+    )
     let metalsmithConfig = await dispatch(
       'github/getFile',
       'layouts/metalsmith.json',
@@ -174,6 +185,18 @@ export const actions = {
       metalsmithConfig.metadata.rootpath = '/'
     }
 
+    commit(
+      'status/addOrUpdateStatusItem',
+      {
+        name: 'metalsmith',
+        button: false,
+        text: 'building...',
+        icon: 'mdi-anvil',
+        progress: { indeterminate: false, value: 50 }
+      },
+      { root: true }
+    )
+
     let ms = Metalsmith('./')
 
     if (metalsmithConfig.metadata) {
@@ -225,9 +248,31 @@ export const actions = {
     ms.build(function(err, files) {
       if (err) {
         debug('runMetalsmith build error: %o', err)
-        throw err
       }
       debug('runMetalsmith: build files object: %o', files)
+      commit(
+        'status/addOrUpdateStatusItem',
+        {
+          name: 'metalsmith',
+          button: false,
+          text: 'build done',
+          icon: 'mdi-anvil',
+          progress: { indeterminate: false, value: 100 }
+        },
+        { root: true }
+      )
+      setTimeout(function() {
+        commit(
+          'status/addOrUpdateStatusItem',
+          {
+            name: 'metalsmith',
+            text: 'idle',
+            icon: 'mdi-anvil',
+            button: false
+          },
+          { root: true }
+        )
+      }, 6000)
     })
   }
 }
