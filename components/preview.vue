@@ -56,16 +56,38 @@ export default {
     }
   },
   computed: {
-    ...mapState('status', ['snackbar'])
+    ...mapState('status', ['snackbar']),
+    ...mapState('github', ['fileContents'])
   },
-  mounted() {
-    if (this.path.length > 0) {
-      debug('Get Html for %s.', this.path)
-      return this.getFile(this.path).then(
-        file => (this.srcDoc = atob(file.content))
-      )
-    } else {
-      return ''
+  watch: {
+    'file.content': {
+      handler: function(val) {
+        debug('file watcher detected change')
+        if (val) {
+          this.srcDoc = atob(val)
+        } else {
+          this.srcDoc = ''
+        }
+      }
+    },
+    path: {
+      handler: function(val) {
+        debug('path watcher detected change')
+        if (val) {
+          this.srcDoc = atob(val)
+        } else {
+          this.srcDoc = ''
+        }
+      }
+    }
+  },
+  asyncComputed: {
+    file: {
+      async get() {
+        debug('file async computed')
+        let file = await this.getFile(this.path)
+        return file
+      }
     }
   },
   methods: {

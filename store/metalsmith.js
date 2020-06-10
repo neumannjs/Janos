@@ -88,17 +88,32 @@ let getSource = function(prefix, dispatch) {
 }
 
 export const state = () => ({
-  devBuild: true
+  devBuild: true,
+  metalsmithDisabled: false,
+  queuedRun: false
 })
 
 export const mutations = {
   switchDevBuild(state) {
     state.devBuild = !state.devBuild
+  },
+  setMetalsmithDisabled(state, value) {
+    state.metalsmithDisabled = value
+  },
+  setQueuedRun(state, value) {
+    state.queuedRun = value
   }
 }
 
 export const actions = {
   async runMetalsmith({ commit, state, dispatch }) {
+    if (state.metalsmithDisabled) {
+      commit('setQueuedRun', true)
+      return
+    } else {
+      commit('setQueuedRun', false)
+    }
+    commit('setMetalsmithDisabled', true)
     commit(
       'status/addOrUpdateStatusItem',
       {
@@ -261,18 +276,23 @@ export const actions = {
         },
         { root: true }
       )
-      setTimeout(function() {
-        commit(
-          'status/addOrUpdateStatusItem',
-          {
-            name: 'metalsmith',
-            text: 'idle',
-            icon: 'mdi-anvil',
-            button: false
-          },
-          { root: true }
-        )
-      }, 6000)
+      if (state.queuedRun) {
+        dispatch('runMetalsmith')
+      } else {
+        commit('setMetalsmithDisabled', false)
+        setTimeout(function() {
+          commit(
+            'status/addOrUpdateStatusItem',
+            {
+              name: 'metalsmith',
+              text: 'idle',
+              icon: 'mdi-anvil',
+              button: false
+            },
+            { root: true }
+          )
+        }, 6000)
+      }
     })
   }
 }

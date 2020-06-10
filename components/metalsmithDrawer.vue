@@ -29,7 +29,7 @@
             />
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="runMetalsmith()">
+        <v-list-item :disabled="metalsmithDisabled" @click="runMetalsmith()">
           <v-list-item-action>
             <v-icon>mdi-play</v-icon>
           </v-list-item-action>
@@ -106,7 +106,8 @@ export default {
         this.switchDevBuild()
       }
     },
-    ...mapState('navigation', ['activeDrawer'])
+    ...mapState('navigation', ['activeDrawer']),
+    ...mapState('metalsmith', ['metalsmithDisabled'])
   },
   mounted() {
     this.addDrawer({
