@@ -277,7 +277,6 @@ export default {
       hoverTab: '',
       drawer: true,
       active: [],
-      openFiles: [],
       open: [],
       splitEditor: false,
       leftPadding: 356,
@@ -335,10 +334,11 @@ export default {
         this.switchDevBuild()
       }
     },
-    ...mapGetters('github', ['numberOfChangedFiles']),
+    ...mapGetters('github', ['numberOfChangedFiles', 'openFiles']),
     ...mapState('github', {
       items: state => state.fileTree
     }),
+    ...mapState('github', ['fileContents']),
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
@@ -347,10 +347,10 @@ export default {
       debug('openTab value changed from old: %s to new: %s', oldVal, val)
       if (val !== null) {
         // Retrieve file contents
-        const file = this.openFiles[
-          this.openFiles.findIndex(f => f.path === val)
-        ]
-        this.active = [file]
+        const file = this.fileContents.find(f => f.path === val)
+        if (this.active.path != file.path) {
+          this.active = [file]
+        }
         // Check for a file extension
         const extension = file.name.substring(file.name.lastIndexOf('.') + 1)
         if (this.files[extension]) {
@@ -382,10 +382,16 @@ export default {
     active: async function(val, oldVal) {
       // Whenever the active item in the treeview changes, check whether a file
       // should be opened.
-      if (val.length > 0) {
-        // Try to find the active item in the openfiles, based on the path
-        const index = this.openFiles.findIndex(f => f.path === val[0].path)
-        if (index > -1) {
+      debug('active value changed to: %o', val)
+      if (
+        oldVal.length === 0 ||
+        (val.length > 0 && val[0].path != oldVal[0].path)
+      ) {
+        // Try to find the active item in fileContents, based on the path
+        const file = this.fileContents.find(f => f.path === val[0].path)
+        debug('Check for %s in fileContents yielded %o', val[0].path, file)
+        if (file && file.opened) {
+          debug('file already open, switch openTab to %s', val[0].path)
           // Make the tab of the already open file active
           this.openTab = val[0].path
         } else if (
@@ -393,13 +399,10 @@ export default {
           val[0].type !== 'newfolder' &&
           val[0].type !== 'tree'
         ) {
+          debug('file not open, getFile to %s', val[0].path)
           // open the file (if it is an existing file)
           const file = await this.getFile(val[0].path)
-          this.openFiles.push({
-            ...val[0],
-            content: atob(file.content),
-            builtFile: file.builtFile
-          })
+          this.setFileOpened({ file, value: true })
           this.openTab = val[0].path
         }
       }
@@ -453,9 +456,10 @@ export default {
         this.splitEditor && this.buttons.preview
           ? codeContainerWidth / 2
           : codeContainerWidth
-      this.openFiles.forEach(file => {
+      this.fileContents.forEach(file => {
         debug('resize editor for %s', 'cmEditor-' + file.path)
         if (
+          file.opened &&
           this.$refs['cmEditor-' + file.path] &&
           this.$refs['cmEditor-' + file.path][0]
         ) {
@@ -475,22 +479,32 @@ export default {
       this.setActiveDrawer(drawer)
     },
     closeTab: function(path) {
-      this.active = []
-      const indexFileToClose = this.openFiles.findIndex(f => f.path === path)
-      const indexOpenTab = this.openFiles.findIndex(f => f.path === path)
-      if (indexFileToClose > -1) {
-        this.openFiles.splice(indexFileToClose, 1)
-        if (this.openTab === path) {
-          if (this.openFiles.length === 0) {
-            this.openTab = null
-            this.code = ''
-          } else if (indexOpenTab === this.openFiles.length) {
-            this.openTab = this.openFiles[indexOpenTab - 1].path
-          } else {
-            this.openTab = this.openFiles[indexOpenTab].path
-          }
+      debug('close tab %s', path)
+      let lastPath = null
+      let countdown = this.fileContents.length
+      this.fileContents.forEach(file => {
+        debug('check file %s to close with path %s.', file.path, path)
+        if (file.path === path) {
+          debug('close file %s', path)
+          this.setFileOpened({ file, value: false })
+          countdown = 1
         }
-      }
+        if (file.opened && countdown > 0) {
+          lastPath = file.path
+          countdown -= 1
+        }
+      })
+      debug('change openTab to %s', lastPath)
+      this.openTab = lastPath
+      this.active =
+        lastPath === null
+          ? []
+          : [
+              this.fileContents.find(file => {
+                file.path === lastPath
+              })
+            ]
+      debug('active tree item %o', this.active)
     },
     onClickAddFileBtn: function(item) {
       this.addNodeToTree({ parent: item, name: '', type: 'blob' }).then(
@@ -529,9 +543,6 @@ export default {
           if (item.type !== 'tree') {
             this.addEmptyFile(item).then(() => {
               this.openTab = path
-              this.openFiles.push({
-                ...item
-              })
             })
           }
         })
@@ -543,9 +554,9 @@ export default {
     onCodeChange: function(value, event) {
       debug('code change of file %s', this.openTab)
       this.updateFileContent({
-        content: this.$btoaUTF8(
-          this.$refs['cmEditor-' + this.openTab][0].codemirror.doc.getValue()
-        ),
+        content: this.$refs[
+          'cmEditor-' + this.openTab
+        ][0].codemirror.doc.getValue(),
         path: this.openTab
       })
     },
@@ -558,7 +569,7 @@ export default {
       'createGitTree',
       'createGitCommit'
     ]),
-    ...mapMutations('github', ['updateFileContent']),
+    ...mapMutations('github', ['updateFileContent', 'setFileOpened']),
     ...mapActions('metalsmith', ['runMetalsmith']),
     ...mapMutations('metalsmith', ['switchDevBuild']),
     ...mapMutations('navigation', ['setActiveDrawer']),

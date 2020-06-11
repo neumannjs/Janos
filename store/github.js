@@ -3,6 +3,7 @@ const debug = require('debug')('store/github')
 const sha1 = require('js-sha1')
 // const Hash = require('sha.js/sha1')
 const { isBinary } = require('istextorbinary')
+const { btoaUTF8 } = require('bestbase64utf8')
 
 export const state = () => ({
   fileTree: [],
@@ -40,6 +41,13 @@ export const mutations = {
       entry.sha = calculateSha1(payload)
       calculateSha1(payload)
       state.fileContents.push(payload)
+    }
+  },
+  setFileOpened(state, { file, value }) {
+    if (value) {
+      Vue.set(file, 'opened', value)
+    } else {
+      Vue.delete(file, 'opened')
     }
   },
   addNodeToTree(state, { parent, node }) {
@@ -389,7 +397,8 @@ export const actions = {
   addEmptyFile({ commit }, file) {
     return new Promise((resolve, reject) => {
       commit('addFile', {
-        content: btoa(''),
+        content: '',
+        encoding: 'utf-8',
         ...file
       })
       resolve()
@@ -450,6 +459,13 @@ export const actions = {
           file = {
             ...treeFile,
             ...result.data
+          }
+          if (!file.binary) {
+            debug('File %s is not binary, so decode base64 content.', file.path)
+            // Convert non-binary files from base64 to string (utf-8)
+            // TODO: Check whether the Unicode problem still is relevant: <https://stackoverflow.com/a/30106551>
+            file.content = atob(file.content)
+            file.encoding = 'utf-8'
           }
           // if (path.indexOf('.md') > -1) {
           //   debug('getFile: %s', path)
@@ -538,10 +554,14 @@ export const actions = {
     let createBlobs = state.fileContents.map(editedFile => {
       if (editedFile.newSha) {
         debug('Create blob for %s', editedFile.path)
+        let content = editedFile.content
+        if (editedFile.encoding && editedFile.encoding === 'utf-8') {
+          content = btoaUTF8(content)
+        }
         return this.$octoKit.git.createBlob({
           owner: rootState.auth.user.login,
           repo: state.repo,
-          content: editedFile.content,
+          content,
           encoding: 'base64'
         })
       }
@@ -665,6 +685,9 @@ export const actions = {
 export const getters = {
   numberOfChangedFiles: state => {
     return state.fileContents.filter(file => file.newSha).length
+  },
+  openFiles: state => {
+    return state.fileContents.filter(file => file.opened)
   }
 }
 
@@ -768,7 +791,10 @@ function addTreeItem(path, object, array) {
 }
 
 function calculateSha1(file) {
-  const contents = atob(file.content)
+  let contents = file.content
+  if (file.encoding && file.encoding != 'utf-8') {
+    contents = atob(contents)
+  }
   const bytes = new Uint8Array(contents.length)
   file.size = contents.length
   for (let i = 0; i < contents.length; i++) {
