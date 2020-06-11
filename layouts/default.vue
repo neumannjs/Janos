@@ -239,7 +239,10 @@
                 cols="6"
                 class="calculatedHeight"
               >
-                <preview :path="file.builtFile" :style="{width: '100%', height: '100%'}" />
+                <preview
+                  :file="getPreviewFile(file.builtFile)"
+                  :style="{width: '100%', height: '100%'}"
+                />
               </v-col>
             </v-row>
           </v-container>
@@ -435,6 +438,13 @@ export default {
     })
   },
   methods: {
+    getPreviewFile(path) {
+      let previewFile = this.fileContents.find(file => file.path == path)
+      if (!previewFile || !previewFile.content) {
+        previewFile = { content: '' }
+      }
+      return previewFile
+    },
     createCommit: async function() {
       debug(this.commitMessage)
       this.commitDisable = true

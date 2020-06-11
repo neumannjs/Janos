@@ -16,7 +16,7 @@
         <v-icon>fullscreen</v-icon>
       </v-btn>
     </v-hover>
-    <iframe :srcDoc="srcDoc" class="previewIFrame" />
+    <iframe :srcDoc="file.content" class="previewIFrame" />
     <v-dialog v-model="fullscreen" fullscreen hide-overlay transition="dialog-right-transition">
       <v-card height="100%" width="100%" flat tile>
         <v-hover>
@@ -35,60 +35,27 @@
             <v-icon>fullscreen_exit</v-icon>
           </v-btn>
         </v-hover>
-        <iframe :srcDoc="srcDoc" class="previewIFrame" />
+        <iframe :srcDoc="file.content" class="previewIFrame" />
       </v-card>
     </v-dialog>
   </v-card>
 </template>
 <script>
 import { mapActions, mapState } from 'vuex'
-const debug = require('debug')('components/preview')
 
 export default {
   name: 'Preview',
   props: {
-    path: { type: String, default: null }
+    file: { type: Object, default: null }
   },
   data() {
     return {
-      fullscreen: false,
-      srcDoc: ''
+      fullscreen: false
     }
   },
   computed: {
     ...mapState('status', ['snackbar']),
     ...mapState('github', ['fileContents'])
-  },
-  watch: {
-    'file.content': {
-      handler: function(val) {
-        debug('file watcher detected change')
-        if (val) {
-          this.srcDoc = atob(val)
-        } else {
-          this.srcDoc = ''
-        }
-      }
-    },
-    path: {
-      handler: function(val) {
-        debug('path watcher detected change')
-        if (val) {
-          this.srcDoc = atob(val)
-        } else {
-          this.srcDoc = ''
-        }
-      }
-    }
-  },
-  asyncComputed: {
-    file: {
-      async get() {
-        debug('file async computed')
-        let file = await this.getFile(this.path)
-        return file
-      }
-    }
   },
   methods: {
     ...mapActions('github', ['getFile'])
