@@ -57,10 +57,14 @@ module.exports = {
     store.dispatch('github/getFile', path).then(
       file => {
         if (encoding === '' || encoding === undefined) {
-          callback(null, Buffer.from(file.content, 'base64'))
+          if (file.encoding == 'utf-8') {
+            callback(null, Buffer.from(file.content))
+          } else {
+            callback(null, Buffer.from(file.content, 'base64'))
+          }
         } else {
           // for now we'll assume that returning the plain string will do regardless of the exact encoding
-          callback(null, atob(file.content))
+          callback(null, file.content)
         }
       },
       err => {
@@ -114,7 +118,7 @@ module.exports = {
 
     const contentsIsBinary = isBinary(null, contents)
     if (!contentsIsBinary) {
-      contents = btoaUTF8(new TextDecoder('utf-8').decode(contents))
+      contents = new TextDecoder('utf-8').decode(contents)
     } else {
       contents = contents.toString('base64')
     }
@@ -148,59 +152,3 @@ module.exports = {
 
 // TODO: switch to a flat(ter) filesystem model, without nesting. Both git(hub) and metalsmith use this, so this would make searches easier (no recursion)
 // TODO: use BrowserFS? https://github.com/jvilk/BrowserFS (or https://github.com/isomorphic-git/lightning-fs) in combination with isomorphic-git https://isomorphic-git.org/docs/en/browser.html
-
-const btoaUTF8 = (function(btoa, replacer) {
-  'use strict'
-  return function(inputString, BOMit) {
-    return btoa(
-      (BOMit ? '\xEF\xBB\xBF' : '') +
-        inputString.replace(
-          /[\x80-\uD7ff\uDC00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]?/g,
-          replacer
-        )
-    )
-  }
-})(
-  btoa,
-  (function(fromCharCode) {
-    return function(nonAsciiChars) {
-      'use strict'
-      // make the UTF string into a binary UTF-8 encoded string
-      let point = nonAsciiChars.charCodeAt(0)
-      if (point >= 0xd800 && point <= 0xdbff) {
-        const nextcode = nonAsciiChars.charCodeAt(1)
-        // eslint-disable-next-line no-self-compare
-        if (nextcode !== nextcode)
-          // NaN because string is 1 code point long
-          return fromCharCode(
-            0xef /* 11101111 */,
-            0xbf /* 10111111 */,
-            0xbd /* 10111101 */
-          )
-        // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
-        if (nextcode >= 0xdc00 && nextcode <= 0xdfff) {
-          point = (point - 0xd800) * 0x400 + nextcode - 0xdc00 + 0x10000
-          if (point > 0xffff)
-            return fromCharCode(
-              (0x1e /* 0b11110 */ << 3) | (point >>> 18),
-              (0x2 /* 0b10 */ << 6) | ((point >>> 12) & 0x3f) /* 0b00111111 */,
-              (0x2 /* 0b10 */ << 6) | ((point >>> 6) & 0x3f) /* 0b00111111 */,
-              (0x2 /* 0b10 */ << 6) | (point & 0x3f) /* 0b00111111 */
-            )
-        } else return fromCharCode(0xef, 0xbf, 0xbd)
-      }
-      if (point <= 0x007f) return nonAsciiChars
-      else if (point <= 0x07ff) {
-        return fromCharCode(
-          (0x6 << 5) | (point >>> 6),
-          (0x2 << 6) | (point & 0x3f)
-        )
-      } else
-        return fromCharCode(
-          (0xe /* 0b1110 */ << 4) | (point >>> 12),
-          (0x2 /* 0b10 */ << 6) | ((point >>> 6) & 0x3f) /* 0b00111111 */,
-          (0x2 /* 0b10 */ << 6) | (point & 0x3f) /* 0b00111111 */
-        )
-    }
-  })(String.fromCharCode)
-)

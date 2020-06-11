@@ -77,7 +77,7 @@ let getSource = function(prefix, dispatch) {
     })
       .then(file => {
         callback(null, {
-          src: atob(file.content),
+          src: file.content,
           path: name
         })
       })
@@ -133,7 +133,7 @@ export const actions = {
       }
     )
 
-    metalsmithConfig = JSON.parse(atob(metalsmithConfig.content))
+    metalsmithConfig = JSON.parse(metalsmithConfig.content)
     let localPlugins = [
       'sourceUrl',
       'writeBuiltUrl',
