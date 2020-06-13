@@ -27,7 +27,9 @@ export default {
       if (this.$refs.form.validate()) {
         Cookies.set(
           'accessTokenEndpoint',
-          'http://localhost:7071/api/handler/?reponame=' + value,
+          process.env.APP_AZURE_FUNCTIONS_URL +
+            '/api/handler/?reponame=' +
+            value,
           { expires: 1 }
         )
         this.$router.push('login')

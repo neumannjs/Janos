@@ -2,6 +2,7 @@ import path from 'path'
 import webpack from 'webpack'
 import VuetifyLoaderPlugin from 'vuetify-loader/lib/plugin'
 import pkg from './package'
+require('dotenv').config()
 
 module.exports = {
   mode: 'spa',
@@ -49,7 +50,10 @@ module.exports = {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
     '@nuxtjs/auth',
-    '@nuxtjs/dotenv'
+    [
+      '@nuxtjs/dotenv',
+      { filename: process.env.NODE_ENV !== 'production' ? '.env' : 'prod.env' }
+    ]
   ],
   /*
   ** Axios module configuration
@@ -70,20 +74,49 @@ module.exports = {
       githubProxy: {
         _scheme: 'oauth2',
         authorization_endpoint: 'https://github.com/login/oauth/authorize',
-        access_token_endpoint: 'http://localhost:7071/api/handler/',
+        access_token_endpoint:
+          process.env.APP_AZURE_FUNCTIONS_URL + '/api/handler/',
         userinfo_endpoint: 'https://api.github.com/user',
         scope: ['repo', 'read:user'],
         response_type: 'code',
         token_type: 'Bearer',
-        redirect_uri: 'http://localhost:7071/api/callback/',
+        redirect_uri: process.env.APP_AZURE_FUNCTIONS_URL + '/api/callback/',
         client_id: '93af288610e66a7a64a9',
         token_key: 'access_token'
-      }
+      },
+      local: false
     }
   },
 
   router: {
-    middleware: ['auth']
+    middleware: ['auth'],
+    extendRoutes(routes, resolve) {
+      routes.push({
+        name: 'sf-admin',
+        path: '/*/admin',
+        component: resolve(__dirname, 'pages/admin.vue')
+      })
+      routes.push({
+        name: 'sf-callback',
+        path: '/*/callback',
+        component: resolve(__dirname, 'pages/callback.vue')
+      })
+      routes.push({
+        name: 'sf-create',
+        path: '/*/create',
+        component: resolve(__dirname, 'pages/create.vue')
+      })
+      routes.push({
+        name: 'sf-login',
+        path: '/*/login',
+        component: resolve(__dirname, 'pages/login.vue')
+      })
+      routes.push({
+        name: 'sf-select',
+        path: '/*/select',
+        component: resolve(__dirname, 'pages/select.vue')
+      })
+    }
   },
 
   vue: {
@@ -99,7 +132,7 @@ module.exports = {
   ** Build configuration
   */
   build: {
-    // publicPath: 'nuxt/',
+    publicPath: '/nuxt/',
     // devtools: true,
     transpile: ['vuetify/lib'],
     plugins: [
