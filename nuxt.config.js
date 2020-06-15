@@ -1,6 +1,7 @@
 import path from 'path'
 import webpack from 'webpack'
 import VuetifyLoaderPlugin from 'vuetify-loader/lib/plugin'
+import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin'
 import pkg from './package'
 require('dotenv').config()
 
@@ -49,11 +50,15 @@ module.exports = {
   modules: [
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
-    '@nuxtjs/auth',
+    '@nuxtjs/auth'
+  ],
+
+  buildModules: [
     [
       '@nuxtjs/dotenv',
       { filename: process.env.NODE_ENV !== 'production' ? '.env' : 'prod.env' }
-    ]
+    ],
+    ['@nuxtjs/router', { keepDefaultRouter: true }]
   ],
   /*
   ** Axios module configuration
@@ -80,8 +85,14 @@ module.exports = {
         scope: ['repo', 'read:user'],
         response_type: 'code',
         token_type: 'Bearer',
-        redirect_uri: process.env.APP_AZURE_FUNCTIONS_URL + '/api/callback/',
-        client_id: '93af288610e66a7a64a9',
+        redirect_uri:
+          process.env.NODE_ENV !== 'production'
+            ? process.env.APP_AZURE_FUNCTIONS_URL_DEV + '/api/callback/'
+            : process.env.APP_AZURE_FUNCTIONS_URL + '/api/callback/',
+        client_id:
+          process.env.NODE_ENV !== 'production'
+            ? process.env.APP_CLIENT_ID_DEV
+            : process.env.APP_CLIENT_ID,
         token_key: 'access_token'
       },
       local: false
@@ -89,34 +100,7 @@ module.exports = {
   },
 
   router: {
-    middleware: ['auth'],
-    extendRoutes(routes, resolve) {
-      routes.push({
-        name: 'sf-admin',
-        path: '/*/admin',
-        component: resolve(__dirname, 'pages/admin.vue')
-      })
-      routes.push({
-        name: 'sf-callback',
-        path: '/*/callback',
-        component: resolve(__dirname, 'pages/callback.vue')
-      })
-      routes.push({
-        name: 'sf-create',
-        path: '/*/create',
-        component: resolve(__dirname, 'pages/create.vue')
-      })
-      routes.push({
-        name: 'sf-login',
-        path: '/*/login',
-        component: resolve(__dirname, 'pages/login.vue')
-      })
-      routes.push({
-        name: 'sf-select',
-        path: '/*/select',
-        component: resolve(__dirname, 'pages/select.vue')
-      })
-    }
+    middleware: ['auth']
   },
 
   vue: {
@@ -133,7 +117,7 @@ module.exports = {
   */
   build: {
     publicPath: '/nuxt/',
-    // devtools: true,
+    devtools: true,
     transpile: ['vuetify/lib'],
     plugins: [
       new VuetifyLoaderPlugin(),
@@ -163,7 +147,72 @@ module.exports = {
       ) {
         resource.request = path.resolve(__dirname, './plugins/stat-mode')
       }),
-      new webpack.NormalModuleReplacementPlugin(/uglify-js/, 'uglifyjs-browser')
+      new webpack.NormalModuleReplacementPlugin(
+        /uglify-js/,
+        'uglifyjs-browser'
+      ),
+      new ReplaceInFileWebpackPlugin([
+        {
+          dir: 'dist/admin',
+          test: /\.html$/,
+          rules: [
+            {
+              search: /="\/nuxt/gi,
+              replace: '="../nuxt'
+            }
+          ]
+        },
+        {
+          dir: 'dist/nuxt',
+          test: /\.html$/,
+          rules: [
+            {
+              search: /="\/nuxt/gi,
+              replace: '="../nuxt'
+            }
+          ]
+        },
+        {
+          dir: 'dist/callback',
+          test: /\.html$/,
+          rules: [
+            {
+              search: /="\/nuxt/gi,
+              replace: '="../nuxt'
+            }
+          ]
+        },
+        {
+          dir: 'dist/create',
+          test: /\.html$/,
+          rules: [
+            {
+              search: /="\/nuxt/gi,
+              replace: '="../nuxt'
+            }
+          ]
+        },
+        {
+          dir: 'dist/login',
+          test: /\.html$/,
+          rules: [
+            {
+              search: /="\/nuxt/gi,
+              replace: '="../nuxt'
+            }
+          ]
+        },
+        {
+          dir: 'dist/select',
+          test: /\.html$/,
+          rules: [
+            {
+              search: /="\/nuxt/gi,
+              replace: '="../nuxt'
+            }
+          ]
+        }
+      ])
     ],
 
     /*

@@ -43,5 +43,16 @@
     "vetur.format.defaultFormatter.js": "prettier-eslint",
     "vetur.format.defaultFormatter.ts": "prettier-tslint",
     "vetur.format.defaultFormatter.html": "prettyhtml"
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Copy from dist to testsite",
+        "type": "shell",
+        "command": "Remove-Item /Repositories/NeumannSSG-testsite/docs/nuxt -Recurse ; Remove-Item /Repositories/NeumannSSG-testsite/docs/admin -Recurse ; Remove-Item /Repositories/NeumannSSG-testsite/docs/callback -Recurse ; Remove-Item /Repositories/NeumannSSG-testsite/docs/create -Recurse ; Remove-Item /Repositories/NeumannSSG-testsite/docs/login -Recurse ; Remove-Item /Repositories/NeumannSSG-testsite/docs/select -Recurse; Copy-Item -Path /Repositories/neumannssg/dist/nuxt -Destination /Repositories/NeumannSSG-testsite/docs -Recurse; Copy-Item -Path /Repositories/neumannssg/dist/admin -Destination /Repositories/NeumannSSG-testsite/docs -Recurse; Copy-Item -Path /Repositories/neumannssg/dist/callback -Destination /Repositories/NeumannSSG-testsite/docs -Recurse; Copy-Item -Path /Repositories/neumannssg/dist/create -Destination /Repositories/NeumannSSG-testsite/docs -Recurse; Copy-Item -Path /Repositories/neumannssg/dist/login -Destination /Repositories/NeumannSSG-testsite/docs -Recurse; Copy-Item -Path /Repositories/neumannssg/dist/select -Destination /Repositories/NeumannSSG-testsite/docs -Recurse",
+        "problemMatcher": []
+      }
+    ]
   }
 }
