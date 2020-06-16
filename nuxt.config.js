@@ -5,6 +5,48 @@ import pkg from './package'
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin')
 require('dotenv').config()
 
+let buildPlugins = [
+  new VuetifyLoaderPlugin(),
+  new webpack.NormalModuleReplacementPlugin(/recursive-readdir/, function(
+    resource
+  ) {
+    resource.request = path.resolve(__dirname, './plugins/readdir')
+  }),
+  new webpack.NormalModuleReplacementPlugin(/fs/, function(resource) {
+    resource.request = path.resolve(__dirname, './plugins/fs')
+  }),
+  new webpack.NormalModuleReplacementPlugin(/co-fs-extra/, function(resource) {
+    resource.request = path.resolve(__dirname, './plugins/fs')
+  }),
+  new webpack.NormalModuleReplacementPlugin(/require-one/, function(resource) {
+    resource.request = path.resolve(__dirname, './plugins/require-one')
+  }),
+  new webpack.NormalModuleReplacementPlugin(/rimraf/, function(resource) {
+    resource.request = path.resolve(__dirname, './plugins/rimraf')
+  }),
+  new webpack.NormalModuleReplacementPlugin(/stat-mode/, function(resource) {
+    resource.request = path.resolve(__dirname, './plugins/stat-mode')
+  }),
+  new webpack.NormalModuleReplacementPlugin(/uglify-js/, 'uglifyjs-browser')
+]
+
+if (process.env.NODE_ENV == 'production') {
+  buildPlugins.push(
+    new ReplaceInFileWebpackPlugin([
+      {
+        dir: '.nuxt/dist/client',
+        test: /\.js$/,
+        rules: [
+          {
+            search: '="/nuxt',
+            replace: '="../nuxt'
+          }
+        ]
+      }
+    ])
+  )
+}
+
 module.exports = {
   mode: 'spa',
 
@@ -121,7 +163,9 @@ module.exports = {
   hooks: {
     generate: {
       page(page) {
-        page.html = page.html.replace(/="\/nuxt/gi, '="../nuxt')
+        if (process.env.NODE_ENV == 'production') {
+          page.html = page.html.replace(/="\/nuxt/gi, '="../nuxt')
+        }
       }
     }
   },
@@ -131,53 +175,8 @@ module.exports = {
   */
   build: {
     publicPath: '/nuxt/',
-    devtools: true,
     transpile: ['vuetify/lib'],
-    plugins: [
-      new VuetifyLoaderPlugin(),
-      new webpack.NormalModuleReplacementPlugin(/recursive-readdir/, function(
-        resource
-      ) {
-        resource.request = path.resolve(__dirname, './plugins/readdir')
-      }),
-      new webpack.NormalModuleReplacementPlugin(/fs/, function(resource) {
-        resource.request = path.resolve(__dirname, './plugins/fs')
-      }),
-      new webpack.NormalModuleReplacementPlugin(/co-fs-extra/, function(
-        resource
-      ) {
-        resource.request = path.resolve(__dirname, './plugins/fs')
-      }),
-      new webpack.NormalModuleReplacementPlugin(/require-one/, function(
-        resource
-      ) {
-        resource.request = path.resolve(__dirname, './plugins/require-one')
-      }),
-      new webpack.NormalModuleReplacementPlugin(/rimraf/, function(resource) {
-        resource.request = path.resolve(__dirname, './plugins/rimraf')
-      }),
-      new webpack.NormalModuleReplacementPlugin(/stat-mode/, function(
-        resource
-      ) {
-        resource.request = path.resolve(__dirname, './plugins/stat-mode')
-      }),
-      new webpack.NormalModuleReplacementPlugin(
-        /uglify-js/,
-        'uglifyjs-browser'
-      ),
-      new ReplaceInFileWebpackPlugin([
-        {
-          dir: '.nuxt/dist/client',
-          test: /\.js$/,
-          rules: [
-            {
-              search: '="/nuxt',
-              replace: '="../nuxt'
-            }
-          ]
-        }
-      ])
-    ],
+    plugins: buildPlugins,
 
     /*
     ** You can extend webpack config here
