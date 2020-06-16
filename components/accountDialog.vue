@@ -9,7 +9,7 @@
     </template>
     <v-card flat>
       <v-card-title class="justify-center px-0">
-        <container>
+        <v-container>
           <v-row no-gutters>
             <v-col cols="12" class="text-center">
               <v-avatar size="80" class="my-2">
@@ -25,7 +25,7 @@
               <v-btn rounded color="secondary" small @click="logout()">Sign out</v-btn>
             </v-col>
           </v-row>
-        </container>
+        </v-container>
       </v-card-title>
       <v-card-text class="pa-0">
         <v-divider />

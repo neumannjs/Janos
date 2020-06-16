@@ -5,7 +5,7 @@
 <script>
 export default {
   layout: 'centered',
-  auth: 'guest',
+  auth: false,
   mounted() {
     let subfolder = window.location.pathname.split('/')[1]
     const reservedReponames = ['login', 'admin']
@@ -13,16 +13,20 @@ export default {
       subfolder = ''
     }
     subfolder += subfolder.length > 0 ? '/' : ''
-    this.$auth.loginWith('githubProxy', {
-      // TODO: This state should include a random nonce of sorts
-      state:
-        window.location.protocol +
-        '//' +
-        window.location.host +
-        '/' +
-        subfolder +
-        'callback/'
-    })
+    if (this.$auth.loggedIn) {
+      this.$router.push('/' + subfolder + 'admin/')
+    } else {
+      this.$auth.loginWith('githubProxy', {
+        // TODO: This state should include a random nonce of sorts
+        state:
+          window.location.protocol +
+          '//' +
+          window.location.host +
+          '/' +
+          subfolder +
+          'callback/'
+      })
+    }
   }
 }
 </script>

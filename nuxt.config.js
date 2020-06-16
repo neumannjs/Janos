@@ -1,8 +1,8 @@
 import path from 'path'
 import webpack from 'webpack'
 import VuetifyLoaderPlugin from 'vuetify-loader/lib/plugin'
-import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin'
 import pkg from './package'
+const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin')
 require('dotenv').config()
 
 module.exports = {
@@ -68,6 +68,7 @@ module.exports = {
   },
 
   auth: {
+    rewriteRedirects: true,
     redirect: {
       login: '/login',
       logout: '/',
@@ -80,7 +81,9 @@ module.exports = {
         _scheme: 'oauth2',
         authorization_endpoint: 'https://github.com/login/oauth/authorize',
         access_token_endpoint:
-          process.env.APP_AZURE_FUNCTIONS_URL + '/api/handler/',
+          process.env.NODE_ENV !== 'production'
+            ? process.env.APP_AZURE_FUNCTIONS_URL_DEV + '/api/handler/'
+            : process.env.APP_AZURE_FUNCTIONS_URL + '/api/handler/',
         userinfo_endpoint: 'https://api.github.com/user',
         scope: ['repo', 'read:user'],
         response_type: 'code',
@@ -109,6 +112,17 @@ module.exports = {
         console.log(`Error: ${err.toString()}\nInfo: ${info}`)
       },
       devtools: true
+    }
+  },
+
+  /*
+  ** Replace ="/nuxt with ="../nuxt" so that the client works at root level and in a subfolder
+  */
+  hooks: {
+    generate: {
+      page(page) {
+        page.html = page.html.replace(/="\/nuxt/gi, '=../nuxt')
+      }
     }
   },
 
@@ -153,61 +167,11 @@ module.exports = {
       ),
       new ReplaceInFileWebpackPlugin([
         {
-          dir: 'dist/admin',
-          test: /\.html$/,
+          dir: '.nuxt/dist/client',
+          test: /\.js$/,
           rules: [
             {
-              search: /="\/nuxt/gi,
-              replace: '="../nuxt'
-            }
-          ]
-        },
-        {
-          dir: 'dist/nuxt',
-          test: /\.html$/,
-          rules: [
-            {
-              search: /="\/nuxt/gi,
-              replace: '="../nuxt'
-            }
-          ]
-        },
-        {
-          dir: 'dist/callback',
-          test: /\.html$/,
-          rules: [
-            {
-              search: /="\/nuxt/gi,
-              replace: '="../nuxt'
-            }
-          ]
-        },
-        {
-          dir: 'dist/create',
-          test: /\.html$/,
-          rules: [
-            {
-              search: /="\/nuxt/gi,
-              replace: '="../nuxt'
-            }
-          ]
-        },
-        {
-          dir: 'dist/login',
-          test: /\.html$/,
-          rules: [
-            {
-              search: /="\/nuxt/gi,
-              replace: '="../nuxt'
-            }
-          ]
-        },
-        {
-          dir: 'dist/select',
-          test: /\.html$/,
-          rules: [
-            {
-              search: /="\/nuxt/gi,
+              search: '="/nuxt',
               replace: '="../nuxt'
             }
           ]
