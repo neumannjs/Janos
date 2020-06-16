@@ -22,7 +22,7 @@
           </v-row>
           <v-row no-gutters>
             <v-col cols="12" class="text-center">
-              <v-btn round color="secondary" small @click="logout()">Sign out</v-btn>
+              <v-btn rounded color="secondary" small @click="logout()">Sign out</v-btn>
             </v-col>
           </v-row>
         </container>
