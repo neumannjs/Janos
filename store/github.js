@@ -178,12 +178,20 @@ export const actions = {
   async getRepo({ rootState, commit }) {
     const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
     let pathName = window.location.pathname
-    let repoName = pathName.substr(0, pathName.indexOf('/admin'))
+    let repoName = pathName.substring(1, pathName.indexOf('/admin'))
     if (repoName.length == 0) {
       repoName = pagesDomain
     }
     let q = `user:${rootState.auth.user.login}+topic:neumannssg`
     let result = await this.$octoKit.search.repos({ q: q })
+    debug(
+      'pagesDomain: %s ; pathName: %s ; repoName: %s ; q: %s ; result: %o ',
+      pagesDomain,
+      pathName,
+      repoName,
+      q,
+      result
+    )
     if (
       result.data.items &&
       result.data.items.some(repo => repo.name == repoName)
@@ -429,6 +437,9 @@ export const actions = {
           content: content,
           ...fileNode
         }
+        if (!contentIsBinary) {
+          file.encoding = 'utf-8'
+        }
         commit('addFile', file)
       }
       resolve(file)
@@ -551,36 +562,47 @@ export const actions = {
       { root: true }
     )
 
-    let createBlobs = state.fileContents.map(editedFile => {
-      if (editedFile.newSha) {
+    let createBlobs = state.fileContents
+      .filter(file => file.newSha)
+      .map(editedFile => {
         debug('Create blob for %s', editedFile.path)
         let content = editedFile.content
         if (editedFile.encoding && editedFile.encoding === 'utf-8') {
           content = btoaUTF8(content)
         }
-        return this.$octoKit.git.createBlob({
-          owner: rootState.auth.user.login,
-          repo: state.repo,
-          content,
-          encoding: 'base64'
-        })
-      }
-    })
+        return this.$octoKit.git
+          .createBlob({
+            owner: rootState.auth.user.login,
+            repo: state.repo,
+            content,
+            encoding: 'base64'
+          })
+          .then(result => {
+            if (editedFile.newSha != result.data.sha) {
+              debug(
+                'sha mismatch for file %s! Our sha: %s ; Theirs %o',
+                editedFile.path,
+                editedFile.newSha,
+                result
+              )
+            }
+          })
+      })
 
     await Promise.all(createBlobs)
 
     debug('New blobs created')
 
-    let gitTree = state.fileContents.map(editedFile => {
-      if (editedFile.newSha) {
+    let gitTree = state.fileContents
+      .filter(file => file.newSha)
+      .map(editedFile => {
         return {
           path: editedFile.path,
           mode: editedFile.mode,
           type: editedFile.type,
           sha: editedFile.newSha
         }
-      }
-    })
+      })
 
     debug('Changed tree objects: %o', gitTree)
 
@@ -792,7 +814,7 @@ function addTreeItem(path, object, array) {
 
 function calculateSha1(file) {
   let contents = file.content
-  if (file.encoding && file.encoding != 'utf-8') {
+  if (!file.encoding || (file.encoding && file.encoding != 'utf-8')) {
     contents = atob(contents)
   }
   const bytes = new Uint8Array(contents.length)

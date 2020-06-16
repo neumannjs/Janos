@@ -106,7 +106,7 @@ export const mutations = {
 }
 
 export const actions = {
-  async runMetalsmith({ commit, state, dispatch }) {
+  async runMetalsmith({ commit, state, dispatch, rootState }) {
     if (state.metalsmithDisabled) {
       commit('setQueuedRun', true)
       return
@@ -193,11 +193,18 @@ export const actions = {
     await Promise.all(cdnPlugins)
     debug('Plugin loaded')
 
-    // overrule some metadat
+    const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
+
+    metalsmithConfig.metadata.domain = pagesDomain
+    metalsmithConfig.metadata.rootpath = '/'
+
+    if (!state.devBuild && pagesDomain != rootState.github.repo) {
+      metalsmithConfig.metadata.rootpath += rootState.github.repo + '/'
+    }
+    // overrule some metadata
     if (process.env.APP_ENV === 'development') {
       metalsmithConfig.metadata.domain =
         process.env.APP_DEV_URL + ':' + process.env.APP_DEV_PORT
-      metalsmithConfig.metadata.rootpath = '/'
     }
 
     commit(

@@ -116,14 +116,14 @@ module.exports = {
       path = path.substr(1)
     }
 
-    const contentsIsBinary = isBinary(null, contents)
+    const contentsIsBinary = isBinary(path, contents)
     if (!contentsIsBinary) {
       contents = new TextDecoder('utf-8').decode(contents)
     } else {
       contents = contents.toString('base64')
     }
 
-    if (path.indexOf('fonts/') > -1 || path.indexOf('.html') > -1) {
+    if (path.indexOf('.html') > -1) {
       debug('outputFile fonts or html path: %s , encoding: %s', path, encoding)
     }
 
