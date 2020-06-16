@@ -121,7 +121,7 @@ module.exports = {
   hooks: {
     generate: {
       page(page) {
-        page.html = page.html.replace(/="\/nuxt/gi, '=../nuxt')
+        page.html = page.html.replace(/="\/nuxt/gi, '="../nuxt')
       }
     }
   },
