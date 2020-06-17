@@ -125,8 +125,8 @@ export const actions = {
     const repo = fullName.split('/')[1]
     //create subfolder in layouts folder
     addTreeItem(
-      'layouts/' + repo,
-      { mode: '040000', name: repo, path: 'layouts/' + repo, type: 'tree' },
+      '_layouts/' + repo,
+      { mode: '040000', name: repo, path: '_layouts/' + repo, type: 'tree' },
       state.fileTree
     )
     debug('Get git tree sha of the latest commit for %s.', fullName)
@@ -144,7 +144,7 @@ export const actions = {
       recursive: 1
     })
     result.data.tree.forEach(async object => {
-      object.path = 'layouts/' + repo + '/' + object.path
+      object.path = '_layouts/' + repo + '/' + object.path
       if (object.type === 'blob') {
         //get blob
         debug('Get blob for path %s with sha %s.', object.path, object.sha)
@@ -170,7 +170,7 @@ export const actions = {
       addTreeItem(object.path, object, state.fileTree)
       dispatch('createGitTree').then(() => {
         dispatch('createGitCommit', {
-          message: 'Copied repo ' + fullName + ' into layouts folder'
+          message: 'Copied repo ' + fullName + ' into _layouts folder'
         })
       })
     })
@@ -306,7 +306,7 @@ export const actions = {
             repo: name,
             source: {
               branch: 'master',
-              path: '/docs'
+              path: '/'
             }
           })
           debug(
@@ -447,6 +447,9 @@ export const actions = {
   },
 
   async getFile({ rootState, state, commit }, path) {
+    if (path[0] === '/') {
+      path = path.substr(1)
+    }
     let file = state.fileContents.find(f => f.path === path)
     if (file == undefined) {
       try {

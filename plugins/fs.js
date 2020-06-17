@@ -51,9 +51,9 @@ module.exports = {
     if (path.substr(0, 1) === '/') {
       path = path.substr(1)
     }
-    if (path.indexOf('fonts/') > -1 || path.indexOf('.md') > -1) {
-      debug('readFile fonts or md path: %s , encoding: %s', path, encoding)
-    }
+
+    debug('readFile path: %s , encoding: %s', path, encoding)
+
     store.dispatch('github/getFile', path).then(
       file => {
         if (encoding === '' || encoding === undefined) {
@@ -123,9 +123,7 @@ module.exports = {
       contents = contents.toString('base64')
     }
 
-    if (path.indexOf('.html') > -1) {
-      debug('outputFile fonts or html path: %s , encoding: %s', path, encoding)
-    }
+    debug('outputFile fonts or html path: %s , encoding: %s', path, encoding)
 
     store
       .dispatch('github/updateFileContent', {

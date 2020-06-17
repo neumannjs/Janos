@@ -19,7 +19,10 @@ module.exports = function(opts) {
                 .dispatch('github/updateFileContent', {
                   content: f.content,
                   path: f.path,
-                  builtFile: metalsmith._destination + '/' + file
+                  builtFile:
+                    metalsmith._destination[0] === '/'
+                      ? metalsmith._destination.substr(1) + file
+                      : metalsmith._destination + file
                 })
                 .then(
                   result => {

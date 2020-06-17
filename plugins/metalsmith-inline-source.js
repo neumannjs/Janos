@@ -18,6 +18,12 @@ let cssRe = new RegExp(/rel\s*=\s*["']{1}stylesheet["']{1}/)
 let imgRe = new RegExp(/<img/)
 
 function parse(htmlFile, files, destinationFolder = '') {
+  if (destinationFolder[0] !== '/') {
+    destinationFolder = '/' + destinationFolder
+  }
+  if (destinationFolder === '/') {
+    destinationFolder = ''
+  }
   let html = ''
   if (htmlFile.data.contents.buffer instanceof ArrayBuffer) {
     html = new TextDecoder('utf-8').decode(htmlFile.data.contents)
@@ -28,7 +34,7 @@ function parse(htmlFile, files, destinationFolder = '') {
 
   while (match) {
     if (match[1].substr(0, 1) === '/') {
-      findFile = '/' + destinationFolder + match[1]
+      findFile = destinationFolder + match[1]
     } else {
       // TODO Check whether this works. Currently there are no testc ases for this.
       findFile = htmlFile.path + '/' + match[1]

@@ -127,7 +127,7 @@ export const actions = {
     )
     let metalsmithConfig = await dispatch(
       'github/getFile',
-      'layouts/metalsmith.json',
+      '_layouts/metalsmith.json',
       {
         root: true
       }
@@ -156,7 +156,7 @@ export const actions = {
           },
           loaders: {
             async: true,
-            getSource: getSource('layouts/', dispatch)
+            getSource: getSource('_layouts/', dispatch)
           }
         }
       }
