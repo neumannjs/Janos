@@ -179,7 +179,7 @@ export const actions = {
     const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
     let pathName = window.location.pathname
     let repoName = pathName.substring(1, pathName.indexOf('/admin'))
-    if (repoName.length == 0) {
+    if (repoName === '/') {
       repoName = pagesDomain
     }
     let q = `user:${rootState.auth.user.login}+topic:neumannssg`
@@ -306,7 +306,7 @@ export const actions = {
             repo: name,
             source: {
               branch: 'master',
-              path: '/'
+              path: ''
             }
           })
           debug(
@@ -447,6 +447,7 @@ export const actions = {
   },
 
   async getFile({ rootState, state, commit }, path) {
+    debug('getFile will try to find file with path %s.', path)
     if (path[0] === '/') {
       path = path.substr(1)
     }
