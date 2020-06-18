@@ -1,5 +1,6 @@
 const JstransformerMarkdown = require('jstransformer-markdown')
 const JstransformerNunjucks = require('jstransformer-nunjucks')
+const JstransformerHandlebars = require('jstransformer-handlebars')
 
 module.exports = function requireOne(packages) {
   // Retrieve the list of package names.
@@ -12,6 +13,8 @@ module.exports = function requireOne(packages) {
             return JstransformerMarkdown
           case 'jstransformer-nunjucks':
             return JstransformerNunjucks
+          case 'jstransformer-handlebars':
+            return JstransformerHandlebars
         }
       } catch (err) {
         // Do nothing, but continue on to the next package.
