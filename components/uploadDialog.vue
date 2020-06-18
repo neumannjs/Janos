@@ -10,7 +10,15 @@
       <v-card-text>Select files</v-card-text>
       <v-card-text>
         <v-form ref="form">
-          <v-file-input v-model="files" multiple chips show-size counter label="File input"></v-file-input>
+          <v-file-input
+            v-model="files"
+            multiple
+            :loading="loading"
+            chips
+            show-size
+            counter
+            label="File input"
+          ></v-file-input>
         </v-form>
       </v-card-text>
       <v-card-actions>
@@ -35,15 +43,16 @@ export default {
   },
   data() {
     return {
-      dialog: false,
-      files: null
+      files: null,
+      loading: false
     }
   },
   methods: {
     upload: async function() {
+      this.loading = true
       this.fileContents = []
       const that = this
-      this.files.forEach(async file => {
+      const uploads = this.files.map(async file => {
         const reader = new FileReader()
         reader.addEventListener('loadend', () => {
           let binary = isBinary(
@@ -76,6 +85,9 @@ export default {
         })
         reader.readAsDataURL(file)
       })
+      await Promise.all(uploads)
+      this.loading = false
+      this.$emit('input', false)
     },
     ...mapMutations('github', ['addFile']),
     ...mapActions('github', ['addNodeToTree'])
