@@ -12,7 +12,6 @@
         <v-form ref="form">
           <v-file-input v-model="files" multiple chips show-size counter label="File input"></v-file-input>
         </v-form>
-        {{ files }}
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -47,25 +46,31 @@ export default {
       this.files.forEach(async file => {
         const reader = new FileReader()
         reader.addEventListener('loadend', () => {
-          const newFile = {
+          let binary = isBinary(
+            file.name,
+            Buffer.from(
+              reader.result.substr(reader.result.indexOf(';base64,') + 8),
+              'base64'
+            )
+          )
+          let newFile = {
             parent: that.parent,
             name: file.name,
             type: 'blob',
-            binary: isBinary(
-              null,
-              Buffer.from(
-                reader.result.substr(reader.result.indexOf(';base64,') + 8),
-                'base64'
-              )
-            )
+            binary
+          }
+          if (!binary) {
+            newFile.encoding = 'utf-8'
           }
           this.addNodeToTree(newFile).then(node => {
             this.addFile({
               ...newFile,
               path: node.path,
-              content: reader.result.substr(
-                reader.result.indexOf(';base64,') + 8
-              )
+              content: binary
+                ? reader.result.substr(reader.result.indexOf(';base64,') + 8)
+                : atob(
+                    reader.result.substr(reader.result.indexOf(';base64,') + 8)
+                  )
             })
           })
         })
