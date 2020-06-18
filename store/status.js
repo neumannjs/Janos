@@ -15,6 +15,16 @@ export const state = () => ({
 })
 
 export const mutations = {
+  updateBadge(state, amount) {
+    const index = state.statusItems.findIndex(
+      item => item.name === 'notifications'
+    )
+    if (index > -1) {
+      let updatedItem = state.statusItems[index]
+      Vue.set(updatedItem, 'badge', amount)
+      Vue.set(state.statusItems, index, updatedItem)
+    }
+  },
   removeStatusItem(state, name) {
     state.statusItems.splice(
       state.statusItems.findIndex(item => item.name === name),
@@ -52,9 +62,10 @@ export const actions = {
   toggleSnackbar({ commit }) {
     commit('toggleSnackbar')
   },
-  addNotification({ commit }, notification) {
+  addNotification({ commit, state }, notification) {
     commit('setSnackbar', true)
     commit('addNotification', notification)
+    commit('updateBadge', state.notifications.length)
   }
 }
 

@@ -9,8 +9,16 @@
       :style="{color: 'white !important', textTransform: 'none'}"
       @click="$store.dispatch(item.dispatch)"
     >
+      <v-badge v-if="item.badge && item.icon" overlap :content="item.badge">
+        <v-icon
+          v-show="item.icon"
+          class="mx-2"
+          small
+          :style="{color: 'white !important'}"
+        >{{ item.icon }}</v-icon>
+      </v-badge>
       <v-icon
-        v-show="item.icon"
+        v-else-if="item.icon"
         class="mx-2"
         small
         :style="{color: 'white !important'}"
@@ -42,3 +50,12 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+::v-deep .v-badge__badge {
+  border-radius: 8px;
+  font-size: 10px;
+  height: 16px;
+  min-width: 16px;
+}
+</style>
