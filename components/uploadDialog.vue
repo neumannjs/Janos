@@ -66,7 +66,8 @@ export default {
             parent: that.parent,
             name: file.name,
             type: 'blob',
-            binary
+            binary,
+            mode: '100644'
           }
           if (!binary) {
             newFile.encoding = 'utf-8'
