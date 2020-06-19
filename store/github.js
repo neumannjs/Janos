@@ -818,13 +818,12 @@ function addTreeItem(path, object, array) {
 
 function calculateSha1(file) {
   let contents = file.content
+  let bytes
   if (!file.encoding || (file.encoding && file.encoding != 'utf-8')) {
-    contents = atob(contents)
-  }
-  const bytes = new Uint8Array(contents.length)
-  file.size = contents.length
-  for (let i = 0; i < contents.length; i++) {
-    bytes[i] = contents.charCodeAt(i)
+    bytes = Uint8Array.from(atob(contents), c => c.charCodeAt(0))
+  } else {
+    const enc = new TextEncoder()
+    bytes = enc.encode(contents)
   }
   const wrapObject = wrap('blob', bytes.buffer)
   const sha = sha1(wrapObject)
