@@ -162,6 +162,25 @@ export const actions = {
       }
     })
 
+    if (findPlugin['metalsmith-layouts'].engineOptions.partials) {
+      let loadPartials = Object.entries(
+        findPlugin['metalsmith-layouts'].engineOptions.partials
+      ).map(async partial => {
+        debug(
+          'Registering partial %s with partial file %s',
+          partial[0],
+          partial[1]
+        )
+        let file = await dispatch('github/getFile', partial[1], {
+          root: true
+        })
+        debug('partial with path %s found: %o', partial[1], file)
+        findPlugin['metalsmith-layouts'].engineOptions.partials[partial[0]] =
+          file.content
+      })
+      await Promise.all(loadPartials)
+    }
+
     //Get all plugin names from metalsmith.json file out of the repo
     //Filter all the local plugins
     //TODO: Force the localPlugins in the build, regardless of metalsmith.json
