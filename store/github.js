@@ -180,18 +180,18 @@ export const actions = {
     let pathName = window.location.pathname
     let repoName = pathName.substring(1, pathName.indexOf('/admin'))
     if (repoName === '/') {
-      repoName = pagesDomain
+      if (process.env.APP_ENV == 'development') {
+        debug(
+          'Development mode: Picking neumannssg repo from Github: %s',
+          process.env.APP_TEMPLATE_REPO
+        )
+        repoName = process.env.APP_TEMPLATE_REPO
+      } else {
+        repoName = pagesDomain
+      }
     }
     let q = `user:${rootState.auth.user.login}+topic:neumannssg`
     let result = await this.$octoKit.search.repos({ q: q })
-    debug(
-      'pagesDomain: %s ; pathName: %s ; repoName: %s ; q: %s ; result: %o ',
-      pagesDomain,
-      pathName,
-      repoName,
-      q,
-      result
-    )
     if (
       result.data.items &&
       result.data.items.some(repo => repo.name == repoName)
@@ -201,13 +201,6 @@ export const actions = {
         repoName,
         window.location.pathname
       )
-      commit('setRepo', repoName)
-    } else if (result.data.items && process.env.APP_ENV == 'development') {
-      debug(
-        'Development mode: Picking first neumannssg repo from Github: %s',
-        result.data.items[0].name
-      )
-      repoName = result.data.items[0].name
       commit('setRepo', repoName)
     }
     let neumannSsgSites = result.data.items.map(site => {
