@@ -239,10 +239,7 @@
                 cols="6"
                 class="calculatedHeight"
               >
-                <preview
-                  :file="getPreviewFile(file.builtFile)"
-                  :style="{width: '100%', height: '100%'}"
-                />
+                <preview :file="getPreviewFile(file)" :style="{width: '100%', height: '100%'}" />
               </v-col>
             </v-row>
           </v-container>
@@ -289,7 +286,7 @@ export default {
       commitMessage: '',
       commitDisable: false,
       files: {
-        html: { icon: 'mdi-language-html5', mode: 'xml' },
+        html: { icon: 'mdi-language-html5', mode: 'xml', buttons: ['preview'] },
         js: { icon: 'mdi-nodejs', mode: 'javascript' },
         json: { icon: 'mdi-code-json', mode: 'javascript' },
         md: {
@@ -438,7 +435,14 @@ export default {
     })
   },
   methods: {
-    getPreviewFile(path) {
+    getPreviewFile(file) {
+      const extension = file.name.substring(file.name.lastIndexOf('.') + 1)
+      let path = ''
+      if (extension !== 'html') {
+        path = file.builtFile
+      } else {
+        path = file.path
+      }
       let previewFile = this.fileContents.find(file => file.path == path)
       if (!previewFile || !previewFile.content) {
         previewFile = { content: '' }
