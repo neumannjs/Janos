@@ -89,6 +89,7 @@ export default {
       await Promise.all(uploads)
       this.loading = false
       this.$emit('input', false)
+      this.files = null
     },
     ...mapMutations('github', ['addFile']),
     ...mapActions('github', ['addNodeToTree'])
