@@ -14,6 +14,7 @@ local.writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
 local.inlineSource = require('../plugins/metalsmith-inline-source')
 /* eslint-disable no-unused-vars */
 const nunjucksDateFilter = require('nunjucks-date-filter')
+const handlebarsDateHelper = require('handlebars-dateformat')
 /* eslint-enable no-unused-vars */
 
 let load = (function() {
@@ -181,6 +182,22 @@ export const actions = {
       await Promise.all(loadPartials)
     }
 
+    this.handlebarsDateHelper = handlebarsDateHelper
+    if (findPlugin['metalsmith-layouts'].engineOptions.helpers) {
+      Object.entries(
+        findPlugin['metalsmith-layouts'].engineOptions.helpers
+      ).forEach(helper => {
+        debug(
+          'Registering helper %s with variable %o',
+          helper[0],
+          this[helper[1]]
+        )
+        findPlugin['metalsmith-layouts'].engineOptions.helpers[
+          helper[0]
+        ] = this[helper[1]]
+      })
+    }
+
     //Get all plugin names from metalsmith.json file out of the repo
     //Filter all the local plugins
     //TODO: Force the localPlugins in the build, regardless of metalsmith.json
@@ -216,6 +233,7 @@ export const actions = {
 
     metalsmithConfig.metadata.domain = pagesDomain
     metalsmithConfig.metadata.rootpath = '/'
+    metalsmithConfig.metadata.now = new Date()
 
     if (!state.devBuild && pagesDomain != rootState.github.repo) {
       metalsmithConfig.metadata.rootpath += rootState.github.repo + '/'

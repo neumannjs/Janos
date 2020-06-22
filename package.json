@@ -21,6 +21,7 @@
     "bestbase64utf8": "^1.0.3",
     "cross-env": "^5.2.1",
     "debug": "^4.1.1",
+    "handlebars-dateformat": "^1.1.1",
     "istextorbinary": "^2.6.0",
     "js-cookie": "^2.2.1",
     "js-sha1": "^0.6.0",
