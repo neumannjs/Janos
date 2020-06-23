@@ -15,7 +15,7 @@ let relativeUrlRe = new RegExp(
 
 let javaScriptRe = new RegExp(/<script/)
 let cssRe = new RegExp(/rel\s*=\s*["']{1}stylesheet["']{1}/)
-let imgRe = new RegExp(/<img/)
+let imgRe = new RegExp(/(<img|url\()/)
 
 function parse(htmlFile, files, destinationFolder = '') {
   if (destinationFolder[0] !== '/') {
@@ -67,14 +67,19 @@ function parse(htmlFile, files, destinationFolder = '') {
         changed = true
       } else if (match[0].match(imgRe)) {
         const extension = findFile.substring(findFile.lastIndexOf('.') + 1)
+        const decoder = new TextDecoder('utf-8')
         html = html.replace(
           match[1],
           'data:image/' +
             extension +
             ';base64, ' +
-            new TextDecoder('utf-8').decode(inlineFile.contents)
+            Buffer.from(inlineFile.contents).toString('base64')
         )
-        debugParser('image inlined %s <= %s', htmlFile.name, findFile)
+        debugParser(
+          'image inlined %s <= %s',
+          htmlFile.name,
+          decoder.decode(inlineFile.contents)
+        )
         changed = true
       } else {
         //ignore match
