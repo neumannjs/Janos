@@ -208,11 +208,15 @@ export const actions = {
         metalsmithConfig.plugins[index].local = true
       } else {
         metalsmithConfig.plugins[index].url = plugin.pkgVer
-          ? 'https://wzrd.in/standalone/' +
+          ? process.env.APP_WZRD_SERVICE +
+            'standalone/' +
             Object.keys(plugin)[0] +
             '@' +
             plugin.pkgVer
-          : 'https://wzrd.in/standalone/' + Object.keys(plugin)[0] + '@latest'
+          : process.env.APP_WZRD_SERVICE +
+            'standalone/' +
+            Object.keys(plugin)[0] +
+            '@latest'
         metalsmithConfig.plugins[index].local = false
       }
     })
