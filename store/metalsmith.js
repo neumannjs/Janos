@@ -2,6 +2,8 @@ const debug = require('debug')('store/metalsmith')
 const Metalsmith = require('metalsmith')
 const find = require('lodash/find')
 const merge = require('lodash/merge')
+const kebabCase = require('lodash/kebabCase')
+const camelCase = require('lodash/camelCase')
 const local = {}
 local.metalsmithLayouts = require('metalsmith-layouts')
 local.metalsmithTags = require('metalsmith-tags')
@@ -12,6 +14,7 @@ local.cssChangeUrl = require('../plugins/metalsmith-css-change-url')
 local.sourceUrl = require('../plugins/metalsmith-sourceurl')
 local.writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
 local.inlineSource = require('../plugins/metalsmith-inline-source')
+local.dumpFile = require('../plugins/metalsmith-dump-file')
 /* eslint-disable no-unused-vars */
 const nunjucksDateFilter = require('nunjucks-date-filter')
 const handlebarsDateHelper = require('handlebars-dateformat')
@@ -135,18 +138,8 @@ export const actions = {
     )
 
     metalsmithConfig = JSON.parse(metalsmithConfig.content)
-    let localPlugins = [
-      'sourceUrl',
-      'writeBuiltUrl',
-      'cssChangeUrl',
-      'inlineSource',
-      'metalsmith-feed',
-      'metalsmith-html-minifier',
-      'metalsmith-layouts',
-      'metalsmith-assets',
-      'metalsmith-tags'
-    ]
-
+    let localPlugins = Object.keys(local).map(name => kebabCase(name))
+    debug('kebabCased local plugins %o', localPlugins)
     let findPlugin = find(metalsmithConfig.plugins, 'metalsmith-layouts')
     merge(findPlugin, {
       'metalsmith-layouts': {
@@ -282,7 +275,7 @@ export const actions = {
 
     metalsmithConfig.plugins.forEach(plugin => {
       let pluginName = Object.keys(plugin)[0]
-      let pluginNameCamelCase = camelize(pluginName)
+      let pluginNameCamelCase = camelCase(pluginName)
       if (
         !plugin.hasOwnProperty('dev') ||
         (plugin.hasOwnProperty('dev') && plugin.dev === state.devBuild)
@@ -343,15 +336,4 @@ export const actions = {
       }
     })
   }
-}
-
-function camelize(str) {
-  let arr = str.split('-')
-  let capital = arr.map(
-    (item, index) =>
-      index ? item.charAt(0).toUpperCase() + item.slice(1).toLowerCase() : item
-  )
-  let capitalString = capital.join('')
-
-  return capitalString
 }
