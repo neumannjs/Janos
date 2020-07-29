@@ -12,7 +12,7 @@ export default ({ store, app: { $auth } }, inject) => {
   inject('octoKit', octoKit)
 
   store.dispatch('github/getRepo').then(() => {
-    store.dispatch('github/getTreeSha').then(() => {
+    store.dispatch('github/getTreeSha', 'source').then(() => {
       store.dispatch('github/getFileTree')
     })
   })

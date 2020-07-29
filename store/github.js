@@ -384,10 +384,11 @@ export const actions = {
     }
   },
 
-  async getTreeSha({ rootState, state, commit }) {
+  async getTreeSha({ rootState, state, commit }, sha = 'master') {
     const result = await this.$octoKit.repos.listCommits({
       owner: rootState.auth.user.login,
       repo: state.repo,
+      sha: sha,
       per_page: 1
     })
     commit('setTreeSha', result.data[0].commit.tree.sha)
