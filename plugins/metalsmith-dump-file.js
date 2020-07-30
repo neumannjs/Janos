@@ -6,6 +6,7 @@ module.exports = function(opts) {
 
   return function(files, metalsmith, done) {
     for (const [filename, object] of Object.entries(files)) {
+      debug('Looking for %s, checking %s', opts.filename, filename)
       if (opts.filename == filename) {
         const metadata = metalsmith.metadata()
         const dump = { ...metadata, ...object }
