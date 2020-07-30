@@ -12,10 +12,14 @@ export const state = () => ({
   newTreeSha: '',
   parentCommitSha: '',
   fileContents: [],
-  neumannssgSites: []
+  neumannssgSites: [],
+  currentBranch: ''
 })
 
 export const mutations = {
+  setCurrentBranch(state, payload) {
+    state.currentBranch = payload
+  },
   setFileTree(state, payload) {
     state.fileTree = payload
   },
@@ -33,6 +37,9 @@ export const mutations = {
   },
   setParentCommitSha(state, payload) {
     state.parentCommitSha = payload
+  },
+  clearFileContents(state) {
+    state.fileContents = []
   },
   addFile(state, payload) {
     const file = state.fileContents.find(f => f.path === payload.path)
@@ -396,6 +403,38 @@ export const actions = {
     return result.data[0].commit.tree.sha
   },
 
+  async merge({ rootState, state, commit }, { base, head, message }) {
+    let payload = {
+      owner: rootState.auth.user.login,
+      repo: state.repo,
+      base,
+      head
+    }
+    if (message) {
+      payload.message = message
+    }
+    try {
+      const result = await this.$octoKit.repos.merge(payload)
+      debug('Github merge returned %o', result.data)
+      return result.data.sha
+    } catch (error) {
+      debug('Github merge returned error: %o', error)
+    }
+  },
+
+  async checkoutBranch({ dispatch, commit, getters }, branch) {
+    if (getters.numberOfChangedFiles === 0) {
+      commit('setFileTree', [])
+      commit('setTreeSha', '')
+      commit('setNewTreeSha', '')
+      commit('setParentCommitSha', '')
+      commit('clearFileContents')
+      await dispatch('getTreeSha', branch)
+      await dispatch('getFileTree')
+      commit('setCurrentBranch', branch)
+    }
+  },
+
   addEmptyFile({ commit }, file) {
     return new Promise((resolve, reject) => {
       commit('addFile', {
@@ -662,7 +701,7 @@ export const actions = {
     result = await this.$octoKit.git.updateRef({
       owner: rootState.auth.user.login,
       repo: state.repo,
-      ref: 'heads/master',
+      ref: 'heads/' + state.currentBranch,
       sha: result.data.sha
     })
     debug('Updated reference of `heads/master` with result: %o', result)

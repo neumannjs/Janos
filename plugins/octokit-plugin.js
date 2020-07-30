@@ -12,8 +12,6 @@ export default ({ store, app: { $auth } }, inject) => {
   inject('octoKit', octoKit)
 
   store.dispatch('github/getRepo').then(() => {
-    store.dispatch('github/getTreeSha', 'source').then(() => {
-      store.dispatch('github/getFileTree')
-    })
+    store.dispatch('github/checkoutBranch', 'source')
   })
 }

@@ -20,16 +20,7 @@
             <v-list-item-title>Run Metalsmith</v-list-item-title>
           </v-list-item>
         </template>
-        <v-list-item>
-          <v-list-item-content>
-            <v-switch
-              v-model="devBuild"
-              :label="devBuild ? 'development' : 'production'"
-              height="42"
-            />
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item :disabled="metalsmithDisabled" @click="runMetalsmith()">
+        <v-list-item :disabled="metalsmithDisabled || currentBranch === 'source'" @click="runMetalsmith()">
           <v-list-item-action>
             <v-icon>mdi-play</v-icon>
           </v-list-item-action>
@@ -98,16 +89,9 @@ export default {
     }
   },
   computed: {
-    devBuild: {
-      get: function() {
-        return this.$store.state.metalsmith.devBuild
-      },
-      set: function() {
-        this.switchDevBuild()
-      }
-    },
     ...mapState('navigation', ['activeDrawer']),
-    ...mapState('metalsmith', ['metalsmithDisabled'])
+    ...mapState('metalsmith', ['metalsmithDisabled']),
+    ...mapState('github', ['currentBranch'])
   },
   mounted() {
     this.addDrawer({
@@ -122,7 +106,6 @@ export default {
         results => (this.results = results)
       )
     },
-    ...mapMutations('metalsmith', ['switchDevBuild']),
     ...mapMutations('navigation', ['addDrawer']),
     ...mapActions('github', ['searchTemplates', 'addSubTree']),
     ...mapActions('metalsmith', ['runMetalsmith'])

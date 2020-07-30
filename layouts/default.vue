@@ -63,6 +63,19 @@
             </v-list-item>
           </template>
           <v-list-item-content>
+            <v-select
+              :value="currentBranch"
+              :items="branches"
+              prepend-icon="mdi-source-branch"
+              menu-props="auto"
+              hide-details
+              single-line
+              dense
+              :disabled="numberOfChangedFiles>0"
+              @change="checkoutBranch"
+            ></v-select>
+          </v-list-item-content>
+          <v-list-item-content>
             <v-treeview
               :open.sync="open"
               :active.sync="active"
@@ -127,7 +140,7 @@
             </v-list-item>
           </template>
           <v-list-item-content>
-            {{ numberOfChangedFiles }}
+            {{ open }}
             <br />
           </v-list-item-content>
         </v-list-group>
@@ -173,6 +186,33 @@
 
           <v-list-item-content>
             <v-list-item-title>Create Git Commit</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="merge({base: 'development', head: 'source'})">
+          <v-list-item-action>
+            <v-icon>mdi-source-merge</v-icon>
+          </v-list-item-action>
+
+          <v-list-item-content>
+            <v-list-item-title>Merge Source > development</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="merge({base: 'staging', head: 'source'})">
+          <v-list-item-action>
+            <v-icon>mdi-source-merge</v-icon>
+          </v-list-item-action>
+
+          <v-list-item-content>
+            <v-list-item-title>Merge Source > staging</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="merge({base: 'master', head: 'source'})">
+          <v-list-item-action>
+            <v-icon>mdi-source-merge</v-icon>
+          </v-list-item-action>
+
+          <v-list-item-content>
+            <v-list-item-title>Merge Source > master</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -322,23 +362,16 @@ export default {
         keymap: 'sublime',
         lineWrapping: true,
         scrollbarStyle: 'native'
-      }
+      },
+      branches: ['source', 'development', 'staging', 'master']
     }
   },
   computed: {
-    devBuild: {
-      get: function() {
-        return this.$store.state.metalsmith.devBuild
-      },
-      set: function() {
-        this.switchDevBuild()
-      }
-    },
     ...mapGetters('github', ['numberOfChangedFiles', 'openFiles']),
     ...mapState('github', {
       items: state => state.fileTree
     }),
-    ...mapState('github', ['fileContents']),
+    ...mapState('github', ['fileContents', 'currentBranch']),
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
@@ -581,11 +614,12 @@ export default {
       'addEmptyFile',
       'renameNode',
       'createGitTree',
-      'createGitCommit'
+      'createGitCommit',
+      'merge',
+      'checkoutBranch'
     ]),
     ...mapMutations('github', ['updateFileContent', 'setFileOpened']),
     ...mapActions('metalsmith', ['runMetalsmith']),
-    ...mapMutations('metalsmith', ['switchDevBuild']),
     ...mapMutations('navigation', ['setActiveDrawer']),
     ...mapMutations('status', ['addOrUpdateStatusItem'])
   }

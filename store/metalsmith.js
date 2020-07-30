@@ -92,15 +92,11 @@ let getSource = function(prefix, dispatch) {
 }
 
 export const state = () => ({
-  devBuild: true,
   metalsmithDisabled: false,
   queuedRun: false
 })
 
 export const mutations = {
-  switchDevBuild(state) {
-    state.devBuild = !state.devBuild
-  },
   setMetalsmithDisabled(state, value) {
     state.metalsmithDisabled = value
   },
@@ -111,6 +107,9 @@ export const mutations = {
 
 export const actions = {
   async runMetalsmith({ commit, state, dispatch, rootState }) {
+    if (rootState.github.currentBranch === 'source') {
+      return
+    }
     if (state.metalsmithDisabled) {
       commit('setQueuedRun', true)
       return
@@ -129,6 +128,7 @@ export const actions = {
       },
       { root: true }
     )
+    let devBuild = rootState.github.currentBranch === 'development'
     let metalsmithConfig = await dispatch(
       'github/getFile',
       '_layouts/metalsmith.json',
@@ -232,7 +232,7 @@ export const actions = {
     metalsmithConfig.metadata.rootpath = '/'
     metalsmithConfig.metadata.now = new Date()
 
-    if (!state.devBuild && pagesDomain != rootState.github.repo) {
+    if (!devBuild && pagesDomain != rootState.github.repo) {
       metalsmithConfig.metadata.rootpath += rootState.github.repo + '/'
     }
     // overrule some metadata
@@ -267,9 +267,9 @@ export const actions = {
       ms = ms.destination(metalsmithConfig.destination)
     }
 
-    if (metalsmithConfig.hasOwnProperty('clean') && !state.devBuild) {
+    if (metalsmithConfig.hasOwnProperty('clean') && !devBuild) {
       ms = ms.clean(metalsmithConfig.clean)
-    } else if (metalsmithConfig.hasOwnProperty('devClean') && state.devBuild) {
+    } else if (metalsmithConfig.hasOwnProperty('devClean') && devBuild) {
       ms = ms.clean(metalsmithConfig.devClean)
     }
 
@@ -278,7 +278,7 @@ export const actions = {
       let pluginNameCamelCase = camelCase(pluginName)
       if (
         !plugin.hasOwnProperty('dev') ||
-        (plugin.hasOwnProperty('dev') && plugin.dev === state.devBuild)
+        (plugin.hasOwnProperty('dev') && plugin.dev === devBuild)
       ) {
         if (plugin.local) {
           if (typeof plugin[pluginName] === 'boolean') {
