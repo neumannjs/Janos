@@ -14,22 +14,21 @@ module.exports = {
     'prettier/vue',
     'plugin:prettier/recommended'
   ],
-  plugins: [
-    'vuetify'
-  ],
+  plugins: ['vuetify'],
   // add your custom rules here
   rules: {
-    "vue/component-name-in-template-casing": ["error", "PascalCase"],
+    'space-before-function-paren': 'off',
+    'vue/component-name-in-template-casing': ['error', 'PascalCase'],
     'vuetify/no-deprecated-classes': 'error',
     'vuetify/grid-unknown-attributes': 'error',
     'vuetify/no-legacy-grid': 'error',
-    "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
-    "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off"
+    'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
   },
   globals: {
     $nuxt: true
   },
   parserOptions: {
-    parser: "babel-eslint"
+    parser: 'babel-eslint'
   }
 }

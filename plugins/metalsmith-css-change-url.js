@@ -5,13 +5,13 @@ const multimatch = require('multimatch')
 metalsmith-css-change-url
 Changes absolute url's in css files to contain the rootpath
 */
-module.exports = function(opts) {
+module.exports = function (opts) {
   'use strict'
 
   opts.pattern = opts.pattern || ['**/*.css']
   opts.rootpath = opts.rootpath || ['/']
 
-  return function(files, metalsmith, done) {
+  return function (files, metalsmith, done) {
     if (opts.rootpath !== '/') {
       for (const file in files) {
         if (multimatch(file, opts.pattern).length) {

@@ -23,7 +23,7 @@ export default {
   layout: 'centered',
   auth: 'guest',
   methods: {
-    createRepo: function(value) {
+    createRepo(value) {
       if (this.$refs.form.validate()) {
         Cookies.set(
           'accessTokenEndpoint',

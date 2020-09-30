@@ -1,9 +1,7 @@
 import Router from 'vue-router'
 
 export function createRouter(ssrContext, createDefaultRouter, routerOptions) {
-  const options = routerOptions
-    ? routerOptions
-    : createDefaultRouter(ssrContext).options
+  const options = routerOptions || createDefaultRouter(ssrContext).options
 
   return new Router({
     ...options,

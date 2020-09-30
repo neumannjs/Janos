@@ -7,7 +7,7 @@ function Mode(stat) {
   this.stat = stat
 }
 
-Mode.prototype.toOctal = function() {
+Mode.prototype.toOctal = function () {
   const octal = this.stat.mode & 4095 /* 07777 */
   return ('0000' + octal.toString(8)).slice(-4)
 }

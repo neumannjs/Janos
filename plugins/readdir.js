@@ -1,7 +1,7 @@
 const minimatch = require('minimatch')
 
 function patternMatcher(pattern) {
-  return function(path, stats) {
+  return function (path, stats) {
     const minimatcher = new minimatch.Minimatch(pattern, { matchBase: true })
     return (!minimatcher.negate || stats.isFile()) && minimatcher.match(path)
   }
@@ -34,8 +34,8 @@ module.exports = async function readdir(path, ignores, callback) {
   }
 
   if (!callback) {
-    return new Promise(function(resolve, reject) {
-      readdir(path, ignores || [], function(err, data) {
+    return new Promise(function (resolve, reject) {
+      readdir(path, ignores || [], function (err, data) {
         if (err) {
           reject(err)
         } else {
@@ -61,7 +61,7 @@ function filterFileTree(fileTree, list, ignores, path) {
       fileTree[i].path.substr(0, path.length) === path
     ) {
       if (
-        !ignores.some(function(matcher) {
+        !ignores.some(function (matcher) {
           // eslint-disable-next-line no-undef
           return matcher(fileTree[i].path, stats)
         })

@@ -1,5 +1,9 @@
 <template>
-  <v-dialog v-model="dialog" width="300px" transition="slide-x-reverse-transition">
+  <v-dialog
+    v-model="dialog"
+    width="300px"
+    transition="slide-x-reverse-transition"
+  >
     <template v-slot:activator="{ on }">
       <v-btn icon v-on="on">
         <v-avatar size="26">
@@ -22,7 +26,9 @@
           </v-row>
           <v-row no-gutters>
             <v-col cols="12" class="text-center">
-              <v-btn rounded color="secondary" small @click="logout()">Sign out</v-btn>
+              <v-btn rounded color="secondary" small @click="logout()"
+                >Sign out</v-btn
+              >
             </v-col>
           </v-row>
         </v-container>
@@ -41,7 +47,10 @@
             </v-list-item-action>
 
             <v-list-item-content>
-              <v-list-item-title class="subheading" v-text="site.name"></v-list-item-title>
+              <v-list-item-title
+                class="subheading"
+                v-text="site.name"
+              ></v-list-item-title>
             </v-list-item-content>
           </v-list-item>
           <CreateDialog
@@ -51,13 +60,20 @@
             title="Create new website"
             @create="createRepo($event)"
           />
-          <v-list-item @click="createDialog = true; dialog = false">
+          <v-list-item
+            @click="
+              createDialog = true
+              dialog = false
+            "
+          >
             <v-list-item-action>
               <v-icon>add_box</v-icon>
             </v-list-item-action>
 
             <v-list-item-content>
-              <v-list-item-title class="subheading">Create new website</v-list-item-title>
+              <v-list-item-title class="subheading"
+                >Create new website</v-list-item-title
+              >
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -90,23 +106,23 @@ export default {
     ...mapState('auth', ['user']),
     ...mapState('github', ['neumannssgSites', 'repo'])
   },
-  updated: function() {
+  updated() {
     debug(
       'Find %s.github.io in neumannssgSite: %o',
       this.user.login,
       this.neumannssgSites
     )
     this.repoName = this.neumannssgSites.some(
-      site => site.name == this.user.login + '.github.io'
+      site => site.name === this.user.login + '.github.io'
     )
       ? ''
       : this.user.login + '.github.io'
   },
   methods: {
-    logout: async function() {
+    async logout() {
       await this.$auth.logout()
     },
-    redirect: function(url) {
+    redirect(url) {
       window.location.href = url
     },
     ...mapActions('github', ['createRepo'])

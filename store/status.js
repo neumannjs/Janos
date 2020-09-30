@@ -20,7 +20,7 @@ export const mutations = {
       item => item.name === 'notifications'
     )
     if (index > -1) {
-      let updatedItem = state.statusItems[index]
+      const updatedItem = state.statusItems[index]
       Vue.set(updatedItem, 'badge', amount)
       Vue.set(state.statusItems, index, updatedItem)
     }

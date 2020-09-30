@@ -1,7 +1,7 @@
 import Cookies from 'js-cookie'
 const debug = require('debug')('plugins/auth-listener')
 
-export default function({ $axios }) {
+export default function ({ $axios }) {
   $axios.onError(error => {
     debug('Error object: ' + error)
     debug('error.response: ' + error.response)
@@ -22,11 +22,8 @@ export default function({ $axios }) {
     }
   })
 
-  $axios.interceptors.request.use(function(config) {
-    if (
-      config.url.indexOf('handler') > -1 &&
-      Cookies.get('accessTokenEndpoint')
-    ) {
+  $axios.interceptors.request.use(function (config) {
+    if (config.url.includes('handler') && Cookies.get('accessTokenEndpoint')) {
       config.url = Cookies.get('accessTokenEndpoint')
     }
     return config

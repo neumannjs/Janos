@@ -2,7 +2,7 @@
   <v-navigation-drawer
     v-show="activeDrawer == drawerName"
     v-model="drawer"
-    :style="{marginLeft: '56px'}"
+    :style="{ marginLeft: '56px' }"
     width="300px"
     app
   >
@@ -20,7 +20,23 @@
             <v-list-item-title>Run Metalsmith</v-list-item-title>
           </v-list-item>
         </template>
-        <v-list-item :disabled="metalsmithDisabled || currentBranch === 'source'" @click="runMetalsmith()">
+        <v-list-item-content>
+          <v-select
+            :value="currentBranch"
+            :items="branches"
+            prepend-icon="mdi-source-branch"
+            menu-props="auto"
+            hide-details
+            single-line
+            dense
+            :disabled="numberOfChangedFiles > 0"
+            @change="commitThenCheckout"
+          ></v-select>
+        </v-list-item-content>
+        <v-list-item
+          :disabled="metalsmithDisabled || currentBranch === 'source'"
+          @click="runMetalsmith()"
+        >
           <v-list-item-action>
             <v-icon>mdi-play</v-icon>
           </v-list-item-action>
@@ -46,7 +62,11 @@
             />
           </v-list-item-content>
         </v-list-item>
-        <v-list-item v-for="(result, i) in results" :key="i" @click="addSubTree(result.full_name)">
+        <v-list-item
+          v-for="(result, i) in results"
+          :key="i"
+          @click="addSubTree(result.full_name)"
+        >
           <v-list-item-content>
             <v-row no-gutters>
               <v-col>
@@ -58,7 +78,10 @@
                   max-height="100"
                 >
                   <template v-slot:placeholder>
-                    <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                    <v-progress-circular
+                      indeterminate
+                      color="grey lighten-5"
+                    ></v-progress-circular>
                   </template>
                 </v-img>
               </v-col>
@@ -72,7 +95,7 @@
 </template>
 
 <script>
-import { mapMutations, mapState, mapActions } from 'vuex'
+import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'MetalsmithDrawer',
@@ -85,10 +108,12 @@ export default {
       drawerTitle: 'Metalsmith',
       drawerIcon: 'mdi-anvil',
       searchTerm: '',
-      results: []
+      results: [],
+      branches: ['source', 'development', 'staging', 'master']
     }
   },
   computed: {
+    ...mapGetters('github', ['numberOfChangedFiles']),
     ...mapState('navigation', ['activeDrawer']),
     ...mapState('metalsmith', ['metalsmithDisabled']),
     ...mapState('github', ['currentBranch'])
@@ -106,8 +131,20 @@ export default {
         results => (this.results = results)
       )
     },
+
+    commitThenCheckout() {
+      // Check for changed files and force a commit dialog, before checking out another branch.
+      if (this.numberOfChangedFiles > 0) {
+        // force commit dialog
+      }
+    },
+
     ...mapMutations('navigation', ['addDrawer']),
-    ...mapActions('github', ['searchTemplates', 'addSubTree']),
+    ...mapActions('github', [
+      'searchTemplates',
+      'addSubTree',
+      'checkoutBranch'
+    ]),
     ...mapActions('metalsmith', ['runMetalsmith'])
   }
 }

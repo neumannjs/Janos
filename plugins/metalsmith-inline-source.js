@@ -4,18 +4,18 @@
  * Attribution: https://github.com/borisovg/metalsmith-inline-css
  */
 
-let debug = require('debug')
+const debug = require('debug')
 
 const debugMain = debug('metalsmith-inline-source:main')
 const debugParser = debug('metalsmith-inline-source:parser')
 
-let relativeUrlRe = new RegExp(
+const relativeUrlRe = new RegExp(
   /(?:url\(|<(?:link|script|img)[^>]+(?:src|href)\s*=\s*)(?!['"]?(?:data|http|\/\/))['"]?([^'")\s>]+)['"]?[^>;]*\/?(?:\)|>(<\/script>)?)/
 )
 
-let javaScriptRe = new RegExp(/<script/)
-let cssRe = new RegExp(/rel\s*=\s*["']{1}stylesheet["']{1}/)
-let imgRe = new RegExp(/(<img|url\()/)
+const javaScriptRe = new RegExp(/<script/)
+const cssRe = new RegExp(/rel\s*=\s*["']{1}stylesheet["']{1}/)
+const imgRe = new RegExp(/(<img|url\()/)
 
 function parse(htmlFile, files, destinationFolder = '') {
   if (destinationFolder[0] !== '/') {
@@ -44,11 +44,11 @@ function parse(htmlFile, files, destinationFolder = '') {
 
     if (inlineFile) {
       if (match[0].match(javaScriptRe)) {
-        let replacement =
+        const replacement =
           '<script type="text/javascript">' +
           new TextDecoder('utf-8').decode(inlineFile.contents) +
           '</script>'
-        html = html.replace(match[0], replacement.replace(/\$/g, '$$$')) //Escape backreferencing $& and $1, $2, etc.
+        html = html.replace(match[0], replacement.replace(/\$/g, '$$$')) // Escape backreferencing $& and $1, $2, etc.
         debugParser('javascript inlined %s <= %s', htmlFile.name, findFile)
         debugParser(
           'indexOf /scripts/vendor.js: %i',
@@ -57,7 +57,7 @@ function parse(htmlFile, files, destinationFolder = '') {
         idx += match.index + replacement.length
         changed = true
       } else if (match[0].match(cssRe)) {
-        let replacement =
+        const replacement =
           '<style>' +
           new TextDecoder('utf-8').decode(inlineFile.contents) +
           '</style>'
@@ -82,7 +82,7 @@ function parse(htmlFile, files, destinationFolder = '') {
         )
         changed = true
       } else {
-        //ignore match
+        // ignore match
         debugParser('%s found in %s, but ignored', findFile, htmlFile.name)
         idx += match.index + match[0].length
       }
@@ -100,16 +100,16 @@ function parse(htmlFile, files, destinationFolder = '') {
 }
 
 function plugin() {
-  return function(files, metalsmith, done) {
+  return function (files, metalsmith, done) {
     debugMain('Files object %o', files)
-    let htmlFiles = []
-    let htmlRe = new RegExp('.html$')
+    const htmlFiles = []
+    const htmlRe = new RegExp('.html$')
     let i, name
 
     for (name in files) {
-      if (files.hasOwnProperty(name)) {
+      if (Object.prototype.hasOwnProperty.call(files, name)) {
         if (name.match(htmlRe)) {
-          htmlFiles.push({ name: name, data: files[name] })
+          htmlFiles.push({ name, data: files[name] })
         }
       }
     }

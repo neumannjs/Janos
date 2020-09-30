@@ -12,8 +12,8 @@ if (process.browser) {
 module.exports = {
   chmod: function chmod(path, mode, callback) {
     if (!callback) {
-      return new Promise(function(resolve, reject) {
-        chmod(path, mode || {}, function(err) {
+      return new Promise(function (resolve, reject) {
+        chmod(path, mode || {}, function (err) {
           if (err) {
             reject(err)
           } else {
@@ -38,8 +38,8 @@ module.exports = {
       // ignore file system flags for now
     }
     if (!callback) {
-      return new Promise(function(resolve, reject) {
-        readFile(path, options || {}, function(err, data) {
+      return new Promise(function (resolve, reject) {
+        readFile(path, options || {}, function (err, data) {
           if (err) {
             reject(err)
           } else {
@@ -57,7 +57,7 @@ module.exports = {
     store.dispatch('github/getFile', path).then(
       file => {
         if (encoding === '' || encoding === undefined) {
-          if (file.encoding == 'utf-8') {
+          if (file.encoding === 'utf-8') {
             callback(null, Buffer.from(file.content))
           } else {
             callback(null, Buffer.from(file.content, 'base64'))
@@ -78,8 +78,8 @@ module.exports = {
       options = {}
     }
     if (!callback) {
-      return new Promise(function(resolve, reject) {
-        stat(path, options || {}, function(err, data) {
+      return new Promise(function (resolve, reject) {
+        stat(path, options || {}, function (err, data) {
           if (err) {
             reject(err)
           } else {
@@ -101,8 +101,8 @@ module.exports = {
     }
 
     if (!callback) {
-      return new Promise(function(resolve, reject) {
-        outputFile(path, contents, encoding, function(err, data) {
+      return new Promise(function (resolve, reject) {
+        outputFile(path, contents, encoding, function (err, data) {
           if (err) {
             reject(err)
           } else {

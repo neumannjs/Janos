@@ -5,26 +5,26 @@ import pkg from './package'
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin')
 require('dotenv').config()
 
-let buildPlugins = [
+const buildPlugins = [
   new VuetifyLoaderPlugin(),
-  new webpack.NormalModuleReplacementPlugin(/recursive-readdir/, function(
+  new webpack.NormalModuleReplacementPlugin(/recursive-readdir/, function (
     resource
   ) {
     resource.request = path.resolve(__dirname, './plugins/readdir')
   }),
-  new webpack.NormalModuleReplacementPlugin(/fs/, function(resource) {
+  new webpack.NormalModuleReplacementPlugin(/fs/, function (resource) {
     resource.request = path.resolve(__dirname, './plugins/fs')
   }),
-  new webpack.NormalModuleReplacementPlugin(/co-fs-extra/, function(resource) {
+  new webpack.NormalModuleReplacementPlugin(/co-fs-extra/, function (resource) {
     resource.request = path.resolve(__dirname, './plugins/fs')
   }),
-  new webpack.NormalModuleReplacementPlugin(/require-one/, function(resource) {
+  new webpack.NormalModuleReplacementPlugin(/require-one/, function (resource) {
     resource.request = path.resolve(__dirname, './plugins/require-one')
   }),
-  new webpack.NormalModuleReplacementPlugin(/rimraf/, function(resource) {
+  new webpack.NormalModuleReplacementPlugin(/rimraf/, function (resource) {
     resource.request = path.resolve(__dirname, './plugins/rimraf')
   }),
-  new webpack.NormalModuleReplacementPlugin(/stat-mode/, function(resource) {
+  new webpack.NormalModuleReplacementPlugin(/stat-mode/, function (resource) {
     resource.request = path.resolve(__dirname, './plugins/stat-mode')
   }),
   new webpack.NormalModuleReplacementPlugin(/uglify-js/, 'uglifyjs-browser')
@@ -51,8 +51,8 @@ module.exports = {
   mode: 'spa',
 
   /*
-  ** Headers of the page
-  */
+   ** Headers of the page
+   */
   head: {
     title: pkg.name,
     meta: [
@@ -71,13 +71,13 @@ module.exports = {
   },
 
   /*
-  ** Customize the progress-bar color
-  */
+   ** Customize the progress-bar color
+   */
   loading: { color: '#fff' },
 
   /*
-  ** Plugins to load before mounting the App
-  */
+   ** Plugins to load before mounting the App
+   */
   plugins: [
     { src: '~/plugins/vuetify' },
     { src: '~plugins/nuxt-codemirror-plugin', ssr: false },
@@ -87,8 +87,8 @@ module.exports = {
   ],
 
   /*
-  ** Nuxt modules
-  */
+   ** Nuxt modules
+   */
   modules: [
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
@@ -103,8 +103,8 @@ module.exports = {
     ['@nuxtjs/router', { keepDefaultRouter: true }]
   ],
   /*
-  ** Axios module configuration
-  */
+   ** Axios module configuration
+   */
   axios: {
     // See https://github.com/nuxt-community/axios-module#options
   },
@@ -158,8 +158,8 @@ module.exports = {
   },
 
   /*
-  ** Replace ="/nuxt with ="../nuxt" so that the client works at root level and in a subfolder
-  */
+   ** Replace ="/nuxt with ="../nuxt" so that the client works at root level and in a subfolder
+   */
   hooks: {
     generate: {
       page(page) {
@@ -171,16 +171,16 @@ module.exports = {
   },
 
   /*
-  ** Build configuration
-  */
+   ** Build configuration
+   */
   build: {
     publicPath: '/nuxt/',
     transpile: ['vuetify/lib'],
     plugins: buildPlugins,
 
     /*
-    ** You can extend webpack config here
-    */
+     ** You can extend webpack config here
+     */
     extend(config, ctx) {
       // Run ESLint on save
       if (ctx.isDev && ctx.isClient) {

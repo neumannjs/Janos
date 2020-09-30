@@ -20,15 +20,15 @@ const nunjucksDateFilter = require('nunjucks-date-filter')
 const handlebarsDateHelper = require('handlebars-dateformat')
 /* eslint-enable no-unused-vars */
 
-let load = (function() {
+const load = (function () {
   // Function which returns a function: https://davidwalsh.name/javascript-functions
   function _load(tag) {
-    return function(url) {
+    return function (url) {
       // This promise will be used by Promise.all to determine success or failure
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         debug('Started loading %s', url)
-        var parent = 'body'
-        var attr = 'src'
+        let parent = 'body'
+        let attr = 'src'
         if (
           document.querySelector(tag + '[' + attr + '="' + url + '"]') != null
         ) {
@@ -36,14 +36,14 @@ let load = (function() {
           resolve(url)
           return
         }
-        var element = document.createElement(tag)
+        const element = document.createElement(tag)
 
         // Important success and error for the promise
-        element.onload = function() {
+        element.onload = function () {
           debug('Loaded %s', url)
           resolve(url)
         }
-        element.onerror = function() {
+        element.onerror = function () {
           debug('Error while loading %s', url)
           reject(url)
         }
@@ -73,8 +73,8 @@ let load = (function() {
   }
 })()
 
-let getSource = function(prefix, dispatch) {
-  return function(name, callback) {
+const getSource = function (prefix, dispatch) {
+  return function (name, callback) {
     const fileName = prefix + name
     dispatch('github/getFile', fileName, {
       root: true
@@ -128,7 +128,7 @@ export const actions = {
       },
       { root: true }
     )
-    let devBuild = rootState.github.currentBranch === 'development'
+    const devBuild = rootState.github.currentBranch === 'development'
     let metalsmithConfig = await dispatch(
       'github/getFile',
       '_layouts/metalsmith.json',
@@ -138,9 +138,9 @@ export const actions = {
     )
 
     metalsmithConfig = JSON.parse(metalsmithConfig.content)
-    let localPlugins = Object.keys(local).map(name => kebabCase(name))
+    const localPlugins = Object.keys(local).map(name => kebabCase(name))
     debug('kebabCased local plugins %o', localPlugins)
-    let findPlugin = find(metalsmithConfig.plugins, 'metalsmith-layouts')
+    const findPlugin = find(metalsmithConfig.plugins, 'metalsmith-layouts')
     merge(findPlugin, {
       'metalsmith-layouts': {
         pattern: '**',
@@ -157,7 +157,7 @@ export const actions = {
     })
 
     if (findPlugin['metalsmith-layouts'].engineOptions.partials) {
-      let loadPartials = Object.entries(
+      const loadPartials = Object.entries(
         findPlugin['metalsmith-layouts'].engineOptions.partials
       ).map(async partial => {
         debug(
@@ -165,7 +165,7 @@ export const actions = {
           partial[0],
           partial[1]
         )
-        let file = await dispatch('github/getFile', partial[1], {
+        const file = await dispatch('github/getFile', partial[1], {
           root: true
         })
         debug('partial with path %s found: %o', partial[1], file)
@@ -191,9 +191,9 @@ export const actions = {
       })
     }
 
-    //Get all plugin names from metalsmith.json file out of the repo
-    //Filter all the local plugins
-    //TODO: Force the localPlugins in the build, regardless of metalsmith.json
+    // Get all plugin names from metalsmith.json file out of the repo
+    // Filter all the local plugins
+    // TODO: Force the localPlugins in the build, regardless of metalsmith.json
     metalsmithConfig.plugins.forEach((plugin, index) => {
       if (
         localPlugins.some(localName => localName === Object.keys(plugin)[0])
@@ -216,7 +216,7 @@ export const actions = {
 
     debug('Metalsmith plugins to be loaded %o', metalsmithConfig.plugins)
 
-    let cdnPlugins = metalsmithConfig.plugins.map(plugin => {
+    const cdnPlugins = metalsmithConfig.plugins.map(plugin => {
       if (!plugin.local) {
         return load.js(plugin.url)
       }
@@ -232,7 +232,7 @@ export const actions = {
     metalsmithConfig.metadata.rootpath = '/'
     metalsmithConfig.metadata.now = new Date()
 
-    if (!devBuild && pagesDomain != rootState.github.repo) {
+    if (!devBuild && pagesDomain !== rootState.github.repo) {
       metalsmithConfig.metadata.rootpath += rootState.github.repo + '/'
     }
     // overrule some metadata
@@ -267,18 +267,25 @@ export const actions = {
       ms = ms.destination(metalsmithConfig.destination)
     }
 
-    if (metalsmithConfig.hasOwnProperty('clean') && !devBuild) {
+    if (
+      Object.prototype.hasOwnProperty.call(metalsmithConfig, 'clean') &&
+      !devBuild
+    ) {
       ms = ms.clean(metalsmithConfig.clean)
-    } else if (metalsmithConfig.hasOwnProperty('devClean') && devBuild) {
+    } else if (
+      Object.prototype.hasOwnProperty.call(metalsmithConfig, 'devClean') &&
+      devBuild
+    ) {
       ms = ms.clean(metalsmithConfig.devClean)
     }
 
     metalsmithConfig.plugins.forEach(plugin => {
-      let pluginName = Object.keys(plugin)[0]
-      let pluginNameCamelCase = camelCase(pluginName)
+      const pluginName = Object.keys(plugin)[0]
+      const pluginNameCamelCase = camelCase(pluginName)
       if (
-        !plugin.hasOwnProperty('dev') ||
-        (plugin.hasOwnProperty('dev') && plugin.dev === devBuild)
+        !Object.prototype.hasOwnProperty.call(plugin, 'dev') ||
+        (Object.prototype.hasOwnProperty.call(plugin, 'dev') &&
+          plugin.dev === devBuild)
       ) {
         if (plugin.local) {
           if (typeof plugin[pluginName] === 'boolean') {
@@ -301,7 +308,7 @@ export const actions = {
     // TODO: The build functions does not call the callback, or doesn't return the files parameter. Bug in Metalsmith?
     debug('Start build now')
 
-    ms.build(function(err, files) {
+    ms.build(function (err, files) {
       if (err) {
         debug('runMetalsmith build error: %o', err)
       }
@@ -321,7 +328,7 @@ export const actions = {
         dispatch('runMetalsmith')
       } else {
         commit('setMetalsmithDisabled', false)
-        setTimeout(function() {
+        setTimeout(function () {
           commit(
             'status/addOrUpdateStatusItem',
             {

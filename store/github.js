@@ -44,7 +44,7 @@ export const mutations = {
   addFile(state, payload) {
     const file = state.fileContents.find(f => f.path === payload.path)
     if (file === undefined) {
-      let entry = findFileRecursive(state.fileTree, payload.path)
+      const entry = findFileRecursive(state.fileTree, payload.path)
       entry.sha = calculateSha1(payload)
       calculateSha1(payload)
       state.fileContents.push(payload)
@@ -61,7 +61,7 @@ export const mutations = {
     if (parent.constructor === Array) {
       state.fileTree.push(node)
     } else {
-      let parentRef = findFileRecursive(state.fileTree, parent.path)
+      const parentRef = findFileRecursive(state.fileTree, parent.path)
       if (parentRef.children) {
         parentRef.children.push(node)
       } else {
@@ -104,7 +104,7 @@ export const mutations = {
     if (builtFile) {
       file.builtFile = builtFile
     }
-    let entry = findFileRecursive(state.fileTree, file.path)
+    const entry = findFileRecursive(state.fileTree, file.path)
     entry.sha = calculateSha1(file)
     calculateSha1(file)
   }
@@ -112,9 +112,9 @@ export const mutations = {
 
 export const actions = {
   async searchTemplates({ rootState, commit }, searchTerm) {
-    let q = `${searchTerm}+topic:neumannssg-template`
-    let result = await this.$octoKit.search.repos({ q: q })
-    let templates = result.data.items.map(template => {
+    const q = `${searchTerm}+topic:neumannssg-template`
+    const result = await this.$octoKit.search.repos({ q })
+    const templates = result.data.items.map(template => {
       return {
         name: template.name,
         full_name: template.full_name,
@@ -127,10 +127,10 @@ export const actions = {
     return templates
   },
   async addSubTree({ dispatch, commit, state, rootState }, fullName) {
-    //Poor man's subtree command (it just copies files from one repo to another)
+    // Poor man's subtree command (it just copies files from one repo to another)
     const owner = fullName.split('/')[0]
     const repo = fullName.split('/')[1]
-    //create subfolder in layouts folder
+    // create subfolder in layouts folder
     addTreeItem(
       '_layouts/' + repo,
       { mode: '040000', name: repo, path: '_layouts/' + repo, type: 'tree' },
@@ -142,25 +142,25 @@ export const actions = {
       repo,
       per_page: 1
     })
-    const tree_sha = resultCommits.data[0].commit.tree.sha
-    debug('Get git tree for repo %s wit tree sha %s.', fullName, tree_sha)
+    const treeSha = resultCommits.data[0].commit.tree.sha
+    debug('Get git tree for repo %s wit tree sha %s.', fullName, treeSha)
     const result = await this.$octoKit.git.getTree({
       owner,
       repo,
-      tree_sha,
+      tree_sha: treeSha,
       recursive: 1
     })
     result.data.tree.forEach(async object => {
       object.path = '_layouts/' + repo + '/' + object.path
       if (object.type === 'blob') {
-        //get blob
+        // get blob
         debug('Get blob for path %s with sha %s.', object.path, object.sha)
         const blob = await this.$octoKit.git.getBlob({
           owner,
           repo,
           file_sha: object.sha
         })
-        //create blob
+        // create blob
         debug('Create blob for path %s.', object.path)
         await this.$octoKit.git.createBlob({
           owner: rootState.auth.user.login,
@@ -184,10 +184,10 @@ export const actions = {
   },
   async getRepo({ rootState, commit }) {
     const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
-    let pathName = window.location.pathname
+    const pathName = window.location.pathname
     let repoName = pathName.substring(1, pathName.indexOf('/admin'))
     if (repoName === '/') {
-      if (process.env.APP_ENV == 'development') {
+      if (process.env.APP_ENV === 'development') {
         debug(
           'Development mode: Picking neumannssg repo from Github: %s',
           process.env.APP_TEMPLATE_REPO
@@ -198,10 +198,10 @@ export const actions = {
       }
     }
     let q = `user:${rootState.auth.user.login}+topic:neumannssg`
-    let result = await this.$octoKit.search.repos({ q: q })
+    let result = await this.$octoKit.search.repos({ q })
     if (
       result.data.items &&
-      result.data.items.some(repo => repo.name == repoName)
+      result.data.items.some(repo => repo.name === repoName)
     ) {
       debug(
         'Repository name  %s based on location path %s is a neumannssg repository',
@@ -210,9 +210,9 @@ export const actions = {
       )
       commit('setRepo', repoName)
     }
-    let neumannSsgSites = result.data.items.map(site => {
+    const neumannSsgSites = result.data.items.map(site => {
       let adminUrl = ''
-      if (pagesDomain == repoName.toLowerCase()) {
+      if (pagesDomain === repoName.toLowerCase()) {
         adminUrl = 'https://' + pagesDomain + '/admin'
       } else {
         adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
@@ -220,13 +220,13 @@ export const actions = {
       return {
         name: site.name,
         url: adminUrl,
-        active: site.name == repoName,
+        active: site.name === repoName,
         neumannssg: true
       }
     })
     q = `repo:${rootState.auth.user.login}/${pagesDomain}`
     try {
-      result = await this.$octoKit.search.repos({ q: q })
+      result = await this.$octoKit.search.repos({ q })
       if (result.data.items) {
         neumannSsgSites.push({
           name: pagesDomain,
@@ -256,113 +256,109 @@ export const actions = {
       { root: true }
     )
     debug('status: %o', rootState.status.statusItems)
-    try {
-      const response = await this.$octoKit.repos.createUsingTemplate({
-        template_owner: process.env.APP_TEMPLATE_OWNER,
-        template_repo: process.env.APP_TEMPLATE_REPO,
-        name
+
+    const response = await this.$octoKit.repos.createUsingTemplate({
+      template_owner: process.env.APP_TEMPLATE_OWNER,
+      template_repo: process.env.APP_TEMPLATE_REPO,
+      name
+    })
+    debug('Create new NeumannSsg repo: %o', response)
+    if (response.status === 201) {
+      commit(
+        'status/addOrUpdateStatusItem',
+        {
+          name: 'github',
+          text: 'Add topic',
+          icon: 'mdi-github',
+          button: false,
+          progress: { indeterminate: false, value: 33 }
+        },
+        { root: true }
+      )
+      // repo is created, now add topic (to be able to distinguish neumannssg repo's later on)
+      const responseTopics = await this.$octoKit.repos.replaceAllTopics({
+        owner: rootState.auth.user.login,
+        repo: name,
+        names: ['neumannssg']
       })
-      debug('Create new NeumannSsg repo: %o', response)
-      if (response.status == 201) {
-        commit(
-          'status/addOrUpdateStatusItem',
-          {
-            name: 'github',
-            text: 'Add topic',
-            icon: 'mdi-github',
-            button: false,
-            progress: { indeterminate: false, value: 33 }
-          },
-          { root: true }
-        )
-        // repo is created, now add topic (to be able to distinguish neumannssg repo's later on)
-        const responseTopics = await this.$octoKit.repos.replaceAllTopics({
+      debug(
+        'Add topic neumannssg to repo %s/%s : %o',
+        rootState.auth.user.login,
+        name,
+        responseTopics
+      )
+      // enable pages
+      commit(
+        'status/addOrUpdateStatusItem',
+        {
+          name: 'github',
+          text: 'Enable pages',
+          icon: 'mdi-github',
+          button: false,
+          progress: { indeterminate: false, value: 66 }
+        },
+        { root: true }
+      )
+      try {
+        // This github call always throws an error, so we should ignore it
+        const responsePages = await this.$octoKit.repos.enablePagesSite({
           owner: rootState.auth.user.login,
           repo: name,
-          names: ['neumannssg']
+          source: {
+            branch: 'master',
+            path: ''
+          }
         })
         debug(
-          'Add topic neumannssg to repo %s/%s : %o',
+          'Enabling Github Pages for %s/%s did not return an error (Github fixed this?). response : %o',
           rootState.auth.user.login,
           name,
-          responseTopics
+          responsePages
         )
-        // enable pages
-        commit(
-          'status/addOrUpdateStatusItem',
-          {
-            name: 'github',
-            text: 'Enable pages',
-            icon: 'mdi-github',
-            button: false,
-            progress: { indeterminate: false, value: 66 }
-          },
-          { root: true }
+      } catch (error) {
+        debug(
+          'Enabling Github Pages for %s/%s returned an eror (issue with Github API). error: %o',
+          rootState.auth.user.login,
+          name,
+          error
         )
-        try {
-          // This github call always throws an error, so we should ignore it
-          const responsePages = await this.$octoKit.repos.enablePagesSite({
-            owner: rootState.auth.user.login,
-            repo: name,
-            source: {
-              branch: 'master',
-              path: ''
-            }
-          })
-          debug(
-            'Enabling Github Pages for %s/%s did not return an error (Github fixed this?). response : %o',
-            rootState.auth.user.login,
-            name,
-            responsePages
-          )
-        } catch (error) {
-          debug(
-            'Enabling Github Pages for %s/%s returned an eror (issue with Github API). error: %o',
-            rootState.auth.user.login,
-            name,
-            error
-          )
-        }
-        commit(
-          'status/addOrUpdateStatusItem',
-          {
-            name: 'github',
-            text: 'new repo created',
-            icon: 'mdi-github',
-            button: false,
-            progress: { indeterminate: false, value: 100 }
-          },
-          { root: true }
-        )
-        const pagesDomain =
-          rootState.auth.user.login.toLowerCase() + '.github.io'
-        let repoUrl = 'https://' + pagesDomain + '/'
-        if (pagesDomain != name) {
-          repoUrl += name + '/'
-        }
-        dispatch(
-          'status/addNotification',
-          {
-            title: 'New repo created',
-            subTitle: `New repo created <a href="${repoUrl}admin" target="_blank">${name}</a>`
-          },
-          { root: true }
-        )
-        setTimeout(function() {
-          commit(
-            'status/addOrUpdateStatusItem',
-            {
-              name: 'github',
-              text: 'idle',
-              icon: 'mdi-github',
-              button: false
-            },
-            { root: true }
-          )
-        }, 6000)
       }
-    } catch (error) {
-      throw error
+      commit(
+        'status/addOrUpdateStatusItem',
+        {
+          name: 'github',
+          text: 'new repo created',
+          icon: 'mdi-github',
+          button: false,
+          progress: { indeterminate: false, value: 100 }
+        },
+        { root: true }
+      )
+      const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
+      let repoUrl = 'https://' + pagesDomain + '/'
+      if (pagesDomain !== name) {
+        repoUrl += name + '/'
+      }
+      dispatch(
+        'status/addNotification',
+        {
+          title: 'New repo created',
+          subTitle: `New repo created <a href="${repoUrl}admin" target="_blank">${name}</a>`
+        },
+        { root: true }
+      )
+      setTimeout(function () {
+        commit(
+          'status/addOrUpdateStatusItem',
+          {
+            name: 'github',
+            text: 'idle',
+            icon: 'mdi-github',
+            button: false
+          },
+          { root: true }
+        )
+      }, 6000)
     }
   },
 
@@ -395,7 +391,7 @@ export const actions = {
     const result = await this.$octoKit.repos.listCommits({
       owner: rootState.auth.user.login,
       repo: state.repo,
-      sha: sha,
+      sha,
       per_page: 1
     })
     commit('setTreeSha', result.data[0].commit.tree.sha)
@@ -404,7 +400,7 @@ export const actions = {
   },
 
   async merge({ rootState, state, commit }, { base, head, message }) {
-    let payload = {
+    const payload = {
       owner: rootState.auth.user.login,
       repo: state.repo,
       base,
@@ -447,6 +443,7 @@ export const actions = {
   },
 
   updateFileContent({ commit, dispatch, state }, { content, path, builtFile }) {
+    /* eslint-disable no-async-promise-executor */
     return new Promise(async (resolve, reject) => {
       let file = await dispatch('getFile', path)
       if (file !== undefined) {
@@ -467,7 +464,7 @@ export const actions = {
           binary: contentIsBinary
         })
         file = {
-          content: content,
+          content,
           ...fileNode
         }
         if (!contentIsBinary) {
@@ -477,6 +474,7 @@ export const actions = {
       }
       resolve(file)
     })
+    /* eslint-enable no-async-promise-executor */
   },
 
   async getFile({ rootState, state, commit }, path) {
@@ -485,7 +483,7 @@ export const actions = {
       path = path.substr(1)
     }
     let file = state.fileContents.find(f => f.path === path)
-    if (file == undefined) {
+    if (file === undefined) {
       try {
         const treeFile = findFileRecursive(state.fileTree, path)
         if (treeFile !== undefined) {
@@ -599,7 +597,7 @@ export const actions = {
       { root: true }
     )
 
-    let createBlobs = state.fileContents
+    const createBlobs = state.fileContents
       .filter(file => file.newSha)
       .map(editedFile => {
         debug('Create blob for %s', editedFile.path)
@@ -615,7 +613,7 @@ export const actions = {
             encoding: 'base64'
           })
           .then(result => {
-            if (editedFile.newSha != result.data.sha) {
+            if (editedFile.newSha !== result.data.sha) {
               debug(
                 'sha mismatch for file %s! Our sha: %s ; Theirs %o',
                 editedFile.path,
@@ -630,7 +628,7 @@ export const actions = {
 
     debug('New blobs created')
 
-    let gitTree = state.fileContents
+    const gitTree = state.fileContents
       .filter(file => file.newSha)
       .map(editedFile => {
         return {
@@ -716,7 +714,7 @@ export const actions = {
       },
       { root: true }
     )
-    setTimeout(function() {
+    setTimeout(function () {
       commit(
         'status/addOrUpdateStatusItem',
         {
@@ -768,7 +766,7 @@ function findParentRecursive(array, file) {
 }
 
 function findOrCreateParent(tree, path) {
-  if (path.indexOf('/') === -1) {
+  if (!path.includes('/')) {
     // The file is at the root, the parent is the tree itself
     return tree
   } else {
@@ -850,9 +848,9 @@ function addTreeItem(path, object, array) {
 }
 
 function calculateSha1(file) {
-  let contents = file.content
+  const contents = file.content
   let bytes
-  if (!file.encoding || (file.encoding && file.encoding != 'utf-8')) {
+  if (!file.encoding || (file.encoding && file.encoding !== 'utf-8')) {
     bytes = Uint8Array.from(atob(contents), c => c.charCodeAt(0))
   } else {
     const enc = new TextEncoder()

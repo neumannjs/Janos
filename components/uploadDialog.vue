@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="value" :persistent="persistent" width="500px" @input="$emit('input', $event)">
+  <v-dialog
+    v-model="value"
+    :persistent="persistent"
+    width="500px"
+    @input="$emit('input', $event)"
+  >
     <template v-slot:activator="{ on }">
       <slot name="activator" :on="on" />
     </template>
@@ -48,21 +53,21 @@ export default {
     }
   },
   methods: {
-    upload: async function() {
+    async upload() {
       this.loading = true
       this.fileContents = []
       const that = this
-      const uploads = this.files.map(async file => {
+      const uploads = this.files.map(file => {
         const reader = new FileReader()
         reader.addEventListener('loadend', () => {
-          let binary = isBinary(
+          const binary = isBinary(
             file.name,
             Buffer.from(
               reader.result.substr(reader.result.indexOf(';base64,') + 8),
               'base64'
             )
           )
-          let newFile = {
+          const newFile = {
             parent: that.parent,
             name: file.name,
             type: 'blob',
@@ -97,11 +102,4 @@ export default {
 }
 </script>
 
-<style>
-</style>
-
-// addNodeToTree({ parent: item, name: '', type: 'blob' }
-// Daarna commit addFile met zelfde object maar met conent erbij.
-// parent weet je al
-// name nu ook
-// content
+<style></style>

@@ -19,7 +19,7 @@ import 'codemirror/addon/selection/active-line.js'
 import 'codemirror/addon/selection/mark-selection.js'
 import 'codemirror/addon/search/searchcursor.js'
 
-//scrollbars
+// scrollbars
 import 'codemirror/addon/scroll/simplescrollbars.js'
 
 // highlightSelectionMatches

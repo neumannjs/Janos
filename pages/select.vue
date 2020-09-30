@@ -5,7 +5,7 @@
     </v-toolbar>
     <v-card-text>
       <v-list two-line>
-        <template v-for="(repo) in repos">
+        <template v-for="repo in repos">
           <v-list-item :key="repo.name" @click="gotoRepo(repo.url)">
             <v-list-item-content>
               <v-list-item-title v-text="repo.name"></v-list-item-title>
@@ -27,7 +27,7 @@ export default {
   layout: 'centered',
   auth: false,
   methods: {
-    gotoRepo: function(uri) {
+    gotoRepo(uri) {
       window.location = uri
     }
   }

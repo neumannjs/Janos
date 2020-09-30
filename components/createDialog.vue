@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="value" :persistent="persistent" width="500px" @input="$emit('input', $event)">
+  <v-dialog
+    v-model="value"
+    :persistent="persistent"
+    width="500px"
+    @input="$emit('input', $event)"
+  >
     <template v-slot:activator="{ on }">
       <slot name="activator" :on="on" />
     </template>
@@ -7,9 +12,11 @@
       <v-toolbar color="primary" dark flat>
         <v-toolbar-title>{{ title }}</v-toolbar-title>
       </v-toolbar>
-      <v-card-text
-        v-show="personalRepo"
-      >The repository {{ personalRepo }} for your personal page is still available. Alternatively you can provide a different name for your website.</v-card-text>
+      <v-card-text v-show="personalRepo"
+        >The repository {{ personalRepo }} for your personal page is still
+        available. Alternatively you can provide a different name for your
+        website.</v-card-text
+      >
       <v-card-text>
         <v-form ref="form">
           <v-text-field
@@ -49,14 +56,14 @@ export default {
     }
   },
   watch: {
-    personalRepo: function(val) {
+    personalRepo(val) {
       if (val.length > 0) {
         this.repoName = val
       }
     }
   },
   methods: {
-    create: function(value) {
+    create(value) {
       if (this.$refs.form.validate()) {
         this.value = false
         this.$emit('create', value)
@@ -66,5 +73,4 @@ export default {
 }
 </script>
 
-<style>
-</style>
+<style></style>

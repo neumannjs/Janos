@@ -11,7 +11,11 @@
       app
     >
       <v-list nav>
-        <v-list-item v-for="(drw, i) in drawers" :key="i" @click="switchNav(drw.name)">
+        <v-list-item
+          v-for="(drw, i) in drawers"
+          :key="i"
+          @click="switchNav(drw.name)"
+        >
           <v-list-item-icon>
             <v-icon medium v-text="drw.icon" />
           </v-list-item-icon>
@@ -44,7 +48,7 @@
     <v-navigation-drawer
       v-show="activeDrawer == 'explorer'"
       v-model="drawer"
-      :style="{marginLeft: '56px'}"
+      :style="{ marginLeft: '56px' }"
       width="300px"
       app
     >
@@ -71,7 +75,7 @@
               hide-details
               single-line
               dense
-              :disabled="numberOfChangedFiles>0"
+              :disabled="numberOfChangedFiles > 0"
               @change="checkoutBranch"
             ></v-select>
           </v-list-item-content>
@@ -87,15 +91,25 @@
             >
               <template v-slot:prepend="{ item, open }">
                 <span>
-                  <v-icon v-if="item.type === 'tree'">{{ open ? 'mdi-folder-open' : 'mdi-folder' }}</v-icon>
+                  <v-icon v-if="item.type === 'tree'">{{
+                    open ? 'mdi-folder-open' : 'mdi-folder'
+                  }}</v-icon>
                   <v-icon
-                    v-else-if="files[item.name.substring(item.name.indexOf('.') + 1)]"
-                  >{{ files[item.name.substring(item.name.indexOf('.') + 1)].icon }}</v-icon>
+                    v-else-if="
+                      files[item.name.substring(item.name.indexOf('.') + 1)]
+                    "
+                    >{{
+                      files[item.name.substring(item.name.indexOf('.') + 1)]
+                        .icon
+                    }}</v-icon
+                  >
                   <v-icon v-else>{{ files['default'].icon }}</v-icon>
                 </span>
               </template>
               <template v-slot:label="{ item }">
-                <span v-if="item.type === 'newfile' || item.type === 'newfolder'">
+                <span
+                  v-if="item.type === 'newfile' || item.type === 'newfolder'"
+                >
                   <v-text-field
                     v-model="fileName"
                     required
@@ -107,7 +121,10 @@
                 </span>
                 <span v-else>
                   <v-hover v-slot:default="{ hover }">
-                    <div :style="{height: '38px'}" class="d-flex align-center">
+                    <div
+                      :style="{ height: '38px' }"
+                      class="d-flex align-center"
+                    >
                       {{ item.name }}
                       <v-spacer />
                       <span v-if="hover && item.type === 'tree'">
@@ -115,14 +132,28 @@
                           text
                           icon
                           color="red"
-                          @click.stop="uploadParent = item; uploadDialog = true"
+                          @click.stop="
+                            uploadParent = item
+                            uploadDialog = true
+                          "
                         >
                           <v-icon>mdi-file-upload</v-icon>
                         </v-btn>
-                        <v-btn text icon color="red" small @click.stop="onClickAddFileBtn(item)">
+                        <v-btn
+                          text
+                          icon
+                          color="red"
+                          small
+                          @click.stop="onClickAddFileBtn(item)"
+                        >
                           <v-icon>mdi-file-plus</v-icon>
                         </v-btn>
-                        <v-btn text icon color="red" @click.stop="onClickAddFolderBtn(item)">
+                        <v-btn
+                          text
+                          icon
+                          color="red"
+                          @click.stop="onClickAddFolderBtn(item)"
+                        >
                           <v-icon>mdi-folder-plus</v-icon>
                         </v-btn>
                       </span>
@@ -157,7 +188,7 @@
     <v-navigation-drawer
       v-show="activeDrawer == 'github'"
       v-model="drawer"
-      :style="{marginLeft: '56px'}"
+      :style="{ marginLeft: '56px' }"
       width="300px"
       app
     >
@@ -179,7 +210,10 @@
             />
           </v-list-item-content>
         </v-list-item>
-        <v-list-item :disabled="commitMessage == '' || commitDisable" @click="createCommit">
+        <v-list-item
+          :disabled="commitMessage == '' || commitDisable"
+          @click="createCommit"
+        >
           <v-list-item-action>
             <v-icon>mdi-source-commit</v-icon>
           </v-list-item-action>
@@ -188,7 +222,7 @@
             <v-list-item-title>Create Git Commit</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="merge({base: 'development', head: 'source'})">
+        <v-list-item @click="merge({ base: 'development', head: 'source' })">
           <v-list-item-action>
             <v-icon>mdi-source-merge</v-icon>
           </v-list-item-action>
@@ -197,7 +231,7 @@
             <v-list-item-title>Merge Source > development</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="merge({base: 'staging', head: 'source'})">
+        <v-list-item @click="merge({ base: 'staging', head: 'source' })">
           <v-list-item-action>
             <v-icon>mdi-source-merge</v-icon>
           </v-list-item-action>
@@ -206,7 +240,7 @@
             <v-list-item-title>Merge Source > staging</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="merge({base: 'master', head: 'source'})">
+        <v-list-item @click="merge({ base: 'master', head: 'source' })">
           <v-list-item-action>
             <v-icon>mdi-source-merge</v-icon>
           </v-list-item-action>
@@ -222,7 +256,13 @@
     <metalsmith-drawer :drawer="drawer" />
 
     <!-- Tabs -->
-    <v-app-bar ref="tabBar" flat dense app :style="{ paddingLeft: leftPadding + 'px' }">
+    <v-app-bar
+      ref="tabBar"
+      flat
+      dense
+      app
+      :style="{ paddingLeft: leftPadding + 'px' }"
+    >
       <v-tabs v-show="openTab" v-model="openTab" slider-color="white">
         <v-tab
           v-for="file in openFiles"
@@ -233,14 +273,28 @@
           @mouseout="hoverTab = null"
         >
           {{ file.name }}
-          <v-btn text icon color="red" small :ripple="false" @click="closeTab(file.path)">
+          <v-btn
+            text
+            icon
+            color="red"
+            small
+            :ripple="false"
+            @click="closeTab(file.path)"
+          >
             <v-icon v-show="hoverTab === file.path" small>close</v-icon>
           </v-btn>
         </v-tab>
       </v-tabs>
       <v-spacer />
       <v-toolbar-items>
-        <v-btn v-show="buttons.preview" icon @click="splitEditor = !splitEditor; onResize()">
+        <v-btn
+          v-show="buttons.preview"
+          icon
+          @click="
+            splitEditor = !splitEditor
+            onResize()
+          "
+        >
           <v-icon>pageview</v-icon>
         </v-btn>
         <account :model="accountDialog" />
@@ -248,7 +302,10 @@
     </v-app-bar>
 
     <!-- Main content -->
-    <v-content class="fill-height" :style="{ padding: '48px 0px 0px ' + leftPadding + 'px' }">
+    <v-content
+      class="fill-height"
+      :style="{ padding: '48px 0px 0px ' + leftPadding + 'px' }"
+    >
       <v-tabs-items v-model="openTab" class="fill-height">
         <v-tab-item
           v-for="file in openFiles"
@@ -270,7 +327,9 @@
                     :options="cmOption"
                     @ready="onResize()"
                   />
-                  <v-card v-else flat tile class="pa-2">The contents of this file are binary</v-card>
+                  <v-card v-else flat tile class="pa-2"
+                    >The contents of this file are binary</v-card
+                  >
                 </v-card>
               </v-col>
               <v-col
@@ -279,7 +338,10 @@
                 cols="6"
                 class="calculatedHeight"
               >
-                <preview :file="getPreviewFile(file)" :style="{width: '100%', height: '100%'}" />
+                <preview
+                  :file="getPreviewFile(file)"
+                  :style="{ width: '100%', height: '100%' }"
+                />
               </v-col>
             </v-row>
           </v-container>
@@ -375,13 +437,13 @@ export default {
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
-    openTab: async function(val, oldVal) {
+    openTab(val, oldVal) {
       // Whenever the open tab changes, change `active`, check whether buttons should be shown
       debug('openTab value changed from old: %s to new: %s', oldVal, val)
       if (val !== null) {
         // Retrieve file contents
         const file = this.fileContents.find(f => f.path === val)
-        if (this.active.path != file.path) {
+        if (this.active.path !== file.path) {
           this.active = [file]
         }
         // Check for a file extension
@@ -390,7 +452,7 @@ export default {
           // Change the mode of the code editor to match the file extension
           this.cmOption.mode = this.files[extension].mode
           // Show and hide buttons based on the file extension
-          for (let [key] of Object.entries(this.buttons)) {
+          for (const [key] of Object.entries(this.buttons)) {
             if (this.files[extension].buttons) {
               this.buttons[key] = this.files[extension].buttons.includes(key)
             } else {
@@ -400,25 +462,25 @@ export default {
         } else {
           // Default mode if file extension doesn't match
           this.cmOption.mode = this.files.default.mode
-          for (let [key] of Object.entries(this.buttons)) {
+          for (const [key] of Object.entries(this.buttons)) {
             this.buttons[key] = false
           }
         }
       } else {
-        for (let [key] of Object.entries(this.buttons)) {
+        for (const [key] of Object.entries(this.buttons)) {
           this.buttons[key] = false
         }
       }
       // Preview pane might be closed, so a resize might be necessary
       this.onResize()
     },
-    active: async function(val, oldVal) {
+    async active(val, oldVal) {
       // Whenever the active item in the treeview changes, check whether a file
       // should be opened.
       debug('active value changed to: %o', val)
       if (
         oldVal.length === 0 ||
-        (val.length > 0 && val[0].path != oldVal[0].path)
+        (val.length > 0 && val[0].path !== oldVal[0].path)
       ) {
         // Try to find the active item in fileContents, based on the path
         const file = this.fileContents.find(f => f.path === val[0].path)
@@ -440,7 +502,7 @@ export default {
         }
       }
     },
-    numberOfChangedFiles: function() {
+    numberOfChangedFiles() {
       this.addOrUpdateStatusItem({
         name: 'github',
         button: false,
@@ -452,7 +514,7 @@ export default {
       })
     }
   },
-  mounted: function() {
+  mounted() {
     this.setActiveDrawer('explorer')
     this.addOrUpdateStatusItem({
       name: 'github',
@@ -476,13 +538,13 @@ export default {
       } else {
         path = file.path
       }
-      let previewFile = this.fileContents.find(file => file.path == path)
+      let previewFile = this.fileContents.find(file => file.path === path)
       if (!previewFile || !previewFile.content) {
         previewFile = { content: '' }
       }
       return previewFile
     },
-    createCommit: async function() {
+    async createCommit() {
       debug(this.commitMessage)
       this.commitDisable = true
       await this.createGitTree()
@@ -490,7 +552,7 @@ export default {
       this.commitMessage = ''
       this.commitDisable = false
     },
-    onResize: function() {
+    onResize() {
       if (window.innerWidth < 1264) {
         this.leftPadding = 56
       } else {
@@ -517,15 +579,15 @@ export default {
         }
       })
     },
-    switchNav: function(drawer) {
+    switchNav(drawer) {
       debug('switchNav %s', drawer)
-      if (this.activeDrawer === drawer || this.drawer == false) {
+      if (this.activeDrawer === drawer || this.drawer === false) {
         this.drawer = !this.drawer
         this.onResize()
       }
       this.setActiveDrawer(drawer)
     },
-    closeTab: function(path) {
+    closeTab(path) {
       debug('close tab %s', path)
       let lastPath = null
       let countdown = this.fileContents.length
@@ -546,19 +608,15 @@ export default {
       this.active =
         lastPath === null
           ? []
-          : [
-              this.fileContents.find(file => {
-                file.path === lastPath
-              })
-            ]
+          : [this.fileContents.find(file => file.path === lastPath)]
       debug('active tree item %o', this.active)
     },
-    onClickAddFileBtn: function(item) {
+    onClickAddFileBtn(item) {
       this.addNodeToTree({ parent: item, name: '', type: 'blob' }).then(
         newFile => {
           if (!this.open.includes(item)) {
             const self = this
-            setTimeout(function() {
+            setTimeout(function () {
               self.open.push(item)
             }, 1000)
           }
@@ -570,7 +628,7 @@ export default {
         }
       )
     },
-    onClickAddFolderBtn: function(item) {
+    onClickAddFolderBtn(item) {
       if (!this.open.includes(item)) {
         this.open.push(item)
       }
@@ -584,7 +642,7 @@ export default {
         }
       )
     },
-    onBlurFileInput: function(item, fileName) {
+    onBlurFileInput(item, fileName) {
       if (fileName.length > 0) {
         this.renameNode({ item, fileName }).then(path => {
           if (item.type !== 'tree') {
@@ -598,7 +656,7 @@ export default {
         this.removeFileFromTree(item)
       }
     },
-    onCodeChange: function(value, event) {
+    onCodeChange(value, event) {
       debug('code change of file %s', this.openTab)
       this.updateFileContent({
         content: this.$refs[

@@ -6,7 +6,7 @@
       :disabled="!item.button"
       text
       small
-      :style="{color: 'white !important', textTransform: 'none'}"
+      :style="{ color: 'white !important', textTransform: 'none' }"
       @click="$store.dispatch(item.dispatch)"
     >
       <v-badge v-if="item.badge && item.icon" overlap :content="item.badge">
@@ -14,15 +14,17 @@
           v-show="item.icon"
           class="mx-2"
           small
-          :style="{color: 'white !important'}"
-        >{{ item.icon }}</v-icon>
+          :style="{ color: 'white !important' }"
+          >{{ item.icon }}</v-icon
+        >
       </v-badge>
       <v-icon
         v-else-if="item.icon"
         class="mx-2"
         small
-        :style="{color: 'white !important'}"
-      >{{ item.icon }}</v-icon>
+        :style="{ color: 'white !important' }"
+        >{{ item.icon }}</v-icon
+      >
       <v-progress-circular
         v-show="item.progress"
         :indeterminate="item.progress ? item.progress.indeterminate : false"
@@ -43,7 +45,7 @@ export default {
     placement: { type: String, default: 'left' },
     statusItems: {
       type: Array,
-      default: function() {
+      default() {
         return []
       }
     }
