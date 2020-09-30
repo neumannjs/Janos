@@ -20,7 +20,8 @@
     "liveServer.settings.multiRootWorkspaceName": "NeumannSSG-testsite",
     "liveServer.settings.root": "/",
     "editor.formatOnSave": true,
-    "vetur.validation.template": true,
+    "editor.formatOnPaste": true,
+    "vetur.validation.template": false,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": true
     },
@@ -42,7 +43,7 @@
     },
     "vetur.format.defaultFormatter.js": "prettier-eslint",
     "vetur.format.defaultFormatter.ts": "prettier-tslint",
-    "vetur.format.defaultFormatter.html": "prettyhtml"
+    "vetur.format.defaultFormatter.html": "prettier"
   },
   "tasks": {
     "version": "2.0.0",
