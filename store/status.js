@@ -32,23 +32,28 @@ export const mutations = {
     )
   },
   addOrUpdateStatusItem(state, updatedItem) {
-    const index = state.statusItems.findIndex(
+    let idleItem = null
+    if (Array.isArray(updatedItem)) {
+      idleItem = updatedItem[1]
+      updatedItem = updatedItem[0]
+    }
+    let index = state.statusItems.findIndex(
       item => item.name === updatedItem.name
     )
     if (index > -1) {
       Vue.set(state.statusItems, index, updatedItem)
     } else {
       state.statusItems.push(updatedItem)
+      index = state.statusItems.length
+    }
+    if (idleItem) {
+      setTimeout(function () {
+        Vue.set(state.statusItems, index, idleItem)
+      }, 6000)
     }
   },
   addNotification(state, notification) {
     state.notifications.push(notification)
-  },
-  removeNotification(state, index) {
-    state.notifications.splice(index, 1)
-  },
-  clearAllNotifications(state) {
-    state.notifications = []
   },
   toggleSnackbar(state) {
     state.snackbar = !state.snackbar
@@ -65,6 +70,14 @@ export const actions = {
   addNotification({ commit, state }, notification) {
     commit('setSnackbar', true)
     commit('addNotification', notification)
+    commit('updateBadge', state.notifications.length)
+  },
+  removeNotification({ state, commit }, index) {
+    state.notifications.splice(index, 1)
+    commit('updateBadge', state.notifications.length)
+  },
+  clearAllNotifications({ state, commit }) {
+    state.notifications = []
     commit('updateBadge', state.notifications.length)
   }
 }

@@ -22,7 +22,10 @@
                 <v-list-item-content>
                   <v-list-item-title>{{ item.title }}</v-list-item-title>
                   <!-- eslint-disable-next-line -->
-                  <v-list-item-sub-title v-html="item.subTitle" class="caption" />
+                  <v-list-item-sub-title
+                    v-html="item.subTitle"
+                    class="caption"
+                  />
                 </v-list-item-content>
                 <v-list-item-action>
                   <v-icon small color="red" @click="removeNotification(index)"
@@ -66,7 +69,7 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapGetters } from 'vuex'
+import { mapState, mapActions, mapGetters } from 'vuex'
 import FooterButtons from '../components/footerButtons'
 
 export default {
@@ -92,7 +95,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('status', ['clearAllNotifications', 'removeNotification'])
+    ...mapActions('status', ['clearAllNotifications', 'removeNotification'])
   }
 }
 </script>

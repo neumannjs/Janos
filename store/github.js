@@ -346,13 +346,21 @@ export const actions = {
       }
       commit(
         'status/addOrUpdateStatusItem',
-        {
-          name: 'github',
-          text: 'new repo created',
-          icon: 'mdi-github',
-          button: false,
-          progress: { indeterminate: false, value: 100 }
-        },
+        [
+          {
+            name: 'github',
+            text: 'new repo created',
+            icon: 'mdi-github',
+            button: false,
+            progress: { indeterminate: false, value: 100 }
+          },
+          {
+            name: 'github',
+            text: 'idle',
+            icon: 'mdi-github',
+            button: false
+          }
+        ],
         { root: true }
       )
       const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
@@ -368,18 +376,6 @@ export const actions = {
         },
         { root: true }
       )
-      setTimeout(function () {
-        commit(
-          'status/addOrUpdateStatusItem',
-          {
-            name: 'github',
-            text: 'idle',
-            icon: 'mdi-github',
-            button: false
-          },
-          { root: true }
-        )
-      }, 6000)
     }
   },
 
@@ -420,7 +416,18 @@ export const actions = {
     return result.data[0].commit.tree.sha
   },
 
-  async merge({ rootState, state, commit }, { base, head, message }) {
+  async merge({ rootState, state, commit, dispatch }, { base, head, message }) {
+    commit(
+      'status/addOrUpdateStatusItem',
+      {
+        name: 'github',
+        text: 'Merging',
+        icon: 'mdi-github',
+        button: false,
+        progress: { indeterminate: true }
+      },
+      { root: true }
+    )
     const payload = {
       owner: rootState.auth.user.login,
       repo: state.repo,
@@ -433,9 +440,55 @@ export const actions = {
     try {
       const result = await this.$octoKit.repos.merge(payload)
       debug('Github merge returned %o', result.data)
+      commit(
+        'status/addOrUpdateStatusItem',
+        [
+          {
+            name: 'github',
+            text: 'merged',
+            icon: 'mdi-github',
+            button: false,
+            progress: { indeterminate: false, value: 100 }
+          },
+          {
+            name: 'github',
+            text: 'idle',
+            icon: 'mdi-github',
+            button: false
+          }
+        ],
+        { root: true }
+      )
       return result.data.sha
     } catch (error) {
       debug('Github merge returned error: %o', error)
+      dispatch(
+        'status/addNotification',
+        {
+          title: 'Merge returned an error',
+          subTitle: `error: ${error}`
+        },
+        { root: true }
+      )
+      commit(
+        'status/addOrUpdateStatusItem',
+        [
+          {
+            name: 'github',
+            text: 'merge error',
+            icon: 'mdi-github',
+            button: false,
+            progress: { indeterminate: false, value: 100 }
+          },
+          {
+            name: 'github',
+            text: 'idle',
+            icon: 'mdi-github',
+            button: false
+          }
+        ],
+        { root: true }
+      )
     }
   },
 
