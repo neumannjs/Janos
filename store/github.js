@@ -13,12 +13,17 @@ export const state = () => ({
   parentCommitSha: '',
   fileContents: [],
   neumannssgSites: [],
-  currentBranch: ''
+  currentBranch: '',
+  selectedBranch: ''
 })
 
 export const mutations = {
   setCurrentBranch(state, payload) {
     state.currentBranch = payload
+    state.selectedBranch = payload
+  },
+  setSelectedBranch(state, payload) {
+    state.selectedBranch = payload
   },
   setFileTree(state, payload) {
     state.fileTree = payload
@@ -111,6 +116,22 @@ export const mutations = {
 }
 
 export const actions = {
+  changeBranchSelection({ dispatch, commit, state, getters }, selection) {
+    commit('setSelectedBranch', selection)
+    if (getters.numberOfChangedFiles > 0) {
+      // A small timeout is needed to give the bounded UI time to pick up the rollback of the changed selection
+      setTimeout(function () {
+        debug(
+          'change branch selection back to %s, because there are unsaved changes',
+          state.currentBranch
+        )
+        commit('setSelectedBranch', state.currentBranch)
+      }, 500)
+    } else {
+      dispatch('checkoutBranch', selection)
+    }
+  },
+
   async searchTemplates({ rootState, commit }, searchTerm) {
     const q = `${searchTerm}+topic:neumannssg-template`
     const result = await this.$octoKit.search.repos({ q })
@@ -428,6 +449,7 @@ export const actions = {
       await dispatch('getTreeSha', branch)
       await dispatch('getFileTree')
       commit('setCurrentBranch', branch)
+      commit('setSelectedBranch', branch)
     }
   },
 
@@ -488,6 +510,7 @@ export const actions = {
         const treeFile = findFileRecursive(state.fileTree, path)
         if (treeFile !== undefined) {
           // fileTree only contains files that are in the github repository, or that are manually created in the browser
+          debug('get file %s from github.', path)
           const result = await this.$octoKit.git.getBlob({
             owner: rootState.auth.user.login,
             repo: state.repo,
@@ -513,20 +536,6 @@ export const actions = {
             file.content = atob(file.content)
             file.encoding = 'utf-8'
           }
-          // if (path.indexOf('.md') > -1) {
-          //   debug('getFile: %s', path)
-          //   debug('getFile, file size: %i', fileObject.size)
-          //   debug('getFile, file sha: %s', fileObject.sha)
-          //   const raw = atob(fileObject.content)
-          //   debug('getFile, length of raw content: ' + raw.length)
-          //   const bytes = new Uint8Array(raw.length)
-          //   for (let i = 0; i < raw.length; i++) {
-          //     bytes[i] = raw.charCodeAt(i)
-          //   }
-          //   const wrapObject = wrap('blob', bytes.buffer)
-          //   debug('getFile, shasum of wrapObject: %s', shasum(wrapObject))
-          //   debug('getFile, sha1 of wrapObject: %s', sha1(wrapObject))
-          // }
           commit('addFile', file)
         }
       } catch (err) {

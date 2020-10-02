@@ -21,17 +21,7 @@
           </v-list-item>
         </template>
         <v-list-item-content>
-          <v-select
-            :value="currentBranch"
-            :items="branches"
-            prepend-icon="mdi-source-branch"
-            menu-props="auto"
-            hide-details
-            single-line
-            dense
-            :disabled="numberOfChangedFiles > 0"
-            @change="commitThenCheckout"
-          ></v-select>
+          <select-branch />
         </v-list-item-content>
         <v-list-item
           :disabled="metalsmithDisabled || currentBranch === 'source'"
@@ -95,10 +85,15 @@
 </template>
 
 <script>
-import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
+import { mapMutations, mapState, mapActions } from 'vuex'
+import SelectBranch from '../components/selectBranch'
+// const debug = require('debug')('components/metalsmithDrawer')
 
 export default {
   name: 'MetalsmithDrawer',
+  components: {
+    selectBranch: SelectBranch
+  },
   props: {
     drawer: { type: Boolean, default: false }
   },
@@ -108,12 +103,10 @@ export default {
       drawerTitle: 'Metalsmith',
       drawerIcon: 'mdi-anvil',
       searchTerm: '',
-      results: [],
-      branches: ['source', 'development', 'staging', 'master']
+      results: []
     }
   },
   computed: {
-    ...mapGetters('github', ['numberOfChangedFiles']),
     ...mapState('navigation', ['activeDrawer']),
     ...mapState('metalsmith', ['metalsmithDisabled']),
     ...mapState('github', ['currentBranch'])
@@ -132,19 +125,8 @@ export default {
       )
     },
 
-    commitThenCheckout() {
-      // Check for changed files and force a commit dialog, before checking out another branch.
-      if (this.numberOfChangedFiles > 0) {
-        // force commit dialog
-      }
-    },
-
     ...mapMutations('navigation', ['addDrawer']),
-    ...mapActions('github', [
-      'searchTemplates',
-      'addSubTree',
-      'checkoutBranch'
-    ]),
+    ...mapActions('github', ['searchTemplates', 'addSubTree']),
     ...mapActions('metalsmith', ['runMetalsmith'])
   }
 }

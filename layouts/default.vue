@@ -67,17 +67,7 @@
             </v-list-item>
           </template>
           <v-list-item-content>
-            <v-select
-              :value="currentBranch"
-              :items="branches"
-              prepend-icon="mdi-source-branch"
-              menu-props="auto"
-              hide-details
-              single-line
-              dense
-              :disabled="numberOfChangedFiles > 0"
-              @change="checkoutBranch"
-            ></v-select>
+            <select-branch />
           </v-list-item-content>
           <v-list-item-content>
             <v-treeview
@@ -362,6 +352,7 @@ import Account from '../components/accountDialog'
 import Upload from '../components/uploadDialog'
 import MetalsmithDrawer from '../components/metalsmithDrawer'
 import Footer from '../components/footer'
+import SelectBranch from '../components/selectBranch'
 const debug = require('debug')('layouts/default')
 
 export default {
@@ -370,7 +361,8 @@ export default {
     account: Account,
     upload: Upload,
     ftr: Footer,
-    metalsmithDrawer: MetalsmithDrawer
+    metalsmithDrawer: MetalsmithDrawer,
+    selectBranch: SelectBranch
   },
   data() {
     return {
@@ -433,7 +425,7 @@ export default {
     ...mapState('github', {
       items: state => state.fileTree
     }),
-    ...mapState('github', ['fileContents', 'currentBranch']),
+    ...mapState('github', ['fileContents']),
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
