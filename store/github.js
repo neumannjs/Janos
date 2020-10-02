@@ -434,6 +434,7 @@ export const actions = {
       base,
       head
     }
+    debug('merging payload %o', payload)
     if (message) {
       payload.message = message
     }
@@ -459,7 +460,12 @@ export const actions = {
         ],
         { root: true }
       )
-      return result.data.sha
+      debug('Merge response %O', result)
+      if (result.data) {
+        return result.data.sha
+      } else {
+        return null
+      }
     } catch (error) {
       debug('Github merge returned error: %o', error)
       dispatch(

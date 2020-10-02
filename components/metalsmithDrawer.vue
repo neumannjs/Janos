@@ -25,7 +25,7 @@
         </v-list-item-content>
         <v-list-item
           :disabled="metalsmithDisabled || currentBranch === 'source'"
-          @click="runMetalsmith()"
+          @click="mergeAndRunMetalsmith()"
         >
           <v-list-item-action>
             <v-icon>mdi-play</v-icon>
@@ -87,7 +87,7 @@
 <script>
 import { mapMutations, mapState, mapActions } from 'vuex'
 import SelectBranch from '../components/selectBranch'
-// const debug = require('debug')('components/metalsmithDrawer')
+const debug = require('debug')('components/metalsmithDrawer')
 
 export default {
   name: 'MetalsmithDrawer',
@@ -125,8 +125,28 @@ export default {
       )
     },
 
+    mergeAndRunMetalsmith() {
+      this.merge({ base: this.currentBranch, head: 'source' }).then(() => {
+        // const that = this
+        debug('pull changes')
+        // checking out the branch that is already checked out is a kind of poor men's git pull
+        this.checkoutBranch(this.currentBranch).then(() => {
+          setTimeout(() => {
+            debug('run metalsmith')
+            // that.runMetalsmith()
+          }, 5000)
+        })
+      })
+    },
+
     ...mapMutations('navigation', ['addDrawer']),
-    ...mapActions('github', ['searchTemplates', 'addSubTree']),
+    ...mapMutations('metalsmith', ['setMetalsmithDisabled']),
+    ...mapActions('github', [
+      'searchTemplates',
+      'addSubTree',
+      'merge',
+      'checkoutBranch'
+    ]),
     ...mapActions('metalsmith', ['runMetalsmith'])
   }
 }
