@@ -126,16 +126,10 @@ export default {
     },
 
     mergeAndRunMetalsmith() {
-      this.merge({ base: this.currentBranch, head: 'source' }).then(() => {
-        // const that = this
-        debug('pull changes')
-        // checking out the branch that is already checked out is a kind of poor men's git pull
-        this.checkoutBranch(this.currentBranch).then(() => {
-          setTimeout(() => {
-            debug('run metalsmith')
-            // that.runMetalsmith()
-          }, 5000)
-        })
+      debug('merge')
+      this.merge({ head: 'source' }).then(() => {
+        debug('run metalsmith')
+        this.runMetalsmith()
       })
     },
 

@@ -161,7 +161,7 @@
             </v-list-item>
           </template>
           <v-list-item-content>
-            {{ open }}
+            {{ treeSha }}
             <br />
           </v-list-item-content>
         </v-list-group>
@@ -210,33 +210,6 @@
 
           <v-list-item-content>
             <v-list-item-title>Create Git Commit</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="merge({ base: 'development', head: 'source' })">
-          <v-list-item-action>
-            <v-icon>mdi-source-merge</v-icon>
-          </v-list-item-action>
-
-          <v-list-item-content>
-            <v-list-item-title>Merge Source > development</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="merge({ base: 'staging', head: 'source' })">
-          <v-list-item-action>
-            <v-icon>mdi-source-merge</v-icon>
-          </v-list-item-action>
-
-          <v-list-item-content>
-            <v-list-item-title>Merge Source > staging</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item @click="merge({ base: 'master', head: 'source' })">
-          <v-list-item-action>
-            <v-icon>mdi-source-merge</v-icon>
-          </v-list-item-action>
-
-          <v-list-item-content>
-            <v-list-item-title>Merge Source > master</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -425,7 +398,7 @@ export default {
     ...mapState('github', {
       items: state => state.fileTree
     }),
-    ...mapState('github', ['fileContents']),
+    ...mapState('github', ['fileContents', 'treeSha']),
     ...mapState('navigation', ['drawers', 'activeDrawer'])
   },
   watch: {
@@ -665,7 +638,6 @@ export default {
       'renameNode',
       'createGitTree',
       'createGitCommit',
-      'merge',
       'checkoutBranch'
     ]),
     ...mapMutations('github', ['updateFileContent', 'setFileOpened']),

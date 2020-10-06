@@ -2,7 +2,7 @@
   <div>
     <v-select
       v-model="selectedBranch"
-      :items="branches"
+      :items="branches.map(branch => branch.name)"
       prepend-icon="mdi-source-branch"
       menu-props="auto"
       hide-details
@@ -23,13 +23,10 @@ export default {
   components: {
     commit: Commit
   },
-  data() {
-    return { branches: ['source', 'development', 'staging', 'master'] }
-  },
 
   computed: {
     ...mapGetters('github', ['numberOfChangedFiles']),
-    ...mapState('github', ['currentBranch']),
+    ...mapState('github', ['currentBranch', 'branches']),
     selectedBranch: {
       get() {
         return this.$store.state.github.selectedBranch
