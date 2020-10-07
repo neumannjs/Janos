@@ -312,14 +312,18 @@ export const actions = {
       },
       { root: true }
     )
-    debug('status: %o', rootState.status.statusItems)
 
     const response = await this.$octoKit.repos.createUsingTemplate({
       template_owner: process.env.APP_TEMPLATE_OWNER,
       template_repo: process.env.APP_TEMPLATE_REPO,
       name
     })
-    debug('Create new NeumannSsg repo: %o', response)
+    debug(
+      'Created new NeumannSsg repo from template %s/%s, respons: %o',
+      process.env.APP_TEMPLATE_OWNER,
+      process.env.APP_TEMPLATE_REPO,
+      response
+    )
     if (response.status === 201) {
       commit(
         'status/addOrUpdateStatusItem',
@@ -356,30 +360,21 @@ export const actions = {
         },
         { root: true }
       )
-      try {
-        // This github call always throws an error, so we should ignore it
-        const responsePages = await this.$octoKit.repos.enablePagesSite({
-          owner: rootState.auth.user.login,
-          repo: name,
-          source: {
-            branch: 'master',
-            path: ''
-          }
-        })
-        debug(
-          'Enabling Github Pages for %s/%s did not return an error (Github fixed this?). response : %o',
-          rootState.auth.user.login,
-          name,
-          responsePages
-        )
-      } catch (error) {
-        debug(
-          'Enabling Github Pages for %s/%s returned an eror (issue with Github API). error: %o',
-          rootState.auth.user.login,
-          name,
-          error
-        )
-      }
+      const responsePages = await this.$octoKit.repos.enablePagesSite({
+        owner: rootState.auth.user.login,
+        repo: name,
+        source: {
+          branch: 'master',
+          path: '/'
+        }
+      })
+      debug(
+        'Enabling Github Pages for %s/%s response : %o',
+        rootState.auth.user.login,
+        name,
+        responsePages
+      )
+
       commit(
         'status/addOrUpdateStatusItem',
         [
