@@ -269,7 +269,7 @@ export const actions = {
     }
     const neumannSsgSites = result.data.items.map(site => {
       let adminUrl = ''
-      if (pagesDomain === repoName.toLowerCase()) {
+      if (pagesDomain === site.name.toLowerCase()) {
         adminUrl = 'https://' + pagesDomain + '/admin'
       } else {
         adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
@@ -287,7 +287,7 @@ export const actions = {
       if (result.data.items) {
         neumannSsgSites.push({
           name: pagesDomain,
-          url: 'https://' + pagesDomain + '/admin',
+          url: 'https://' + pagesDomain,
           active: false,
           neumannssg: false
         })
