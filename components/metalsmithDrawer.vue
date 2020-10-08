@@ -2,6 +2,7 @@
   <v-navigation-drawer
     v-show="activeDrawer == drawerName"
     v-model="drawer"
+    :permanent="drawerPermanent"
     :style="{ marginLeft: '56px' }"
     width="300px"
     app
@@ -95,7 +96,8 @@ export default {
     selectBranch: SelectBranch
   },
   props: {
-    drawer: { type: Boolean, default: false }
+    drawer: { type: Boolean, default: false },
+    drawerPermanent: { type: Boolean, default: false }
   },
   data() {
     return {

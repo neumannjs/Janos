@@ -48,6 +48,7 @@
     <v-navigation-drawer
       v-show="activeDrawer == 'explorer'"
       v-model="drawer"
+      :permanent="drawerPermanent"
       :style="{ marginLeft: '56px' }"
       width="300px"
       app
@@ -178,6 +179,7 @@
     <v-navigation-drawer
       v-show="activeDrawer == 'github'"
       v-model="drawer"
+      :permanent="drawerPermanent"
       :style="{ marginLeft: '56px' }"
       width="300px"
       app
@@ -216,7 +218,7 @@
     </v-navigation-drawer>
 
     <!-- Metalsmith Drawer -->
-    <metalsmith-drawer :drawer="drawer" />
+    <metalsmith-drawer :drawer="drawer" :drawer-permanent="drawerPermanent" />
 
     <!-- Tabs -->
     <v-app-bar
@@ -343,6 +345,7 @@ export default {
       openTab: null,
       hoverTab: '',
       drawer: true,
+      drawerPermanent: true,
       active: [],
       open: [],
       splitEditor: false,
@@ -548,6 +551,7 @@ export default {
       debug('switchNav %s', drawer)
       if (this.activeDrawer === drawer || this.drawer === false) {
         this.drawer = !this.drawer
+        this.drawerPermanent = this.drawer
         this.onResize()
       }
       this.setActiveDrawer(drawer)
