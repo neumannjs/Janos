@@ -314,7 +314,7 @@
       </v-tabs-items>
     </v-content>
     <!-- Footer -->
-    <v-footer fixed app>
+    <v-footer fixed app class="footer">
       <ftr />
     </v-footer>
   </v-app>
@@ -544,7 +544,10 @@ export default {
             codeContainerWidth,
             null
           )
-          this.$refs['cmEditor-' + file.path][0].codemirror.scrollIntoView(null)
+          this.$refs['cmEditor-' + file.path][0].codemirror.scrollIntoView(
+            null,
+            24
+          )
         }
       })
     },
@@ -667,6 +670,11 @@ export default {
 
 .calculatedHeight {
   height: calc(100% - 40px) !important;
+}
+
+.footer {
+  max-height: 40px;
+  overflow-y: auto;
 }
 html {
   overflow-y: auto !important;
