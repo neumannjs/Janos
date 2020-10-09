@@ -544,6 +544,7 @@ export default {
             codeContainerWidth,
             null
           )
+          this.$refs['cmEditor-' + file.path][0].codemirror.scrollIntoView(null)
         }
       })
     },
