@@ -316,7 +316,8 @@ export const actions = {
     const response = await this.$octoKit.repos.createUsingTemplate({
       template_owner: process.env.APP_TEMPLATE_OWNER,
       template_repo: process.env.APP_TEMPLATE_REPO,
-      name
+      name,
+      include_all_branches: true
     })
     debug(
       'Created new NeumannSsg repo from template %s/%s, respons: %o',
