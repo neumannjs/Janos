@@ -56,6 +56,9 @@ module.exports = {
 
     store.dispatch('github/getFile', path).then(
       file => {
+        if (file === undefined || file.content === undefined) {
+          debug('github/getFile with path %s returned undefined.', path)
+        }
         if (encoding === '' || encoding === undefined) {
           if (file.encoding === 'utf-8') {
             callback(null, Buffer.from(file.content))

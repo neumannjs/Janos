@@ -86,7 +86,7 @@ const getSource = function (prefix, dispatch) {
         })
       })
       .catch(error => {
-        debug('file with path %s returend an error.', fileName)
+        debug('file with path %s returned an error.', fileName)
         callback(error)
       })
   }
