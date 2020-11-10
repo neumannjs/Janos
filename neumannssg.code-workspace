@@ -17,8 +17,8 @@
     }
   ],
   "settings": {
-    "liveServer.settings.multiRootWorkspaceName": "NeumannSSG-testsite",
-    "liveServer.settings.root": "/",
+    "liveServer.settings.multiRootWorkspaceName": "neumannssg-template",
+    "liveServer.settings.root": "/dist",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "vetur.validation.template": false,
