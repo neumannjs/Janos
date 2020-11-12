@@ -227,7 +227,7 @@ export const actions = {
     await Promise.all(cdnPlugins)
     debug('Plugin loaded')
 
-    const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
+    const pagesDomain = rootState.github.repoOwner + '.github.io'
 
     metalsmithConfig.metadata.domain = pagesDomain
     metalsmithConfig.metadata.rootpath = '/'

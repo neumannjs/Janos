@@ -9,6 +9,7 @@ export const state = () => ({
   fileTree: [],
   sourceFileTree: [],
   repo: '',
+  repoOwner: '',
   treeSha: '',
   newTreeSha: '',
   fileContents: [],
@@ -33,11 +34,14 @@ export const mutations = {
   setFileTree(state, payload) {
     state.fileTree = payload
   },
-  setJanosssgSites(state, payload) {
+  setJanosSites(state, payload) {
     state.janosSites = payload
   },
   setRepo(state, payload) {
     state.repo = payload
+  },
+  setRepoOwner(state, payload) {
+    state.repoOwner = payload
   },
   setTreeSha(state, payload) {
     state.treeSha = payload
@@ -135,7 +139,7 @@ export const mutations = {
 export const actions = {
   async getBranches({ state, rootState, commit }) {
     const result = await this.$octoKit.repos.listBranches({
-      owner: rootState.auth.user.login,
+      owner: state.repoOwner,
       repo: state.repo
     })
     debug('Branches: %o', result)
@@ -218,7 +222,7 @@ export const actions = {
           // create blob
           debug('Create blob for path %s.', object.path)
           await this.$octoKit.git.createBlob({
-            owner: rootState.auth.user.login,
+            owner: state.repoOwner,
             repo: state.repo,
             content: blob.data.content,
             encoding: 'base64'
@@ -240,7 +244,7 @@ export const actions = {
       })
   },
   async getRepo({ rootState, commit }) {
-    const pagesDomain = rootState.auth.user.login.toLowerCase() + '.github.io'
+    const pagesDomain = window.location.hostname
     const pathName = window.location.pathname
     let repoName = pathName.substring(1, pathName.indexOf('/admin'))
     if (repoName === '/') {
@@ -254,20 +258,32 @@ export const actions = {
         repoName = pagesDomain
       }
     }
-    let q = `user:${rootState.auth.user.login}+topic:janos`
-    let result = await this.$octoKit.search.repos({ q })
-    if (
-      result.data.items &&
-      result.data.items.some(repo => repo.name === repoName)
-    ) {
+    let result = await this.$octoKit.repos.listForAuthenticatedUser({
+      per_page: 100,
+      mediaType: {
+        previews: ['mercy']
+      }
+    })
+    // TODO: Built filter that iterates through result pages. Now it ignores repos above 100.
+    result = result.data.filter(repo => {
+      if (repo.topics) {
+        return repo.topics.some(topic => topic === 'janos')
+      }
+      return false
+    })
+    if (result && result.some(repo => repo.name === repoName)) {
       debug(
         'Repository name  %s based on location path %s is a Janos repository',
         repoName,
         window.location.pathname
       )
       commit('setRepo', repoName)
+      commit(
+        'setRepoOwner',
+        result.find(repo => repo.name === repoName).owner.login
+      )
     }
-    const janosSites = result.data.items.map(site => {
+    const janosSites = result.map(site => {
       let adminUrl = ''
       if (pagesDomain === site.name.toLowerCase()) {
         adminUrl = 'https://' + pagesDomain + '/admin'
@@ -281,13 +297,16 @@ export const actions = {
         janos: true
       }
     })
-    q = `repo:${rootState.auth.user.login}/${pagesDomain}`
+    const q = `repo:${rootState.auth.user.login}/${
+      rootState.auth.user.login.toLowerCase() + '.github.io'
+    }`
     try {
       result = await this.$octoKit.search.repos({ q })
       if (result.data.items) {
         janosSites.push({
-          name: pagesDomain,
-          url: 'https://' + pagesDomain,
+          name: rootState.auth.user.login.toLowerCase() + '.github.io',
+          url:
+            'https://' + rootState.auth.user.login.toLowerCase() + '.github.io',
           active: false,
           janos: false
         })
@@ -301,6 +320,7 @@ export const actions = {
   },
 
   async createRepo({ rootState, commit, dispatch }, name) {
+    // TODO: Support creating repos in Organizations the user is a member of.
     commit(
       'status/addOrUpdateStatusItem',
       {
@@ -417,7 +437,7 @@ export const actions = {
   ) {
     if (state.fileTree.length === 0 || force) {
       const result = await this.$octoKit.git.getTree({
-        owner: rootState.auth.user.login,
+        owner: state.repoOwner,
         repo: state.repo,
         tree_sha: state.treeSha,
         recursive: 1
@@ -438,7 +458,7 @@ export const actions = {
 
   async getTreeSha({ rootState, state, commit }, sha = 'master') {
     const result = await this.$octoKit.repos.listCommits({
-      owner: rootState.auth.user.login,
+      owner: state.repoOwner,
       repo: state.repo,
       sha,
       per_page: 1
@@ -488,7 +508,7 @@ export const actions = {
       debug('Tree to be created: %o', gitTree)
 
       const result = await this.$octoKit.git.createTree({
-        owner: rootState.auth.user.login,
+        owner: state.repoOwner,
         repo: state.repo,
         tree: gitTree,
         base_tree: state.treeSha
@@ -499,7 +519,7 @@ export const actions = {
       const newTreeSha = result.data.sha
 
       const payload = {
-        owner: rootState.auth.user.login,
+        owner: state.repoOwner,
         repo: state.repo,
         tree: newTreeSha,
         parents: [baseParent.sha, headParent.sha]
@@ -517,7 +537,7 @@ export const actions = {
         debug('Merge response %O', result)
         if (resultCommit.data) {
           await this.$octoKit.git.updateRef({
-            owner: rootState.auth.user.login,
+            owner: state.repoOwner,
             repo: state.repo,
             ref: 'heads/' + state.currentBranch,
             sha: resultCommit.data.sha
@@ -693,7 +713,7 @@ export const actions = {
           // fileTree only contains files that are in the github repository, or that are manually created in the browser
           debug('get file %s from github.', path)
           const result = await this.$octoKit.git.getBlob({
-            owner: rootState.auth.user.login,
+            owner: state.repoOwner,
             repo: state.repo,
             file_sha: treeFile.sha
           })
@@ -797,7 +817,7 @@ export const actions = {
         }
         return this.$octoKit.git
           .createBlob({
-            owner: rootState.auth.user.login,
+            owner: state.repoOwner,
             repo: state.repo,
             content,
             encoding: 'base64'
@@ -832,7 +852,7 @@ export const actions = {
     debug('Changed tree objects: %o', gitTree)
 
     const result = await this.$octoKit.git.createTree({
-      owner: rootState.auth.user.login,
+      owner: state.repoOwner,
       repo: state.repo,
       tree: gitTree,
       base_tree: state.treeSha
@@ -865,7 +885,7 @@ export const actions = {
     )
     debug(
       'Create commit for repo %s/%s and tree %s.',
-      rootState.auth.user.login,
+      state.repoOwner,
       state.repo,
       state.newTreeSha
     )
@@ -873,7 +893,7 @@ export const actions = {
       branch => branch.name === state.currentBranch
     )
     let result = await this.$octoKit.git.createCommit({
-      owner: rootState.auth.user.login,
+      owner: state.repoOwner,
       repo: state.repo,
       message,
       tree: state.newTreeSha,
@@ -881,7 +901,7 @@ export const actions = {
     })
     debug(
       'New commit created for repo %s/%s with sha %s',
-      rootState.auth.user.login,
+      state.repoOwner,
       state.repo,
       result.data.sha
     )
@@ -893,7 +913,7 @@ export const actions = {
     commit('setNewTreeSha', '')
     debug('Updated treeSha with value of newTreeSha: %s', state.treeSha)
     result = await this.$octoKit.git.updateRef({
-      owner: rootState.auth.user.login,
+      owner: state.repoOwner,
       repo: state.repo,
       ref: 'heads/' + state.currentBranch,
       sha: result.data.sha
