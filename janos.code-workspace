@@ -1,0 +1,59 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "C:\\Repositories\\githubProxy"
+    },
+    {
+      "path": "C:\\Repositories\\Janos.wiki"
+    },
+    {
+      "path": "C:\\Repositories\\Janos-templatebuilder"
+    },
+    {
+      "path": "C:\\Repositories\\Janos-starter"
+    }
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "Janos-templatebuilder",
+    "liveServer.settings.root": "/dist",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "vetur.validation.template": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    },
+    "eslint.format.enable": true,
+    "[javascript]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[html]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[vue]": {
+      "editor.defaultFormatter": "octref.vetur"
+    },
+    "vetur.format.defaultFormatter.js": "prettier-eslint",
+    "vetur.format.defaultFormatter.ts": "prettier-tslint",
+    "vetur.format.defaultFormatter.html": "prettier"
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Copy from dist to testsite",
+        "type": "shell",
+        "command": "Remove-Item /Repositories/Janos-starter/nuxt -Recurse ; Remove-Item /Repositories/Janos-starter/admin -Recurse ; Remove-Item /Repositories/Janos-starter/callback -Recurse ; Remove-Item /Repositories/Janos-starter/create -Recurse ; Remove-Item /Repositories/Janos-starter/login -Recurse ; Remove-Item /Repositories/Janos-starter/select -Recurse; Copy-Item -Path /Repositories/Janos/dist/nuxt -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/admin -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/callback -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/create -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/login -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/select -Destination /Repositories/Janos-starter -Recurse",
+        "problemMatcher": []
+      }
+    ]
+  }
+}
