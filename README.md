@@ -1,10 +1,10 @@
-# neumannssg
+# Janos
 
 > Browser based static site generator
 
 ## Build Setup
 
-``` bash
+```bash
 # install dependencies
 $ npm install
 

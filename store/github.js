@@ -12,7 +12,7 @@ export const state = () => ({
   treeSha: '',
   newTreeSha: '',
   fileContents: [],
-  neumannssgSites: [],
+  janosSites: [],
   branches: [],
   currentBranch: '',
   selectedBranch: ''
@@ -33,8 +33,8 @@ export const mutations = {
   setFileTree(state, payload) {
     state.fileTree = payload
   },
-  setNeumannssgSites(state, payload) {
-    state.neumannssgSites = payload
+  setJanosssgSites(state, payload) {
+    state.janosSites = payload
   },
   setRepo(state, payload) {
     state.repo = payload
@@ -166,7 +166,7 @@ export const actions = {
   },
 
   async searchTemplates({ rootState, commit }, searchTerm) {
-    const q = `${searchTerm}+topic:neumannssg-template`
+    const q = `${searchTerm}+topic:janos-template`
     const result = await this.$octoKit.search.repos({ q })
     const templates = result.data.items.map(template => {
       return {
@@ -246,7 +246,7 @@ export const actions = {
     if (repoName === '/') {
       if (process.env.APP_ENV === 'development') {
         debug(
-          'Development mode: Picking neumannssg repo from Github: %s',
+          'Development mode: Picking Janos repo from Github: %s',
           process.env.APP_TEMPLATE_REPO
         )
         repoName = process.env.APP_TEMPLATE_REPO
@@ -254,20 +254,20 @@ export const actions = {
         repoName = pagesDomain
       }
     }
-    let q = `user:${rootState.auth.user.login}+topic:neumannssg`
+    let q = `user:${rootState.auth.user.login}+topic:janos`
     let result = await this.$octoKit.search.repos({ q })
     if (
       result.data.items &&
       result.data.items.some(repo => repo.name === repoName)
     ) {
       debug(
-        'Repository name  %s based on location path %s is a neumannssg repository',
+        'Repository name  %s based on location path %s is a Janos repository',
         repoName,
         window.location.pathname
       )
       commit('setRepo', repoName)
     }
-    const neumannSsgSites = result.data.items.map(site => {
+    const janosSites = result.data.items.map(site => {
       let adminUrl = ''
       if (pagesDomain === site.name.toLowerCase()) {
         adminUrl = 'https://' + pagesDomain + '/admin'
@@ -278,25 +278,25 @@ export const actions = {
         name: site.name,
         url: adminUrl,
         active: site.name === repoName,
-        neumannssg: true
+        janos: true
       }
     })
     q = `repo:${rootState.auth.user.login}/${pagesDomain}`
     try {
       result = await this.$octoKit.search.repos({ q })
       if (result.data.items) {
-        neumannSsgSites.push({
+        janosSites.push({
           name: pagesDomain,
           url: 'https://' + pagesDomain,
           active: false,
-          neumannssg: false
+          janos: false
         })
       }
       debug('Search for personal Github Pages returned: %o', result)
     } catch (error) {
       debug('Search for personal Github Pages returned error: %o', error)
     }
-    commit('setNeumannssgSites', neumannSsgSites)
+    commit('setJanosSites', janosSites)
     return repoName
   },
 
@@ -320,7 +320,7 @@ export const actions = {
       include_all_branches: true
     })
     debug(
-      'Created new NeumannSsg repo from template %s/%s, respons: %o',
+      'Created new Janos repo from template %s/%s, respons: %o',
       process.env.APP_TEMPLATE_OWNER,
       process.env.APP_TEMPLATE_REPO,
       response
@@ -337,14 +337,14 @@ export const actions = {
         },
         { root: true }
       )
-      // repo is created, now add topic (to be able to distinguish neumannssg repo's later on)
+      // repo is created, now add topic (to be able to distinguish janos repo's later on)
       const responseTopics = await this.$octoKit.repos.replaceAllTopics({
         owner: rootState.auth.user.login,
         repo: name,
-        names: ['neumannssg']
+        names: ['janos']
       })
       debug(
-        'Add topic neumannssg to repo %s/%s : %o',
+        'Add topic janos to repo %s/%s : %o',
         rootState.auth.user.login,
         name,
         responseTopics

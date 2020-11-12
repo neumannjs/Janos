@@ -37,8 +37,8 @@
         <v-divider />
         <v-list dense nav class="transparent">
           <v-list-item
-            v-for="site in neumannssgSites"
-            v-show="!site.active && site.neumannssg"
+            v-for="site in janosSites"
+            v-show="!site.active && site.janos"
             :key="site.name"
             @click="redirect(site.url)"
           >
@@ -104,15 +104,15 @@ export default {
   },
   computed: {
     ...mapState('auth', ['user']),
-    ...mapState('github', ['neumannssgSites', 'repo'])
+    ...mapState('github', ['janosSites', 'repo'])
   },
   updated() {
     debug(
-      'Find %s.github.io in neumannssgSite: %o',
+      'Find %s.github.io in janosSites: %o',
       this.user.login,
-      this.neumannssgSites
+      this.janosSites
     )
-    this.repoName = this.neumannssgSites.some(
+    this.repoName = this.janosSites.some(
       site => site.name === this.user.login + '.github.io'
     )
       ? ''

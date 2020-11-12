@@ -148,7 +148,7 @@ module.exports = {
 // TODO: Make a PR for Metalsmith that uses dependency injection for everything filesystem related.
 // Possible approach: create a wrapper that constructs a metalsmith instance with the default fs-modules.
 // Export this wrapper as the default function, but also export the core function
-// Import the core function in neumannssg
+// Import the core function in Janos
 // Construct a metalsmith instance with the github-fs modules
 
 // TODO: switch to a flat(ter) filesystem model, without nesting. Both git(hub) and metalsmith use this, so this would make searches easier (no recursion)
