@@ -76,6 +76,7 @@
               :active.sync="active"
               :items="items"
               activatable
+              hoverable
               item-key="path"
               open-on-click
               return-object
@@ -111,45 +112,51 @@
                   />
                 </span>
                 <span v-else>
-                  <v-hover v-slot:default="{ hover }">
-                    <div
-                      :style="{ height: '38px' }"
-                      class="d-flex align-center"
-                    >
-                      {{ item.name }}
-                      <v-spacer />
-                      <span v-if="hover && item.type === 'tree'">
-                        <v-btn
-                          text
-                          icon
-                          color="red"
-                          @click.stop="
-                            uploadParent = item
-                            uploadDialog = true
-                          "
-                        >
-                          <v-icon>mdi-file-upload</v-icon>
-                        </v-btn>
-                        <v-btn
-                          text
-                          icon
-                          color="red"
-                          small
-                          @click.stop="onClickAddFileBtn(item)"
-                        >
-                          <v-icon>mdi-file-plus</v-icon>
-                        </v-btn>
-                        <v-btn
-                          text
-                          icon
-                          color="red"
-                          @click.stop="onClickAddFolderBtn(item)"
-                        >
-                          <v-icon>mdi-folder-plus</v-icon>
-                        </v-btn>
-                      </span>
-                    </div>
-                  </v-hover>
+                  <v-tooltip bottom open-delay="500">
+                    <template v-slot:activator="{ on, attrs }">
+                      <div
+                        v-bind="attrs"
+                        :style="{ height: '38px' }"
+                        class="d-flex align-center"
+                        v-on="on"
+                      >
+                        {{ item.name }}
+                      </div>
+                    </template>
+                    <span>{{ item.name }}</span>
+                  </v-tooltip>
+                </span>
+              </template>
+              <template v-slot:append="{ item }">
+                <span v-if="item.type === 'tree'">
+                  <v-btn
+                    text
+                    icon
+                    color="red"
+                    @click.stop="
+                      uploadParent = item
+                      uploadDialog = true
+                    "
+                  >
+                    <v-icon>mdi-file-upload</v-icon>
+                  </v-btn>
+                  <v-btn
+                    text
+                    icon
+                    color="red"
+                    small
+                    @click.stop="onClickAddFileBtn(item)"
+                  >
+                    <v-icon>mdi-file-plus</v-icon>
+                  </v-btn>
+                  <v-btn
+                    text
+                    icon
+                    color="red"
+                    @click.stop="onClickAddFolderBtn(item)"
+                  >
+                    <v-icon>mdi-folder-plus</v-icon>
+                  </v-btn>
                 </span>
               </template>
             </v-treeview>
@@ -678,5 +685,23 @@ export default {
 }
 html {
   overflow-y: auto !important;
+}
+
+.v-treeview-node {
+  max-width: 267px;
+  white-space: nowrap;
+  overflow: hidden;
+  /*TODO: text-overflow doesn't work, find out why */
+  text-overflow: ellipsis;
+}
+
+.v-treeview-node__append {
+  width: 0px;
+  visibility: hidden;
+}
+
+.v-treeview-node__root:hover .v-treeview-node__append {
+  width: auto;
+  visibility: visible;
 }
 </style>
