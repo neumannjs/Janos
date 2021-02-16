@@ -271,21 +271,46 @@ export const actions = {
       }
       return false
     })
-    if (result && result.some(repo => repo.name === repoName)) {
+    if (
+      result &&
+      result.some(
+        repo =>
+          repo.name === repoName ||
+          repo.homepage.replace(/https?:\/\//g, '') === repoName
+      )
+    ) {
       debug(
         'Repository name  %s based on location path %s is a Janos repository',
-        repoName,
+        result.find(
+          repo =>
+            repo.name === repoName ||
+            repo.homepage.replace(/https?:\/\//g, '') === repoName
+        ).name,
         window.location.pathname
       )
-      commit('setRepo', repoName)
+      commit(
+        'setRepo',
+        result.find(
+          repo =>
+            repo.name === repoName ||
+            repo.homepage.replace(/https?:\/\//g, '') === repoName
+        ).name
+      )
       commit(
         'setRepoOwner',
-        result.find(repo => repo.name === repoName).owner.login
+        result.find(
+          repo =>
+            repo.name === repoName ||
+            repo.homepage.replace(/https?:\/\//g, '') === repoName
+        ).owner.login
       )
     }
     const janosSites = result.map(site => {
       let adminUrl = ''
-      if (pagesDomain === site.name.toLowerCase()) {
+      if (
+        pagesDomain === site.name.toLowerCase() ||
+        pagesDomain === site.homepage.toLowerCase().replace(/https?:\/\//g, '')
+      ) {
         adminUrl = 'https://' + pagesDomain + '/admin'
       } else {
         adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
