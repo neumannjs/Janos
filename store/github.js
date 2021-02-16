@@ -311,9 +311,10 @@ export const actions = {
         pagesDomain === site.name.toLowerCase() ||
         pagesDomain === site.homepage.toLowerCase().replace(/https?:\/\//g, '')
       ) {
-        adminUrl = 'https://' + pagesDomain + '/admin'
+        adminUrl = 'https://' + site.owner.login + '.github.io/admin'
       } else {
-        adminUrl = 'https://' + pagesDomain + '/' + site.name + '/admin'
+        adminUrl =
+          'https://' + site.owner.login + '.github.io/' + site.name + '/admin'
       }
       return {
         name: site.name,
