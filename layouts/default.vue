@@ -120,7 +120,8 @@
                         class="d-flex align-center"
                         v-on="on"
                       >
-                        {{ item.name }}
+                        <del v-if="item.deleted">{{ item.name }}</del>
+                        <span v-else>{{ item.name }}</span>
                       </div>
                     </template>
                     <span>{{ item.name }}</span>
@@ -138,7 +139,7 @@
                       uploadDialog = true
                     "
                   >
-                    <v-icon>mdi-file-upload</v-icon>
+                    <v-icon>mdi-upload</v-icon>
                   </v-btn>
                   <v-btn
                     text
@@ -160,12 +161,22 @@
                 </span>
                 <span v-else>
                   <v-btn
+                    v-if="!item.deleted"
                     text
                     icon
                     color="red"
                     @click.stop="onClickDeleteFileBtn(item)"
                   >
                     <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                  <v-btn
+                    v-else
+                    text
+                    icon
+                    color="red"
+                    @click.stop="onClickRestoreFileBtn(item)"
+                  >
+                    <v-icon>mdi-file-restore</v-icon>
                   </v-btn>
                 </span>
               </template>
@@ -464,8 +475,10 @@ export default {
       // should be opened.
       debug('active value changed to: %o', val)
       if (
-        oldVal.length === 0 ||
-        (val.length > 0 && val[0].path !== oldVal[0].path)
+        (oldVal.length === 0 && !val[0].deleted) ||
+        (val.length > 0 &&
+          (oldVal.length === 0 || val[0].path !== oldVal[0].path) &&
+          !val[0].deleted)
       ) {
         // Try to find the active item in fileContents, based on the path
         const file = this.fileContents.find(f => f.path === val[0].path)
@@ -634,7 +647,14 @@ export default {
       )
     },
     onClickDeleteFileBtn(item) {
-      this.deleteFile(item.path)
+      const file = this.fileContents.find(f => f.path === item.path)
+      if (file && file.opened) {
+        this.closeTab(file.path)
+      }
+      this.deleteFile(item)
+    },
+    onClickRestoreFileBtn(item) {
+      this.restoreFile(item)
     },
     onBlurFileInput(item, fileName) {
       if (fileName.length > 0) {
@@ -664,6 +684,7 @@ export default {
       'getFile',
       'removeFileFromTree',
       'deleteFile',
+      'restoreFile',
       'addEmptyFile',
       'renameNode',
       'createGitTree',

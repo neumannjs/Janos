@@ -74,6 +74,13 @@ export const mutations = {
       Vue.delete(file, 'opened')
     }
   },
+  setFileDeleted(state, { file, value }) {
+    if (value) {
+      Vue.set(file, 'deleted', value)
+    } else {
+      Vue.delete(file, 'deleted')
+    }
+  },
   addNodeToTree(state, { parent, node }) {
     if (parent.constructor === Array) {
       state.fileTree.push(node)
@@ -123,12 +130,21 @@ export const mutations = {
   },
   updateFileContent(state, { content, path, builtFile }) {
     const file = state.fileContents.find(f => f.path === path)
-    file.content = content
+    if (content !== null) {
+      // if the file is not to be deleted
+      file.content = content
+      const entry = findFileRecursive(state.fileTree, file.path)
+      const sha = calculateSha1(file)
+      entry.sha = sha
+    } else {
+      // File is to be deleted. Only set sha to null, but leave content untouced
+      // for possible restore
+      setFileSha(file, null)
+    }
+
     if (builtFile) {
       file.builtFile = builtFile
     }
-    const entry = findFileRecursive(state.fileTree, file.path)
-    entry.sha = calculateSha1(file)
 
     if (state.currentBranch === 'source') {
       state.sourceFileTree = state.fileTree
@@ -691,15 +707,23 @@ export const actions = {
     })
   },
 
-  async deleteFile({ commit, dispatch }, path) {
-    const file = await dispatch('getFile', path)
-    if (file !== undefined) {
+  async deleteFile({ commit, dispatch, state }, file) {
+    const fileContent = await dispatch('getFile', file.path)
+    if (fileContent !== undefined) {
       commit('updateFileContent', {
         content: null,
-        path,
+        path: file.path,
         builtFile: false
       })
+      commit('setFileDeleted', { file, value: true })
     }
+  },
+
+  restoreFile({ commit, state }, file) {
+    const fileContent = state.fileContents.find(f => f.path === file.path)
+    const sha = calculateSha1(fileContent)
+    setFileSha(fileContent, sha) // This should remove newSha
+    commit('setFileDeleted', { file, value: false })
   },
 
   updateFileContent({ commit, dispatch, state }, { content, path, builtFile }) {
@@ -821,7 +845,10 @@ export const actions = {
   removeFileFromTree({ state, commit }, file) {
     debug('Remove file from tree with path %s', file.path)
     const parent = findParentRecursive(state.fileTree, file)
-    commit('deleteFileFromTree', { parent, index: parent.indexOf(file) })
+    commit('deleteFileFromTree', {
+      parent,
+      index: parent.findIndex(i => i.path === file.path)
+    })
   },
 
   renameNode({ state, commit }, { item, fileName }) {
@@ -908,6 +935,10 @@ export const actions = {
       if (Object.prototype.hasOwnProperty.call(file, 'newSha')) {
         if (file.newSha === null) {
           dispatch('removeFileFromTree', file)
+          state.fileContents.splice(
+            state.fileContents.findIndex(f => f.path === file.path),
+            1
+          )
         } else {
           Vue.delete(file, 'newSha')
         }
@@ -1003,7 +1034,9 @@ export const actions = {
 
 export const getters = {
   numberOfChangedFiles: state => {
-    return state.fileContents.filter(file => file.newSha).length
+    return state.fileContents.filter(file =>
+      Object.prototype.hasOwnProperty.call(file, 'newSha')
+    ).length
   },
   openFiles: state => {
     return state.fileContents.filter(file => file.opened)
@@ -1011,7 +1044,7 @@ export const getters = {
 }
 
 function findParentRecursive(array, file) {
-  // This function is sued to find and return the parent of a file.
+  // This function is used to find and return the parent of a file.
   // This is needed to delete the file itself, knowing the array it is contained by.
   if (array.findIndex(i => i.path === file.path) > -1) {
     return array
@@ -1123,16 +1156,31 @@ function calculateSha1(file) {
     const wrapObject = wrap('blob', bytes.buffer)
     sha = sha1(wrapObject)
   }
+  setFileSha(file, sha)
+  return sha
+}
+
+function setFileSha(file, sha) {
+  // If the file has the `sha` property (it exists on Github) then check whether
+  // the new sha value is equal. If not, set the `newSha` property to indicate
+  // the file has changed. If it is equal, delete the `newSha` property to
+  // indicate the file has not changed. If the file does not have the `sha`
+  // property (it does not exist on Github) the `newSha` value should always be
+  // set, except when the new sha value equals null. The latter case means that
+  // the file was created (but not commited) and then deleted again. In that
+  // case the `newSha` property is deleted to indicate that nothing has changed
+  // (no file was added after all).
   if (file.sha) {
     if (file.sha !== sha) {
       Vue.set(file, 'newSha', sha)
-    } else if (file.newSha) {
+    } else if (Object.prototype.hasOwnProperty.call(file, 'newSha')) {
       Vue.delete(file, 'newSha')
     }
-  } else {
+  } else if (sha !== null) {
     Vue.set(file, 'newSha', sha)
+  } else {
+    Vue.delete(file, 'newSha')
   }
-  return sha
 }
 
 function wrap(type, object) {
