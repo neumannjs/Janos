@@ -427,7 +427,18 @@ export default {
   computed: {
     ...mapGetters('github', ['numberOfChangedFiles', 'openFiles']),
     ...mapState('github', {
-      items: state => state.fileTree
+      items: state => {
+        // add root folder
+        const rootFolder = [
+          {
+            children: state.fileTree,
+            mode: '040000',
+            name: state.repo,
+            type: 'tree'
+          }
+        ]
+        return rootFolder
+      }
     }),
     ...mapState('github', ['fileContents', 'treeSha']),
     ...mapState('navigation', ['drawers', 'activeDrawer'])

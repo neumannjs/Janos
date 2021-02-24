@@ -102,8 +102,11 @@ export const mutations = {
       if (folder.charAt(0) === '/') {
         folder = folder.substring(1)
       }
+      if (folder.length > 0) {
+        folder += '/'
+      }
       item.name = fileName
-      item.path = folder + '/' + fileName
+      item.path = folder + fileName
       if (item.type === 'newfile') {
         item.type = 'blob'
       } else if (item.type === 'newfolder') {
@@ -473,10 +476,7 @@ export const actions = {
     }
   },
 
-  async getFileTree(
-    { rootState, state, commit },
-    { force } = { force: false }
-  ) {
+  async getFileTree({ state, commit }, { force } = { force: false }) {
     if (state.fileTree.length === 0 || force) {
       const result = await this.$octoKit.git.getTree({
         owner: state.repoOwner,
@@ -815,6 +815,7 @@ export const actions = {
         path = parent.path + '/' + name
       } else {
         path = name
+        parent = parent.children
       }
       const node = {
         mode: '100644',
