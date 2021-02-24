@@ -831,7 +831,7 @@ export const actions = {
     })
   },
 
-  async createGitTree({ rootState, state, commit }) {
+  async createGitTree({ state, commit, dispatch }) {
     commit(
       'status/addOrUpdateStatusItem',
       {
@@ -905,8 +905,12 @@ export const actions = {
     commit('setNewTreeSha', result.data.sha)
 
     state.fileContents.forEach(file => {
-      if (file.newSha) {
-        Vue.delete(file, 'newSha')
+      if (Object.prototype.hasOwnProperty.call(file, 'newSha')) {
+        if (file.newSha === null) {
+          dispatch('removeFileFromTree', file)
+        } else {
+          Vue.delete(file, 'newSha')
+        }
       }
     })
 
