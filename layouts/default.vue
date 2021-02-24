@@ -158,6 +158,16 @@
                     <v-icon>mdi-folder-plus</v-icon>
                   </v-btn>
                 </span>
+                <span v-else>
+                  <v-btn
+                    text
+                    icon
+                    color="red"
+                    @click.stop="onClickDeleteFileBtn(item)"
+                  >
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </span>
               </template>
             </v-treeview>
           </v-list-item-content>
@@ -567,6 +577,7 @@ export default {
       }
       this.setActiveDrawer(drawer)
     },
+
     closeTab(path) {
       debug('close tab %s', path)
       let lastPath = null
@@ -622,6 +633,9 @@ export default {
         }
       )
     },
+    onClickDeleteFileBtn(item) {
+      this.deleteFile(item.path)
+    },
     onBlurFileInput(item, fileName) {
       if (fileName.length > 0) {
         this.renameNode({ item, fileName }).then(path => {
@@ -649,6 +663,7 @@ export default {
       'addNodeToTree',
       'getFile',
       'removeFileFromTree',
+      'deleteFile',
       'addEmptyFile',
       'renameNode',
       'createGitTree',

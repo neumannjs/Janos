@@ -129,7 +129,7 @@ export const mutations = {
     }
     const entry = findFileRecursive(state.fileTree, file.path)
     entry.sha = calculateSha1(file)
-    calculateSha1(file)
+
     if (state.currentBranch === 'source') {
       state.sourceFileTree = state.fileTree
     }
@@ -691,6 +691,17 @@ export const actions = {
     })
   },
 
+  async deleteFile({ commit, dispatch }, path) {
+    const file = await dispatch('getFile', path)
+    if (file !== undefined) {
+      commit('updateFileContent', {
+        content: null,
+        path,
+        builtFile: false
+      })
+    }
+  },
+
   updateFileContent({ commit, dispatch, state }, { content, path, builtFile }) {
     /* eslint-disable no-async-promise-executor */
     return new Promise(async (resolve, reject) => {
@@ -833,6 +844,8 @@ export const actions = {
       { root: true }
     )
 
+    // create new Blobs for files that have a truthy value in newSha (so deleted
+    // files with newsha set to null will be ignored)
     const createBlobs = state.fileContents
       .filter(file => file.newSha)
       .map(editedFile => {
@@ -864,8 +877,11 @@ export const actions = {
 
     debug('New blobs created')
 
+    // Create a git tree for *all* files with a newSha property (regardless of
+    // the value of the propery). This includes files that will be deleted,
+    // having a newSha of null.
     const gitTree = state.fileContents
-      .filter(file => file.newSha)
+      .filter(file => Object.prototype.hasOwnProperty.call(file, 'newSha'))
       .map(editedFile => {
         return {
           path: editedFile.path,
@@ -1031,7 +1047,7 @@ function findOrCreateParent(tree, path) {
     if (indexOfFolder === -1) {
       // Create the folder when it is not found
       // UPDATE 20200625: I'm not sure whether this actually needed anymore.
-      // When bbuilt there were situations where the file got updated before the folder was created
+      // When built there were situations where the file got updated before the folder was created
       // In these cases creating a folder that could not be found was useful.
       let folderPath = ''
       if (tree.path) {
@@ -1091,15 +1107,18 @@ function addTreeItem(path, object, array) {
 
 function calculateSha1(file) {
   const contents = file.content
-  let bytes
-  if (!file.encoding || (file.encoding && file.encoding !== 'utf-8')) {
-    bytes = Uint8Array.from(atob(contents), c => c.charCodeAt(0))
-  } else {
-    const enc = new TextEncoder()
-    bytes = enc.encode(contents)
+  let sha = null
+  if (contents !== null) {
+    let bytes
+    if (!file.encoding || (file.encoding && file.encoding !== 'utf-8')) {
+      bytes = Uint8Array.from(atob(contents), c => c.charCodeAt(0))
+    } else {
+      const enc = new TextEncoder()
+      bytes = enc.encode(contents)
+    }
+    const wrapObject = wrap('blob', bytes.buffer)
+    sha = sha1(wrapObject)
   }
-  const wrapObject = wrap('blob', bytes.buffer)
-  const sha = sha1(wrapObject)
   if (file.sha) {
     if (file.sha !== sha) {
       Vue.set(file, 'newSha', sha)
@@ -1111,15 +1130,6 @@ function calculateSha1(file) {
   }
   return sha
 }
-
-// function lengthInUtf8Bytes(str) {
-//   const m = encodeURIComponent(str).match(/%[89ABab]/g)
-//   return str.length + (m ? m.length : 0)
-// }
-
-// function shasum(buffer) {
-//   return new Hash().update(buffer).digest('hex')
-// }
 
 function wrap(type, object) {
   return Buffer.concat([
