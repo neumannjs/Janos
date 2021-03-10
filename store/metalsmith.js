@@ -225,7 +225,7 @@ export const actions = {
 
     debug('Lazy load markdown plugins')
     await Promise.all(cdnPlugins)
-    debug('Plugin loaded')
+    debug('Plugins loaded')
 
     const pagesDomain = rootState.github.repoOwner + '.github.io'
 
