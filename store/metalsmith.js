@@ -10,6 +10,7 @@ local.metalsmithTags = require('metalsmith-tags')
 local.metalsmithAssets = require('metalsmith-assets')
 local.metalsmithFeed = require('metalsmith-feed')
 local.metalsmithHtmlMinifier = require('metalsmith-html-minifier')
+local.metalsmithPermalinks = require('@metalsmith/permalinks')
 local.cssChangeUrl = require('../plugins/metalsmith-css-change-url')
 local.sourceUrl = require('../plugins/metalsmith-sourceurl')
 local.writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
@@ -20,58 +21,58 @@ const nunjucksDateFilter = require('nunjucks-date-filter')
 const handlebarsDateHelper = require('handlebars-dateformat')
 /* eslint-enable no-unused-vars */
 
-const load = (function () {
-  // Function which returns a function: https://davidwalsh.name/javascript-functions
-  function _load(tag) {
-    return function (url) {
-      // This promise will be used by Promise.all to determine success or failure
-      return new Promise(function (resolve, reject) {
-        debug('Started loading %s', url)
-        let parent = 'body'
-        let attr = 'src'
-        if (
-          document.querySelector(tag + '[' + attr + '="' + url + '"]') != null
-        ) {
-          debug('Script %s was already found in DOM', url)
-          resolve(url)
-          return
-        }
-        const element = document.createElement(tag)
+// const load = (function () {
+//   // Function which returns a function: https://davidwalsh.name/javascript-functions
+//   function _load(tag) {
+//     return function (url) {
+//       // This promise will be used by Promise.all to determine success or failure
+//       return new Promise(function (resolve, reject) {
+//         debug('Started loading %s', url)
+//         let parent = 'body'
+//         let attr = 'src'
+//         if (
+//           document.querySelector(tag + '[' + attr + '="' + url + '"]') != null
+//         ) {
+//           debug('Script %s was already found in DOM', url)
+//           resolve(url)
+//           return
+//         }
+//         const element = document.createElement(tag)
 
-        // Important success and error for the promise
-        element.onload = function () {
-          debug('Loaded %s', url)
-          resolve(url)
-        }
-        element.onerror = function () {
-          debug('Error while loading %s', url)
-          reject(url)
-        }
+//         // Important success and error for the promise
+//         element.onload = function () {
+//           debug('Loaded %s', url)
+//           resolve(url)
+//         }
+//         element.onerror = function () {
+//           debug('Error while loading %s', url)
+//           reject(url)
+//         }
 
-        // Need to set different attributes depending on tag type
-        switch (tag) {
-          case 'script':
-            element.async = true
-            break
-          case 'link':
-            element.type = 'text/css'
-            element.rel = 'stylesheet'
-            attr = 'href'
-            parent = 'head'
-        }
+//         // Need to set different attributes depending on tag type
+//         switch (tag) {
+//           case 'script':
+//             element.async = true
+//             break
+//           case 'link':
+//             element.type = 'text/css'
+//             element.rel = 'stylesheet'
+//             attr = 'href'
+//             parent = 'head'
+//         }
 
-        // Inject into document to kick off loading
-        element[attr] = url
-        document[parent].appendChild(element)
-      })
-    }
-  }
+//         // Inject into document to kick off loading
+//         element[attr] = url
+//         document[parent].appendChild(element)
+//       })
+//     }
+//   }
 
-  return {
-    css: _load('link'),
-    js: _load('script')
-  }
-})()
+//   return {
+//     css: _load('link'),
+//     js: _load('script')
+//   }
+// })()
 
 const getSource = function (prefix, dispatch) {
   return function (name, callback) {
@@ -217,15 +218,106 @@ export const actions = {
 
     debug('Metalsmith plugins to be loaded %o', metalsmithConfig.plugins)
 
-    const cdnPlugins = metalsmithConfig.plugins.map(plugin => {
-      if (!plugin.local) {
-        return load.js(plugin.url)
-      }
-    })
+    // debug('Load everything using jspm')
+    // const systemjsImportmap = document.createElement('script')
+    // systemjsImportmap.type = 'systemjs-importmap'
+    // systemjsImportmap.innerHTML = `
+    // {
+    //   "imports": {
+    //     "metalsmith-collections": "https://ga.system.jspm.io/npm:metalsmith-collections@0.9.0/lib/index.js",
+    //     "metalsmith-debug": "https://ga.system.jspm.io/npm:metalsmith-debug@1.2.0/lib/index.js",
+    //     "metalsmith-mapsite": "https://ga.system.jspm.io/npm:metalsmith-mapsite@1.0.6/lib/index.js",
+    //     "metalsmith-markdown": "https://ga.system.jspm.io/npm:metalsmith-markdown@1.3.0/lib/index.js",
+    //     "metalsmith-more": "https://ga.system.jspm.io/npm:metalsmith-more@0.2.0/lib/index.js",
+    //     "metalsmith-pagination": "https://ga.system.jspm.io/npm:metalsmith-pagination@1.5.0/metalsmith-pagination.js",
+    //     "metalsmith-publish": "https://ga.system.jspm.io/npm:metalsmith-publish@0.1.6/lib/index.js"
+    //   },
+    //   "scopes": {
+    //     "https://ga.system.jspm.io/": {
+    //       "array-differ": "https://ga.system.jspm.io/npm:array-differ@1.0.0/index.js",
+    //       "array-union": "https://ga.system.jspm.io/npm:array-union@1.0.2/index.js",
+    //       "array-uniq": "https://ga.system.jspm.io/npm:array-uniq@1.0.3/index.js",
+    //       "arrify": "https://ga.system.jspm.io/npm:arrify@1.0.1/index.js",
+    //       "balanced-match": "https://ga.system.jspm.io/npm:balanced-match@1.0.0/index.js",
+    //       "brace-expansion": "https://ga.system.jspm.io/npm:brace-expansion@1.1.11/index.js",
+    //       "buffer": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/buffer.js",
+    //       "component-props": "https://ga.system.jspm.io/npm:component-props@1.1.1/index.js",
+    //       "concat-map": "https://ga.system.jspm.io/npm:concat-map@0.0.1/index.js",
+    //       "debug": "https://ga.system.jspm.io/npm:debug@2.6.9/src/index.js",
+    //       "extend": "https://ga.system.jspm.io/npm:extend@3.0.2/index.js",
+    //       "fs": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/fs.js",
+    //       "has-flag": "https://ga.system.jspm.io/npm:has-flag@4.0.0/index.js",
+    //       "is": "https://ga.system.jspm.io/npm:is@3.3.0/index.js",
+    //       "js-yaml": "https://ga.system.jspm.io/npm:js-yaml@1.0.3/index.js",
+    //       "jsml": "https://ga.system.jspm.io/npm:jsml@0.0.1/jsml.js",
+    //       "lodash.isundefined": "https://ga.system.jspm.io/npm:lodash.isundefined@3.0.1/index.js",
+    //       "lodash.pickby": "https://ga.system.jspm.io/npm:lodash.pickby@4.6.0/index.js",
+    //       "lodash/chunk": "https://ga.system.jspm.io/npm:lodash@4.17.21/chunk.js",
+    //       "lodash/isArray": "https://ga.system.jspm.io/npm:lodash@4.17.21/isArray.js",
+    //       "lodash/padStart": "https://ga.system.jspm.io/npm:lodash@4.17.21/padStart.js",
+    //       "marked": "https://ga.system.jspm.io/npm:marked@0.7.0/lib/marked.js",
+    //       "minimatch": "https://ga.system.jspm.io/npm:minimatch@3.0.4/minimatch.js",
+    //       "ms": "https://ga.system.jspm.io/npm:ms@2.0.0/index.js",
+    //       "multimatch": "https://ga.system.jspm.io/npm:multimatch@2.1.0/index.js",
+    //       "net": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/net.js",
+    //       "os": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/os.js",
+    //       "path": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/path.js",
+    //       "process": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/process.js",
+    //       "props": "https://ga.system.jspm.io/npm:props@0.3.0/props.js",
+    //       "read-metadata": "https://ga.system.jspm.io/npm:read-metadata@1.0.0/index.js",
+    //       "sitemap": "https://ga.system.jspm.io/npm:sitemap@2.2.0/index.js",
+    //       "slash": "https://ga.system.jspm.io/npm:slash@2.0.0/index.js",
+    //       "supports-color": "https://ga.system.jspm.io/npm:supports-color@8.1.1/index.js",
+    //       "to-function": "https://ga.system.jspm.io/npm:to-function@2.0.6/index.js",
+    //       "tty": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/tty.js",
+    //       "uniq": "https://ga.system.jspm.io/npm:uniq@1.0.1/uniq.js",
+    //       "url-join": "https://ga.system.jspm.io/npm:url-join@4.0.1/lib/url-join.js",
+    //       "util": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/util.js",
+    //       "xmlbuilder": "https://ga.system.jspm.io/npm:xmlbuilder@10.1.1/lib/index.js",
+    //       "xtend": "https://ga.system.jspm.io/npm:xtend@4.0.2/immutable.js",
+    //       "yaml-js": "https://ga.system.jspm.io/npm:yaml-js@0.0.8/lib/yaml.js",
+    //       "zlib": "https://ga.system.jspm.io/npm:@jspm/core@2.0.0-beta.7/nodelibs/zlib.js"
+    //     },
+    //     "https://ga.system.jspm.io/npm:debug@4.1.1/": {
+    //       "ms": "https://ga.system.jspm.io/npm:ms@2.1.3/index.js"
+    //     },
+    //     "https://ga.system.jspm.io/npm:debug@4.3.2/": {
+    //       "ms": "https://ga.system.jspm.io/npm:ms@2.1.2/index.js"
+    //     },
+    //     "https://ga.system.jspm.io/npm:metalsmith-markdown@1.3.0/": {
+    //       "debug": "https://ga.system.jspm.io/npm:debug@4.3.2/src/index.js"
+    //     },
+    //     "https://ga.system.jspm.io/npm:metalsmith-publish@0.1.6/": {
+    //       "debug": "https://ga.system.jspm.io/npm:debug@4.1.1/src/index.js"
+    //     }
+    //   }
+    // }`
 
-    debug('Lazy load markdown plugins')
-    await Promise.all(cdnPlugins)
-    debug('Plugins loaded')
+    // const jspmTest = document.createElement('script')
+    // jspmTest.innerHTML = `
+    // System.import("metalsmith-collections").then(m => window.metalsmithCollections = m.default);
+    // System.import("metalsmith-debug").then(m => window.metalsmithDebug = m.default);
+    // System.import("metalsmith-mapsite").then(m => window.metalsmithMapsite = m.default);
+    // System.import("metalsmith-markdown").then(m => window.metalsmithMarkdown = m.default);
+    // System.import("metalsmith-more").then(m => window.metalsmithMore = m.default);
+    // System.import("metalsmith-pagination").then(m => window.metalsmithPagination = m.default);
+    // System.import("metalsmith-publish").then(m => window.metalsmithPublish = m.default);
+    // `
+
+    // document.body.appendChild(systemjsImportmap)
+    // document.body.appendChild(jspmTest)
+
+    // debug('JSPM scripts should be loaded by now')
+
+    // const cdnPlugins = metalsmithConfig.plugins.map(plugin => {
+    //   if (!plugin.local) {
+    //     return load.js(plugin.url)
+    //   }
+    // })
+
+    // debug('Lazy load markdown plugins')
+    // await Promise.all(cdnPlugins)
+    // debug('Plugins loaded')
 
     const pagesDomain = rootState.github.repoOwner + '.github.io'
 
@@ -283,6 +375,7 @@ export const actions = {
     metalsmithConfig.plugins.forEach(plugin => {
       const pluginName = Object.keys(plugin)[0]
       const pluginNameCamelCase = camelCase(pluginName)
+      debug(pluginNameCamelCase)
       if (
         !Object.prototype.hasOwnProperty.call(plugin, 'dev') ||
         (Object.prototype.hasOwnProperty.call(plugin, 'dev') &&
