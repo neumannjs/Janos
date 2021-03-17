@@ -316,9 +316,11 @@
                     v-if="!file.binary"
                     :ref="`cmEditor-${file.path}`"
                     v-debounce:500ms="onCodeChange"
+                    debounce-events="keyup"
                     :value="file.content"
                     :options="cmOption"
-                    @ready="onResize()"
+                    @ready="onResize"
+                    @paste="onPaste"
                   />
                   <v-card v-else flat tile class="pa-2"
                     >The contents of this file are binary</v-card
@@ -356,6 +358,8 @@ import Upload from '../components/uploadDialog'
 import MetalsmithDrawer from '../components/metalsmithDrawer'
 import Footer from '../components/footer'
 import SelectBranch from '../components/selectBranch'
+import { findOrCreateParent } from './../utils/utils'
+import { uploadFile } from './../utils/upload_file'
 const debug = require('debug')('layouts/default')
 
 export default {
@@ -561,6 +565,28 @@ export default {
       this.commitMessage = ''
       this.commitDisable = false
     },
+    onPaste(cm, event) {
+      debug('paste event')
+      const kind = event.clipboardData.items[0].kind
+      const image = event.clipboardData.items[0].type.includes('image')
+      if (kind === 'file' && image) {
+        const file = event.clipboardData.items[0].getAsFile()
+        const imgName = Date.now() + '.png'
+        const imgLoc = '_src/images/' + imgName
+        const parent = findOrCreateParent(this.items, imgLoc)
+        const callback = newFile => {
+          this.uploadFileContent({
+            content: newFile.content,
+            path: newFile.path
+          })
+        }
+        uploadFile(file, parent, callback, imgName)
+        cm.replaceRange(
+          '![Alt text](/images/' + imgName + ' "a title")',
+          cm.getCursor()
+        )
+      }
+    },
     onResize() {
       if (window.innerWidth < 1264) {
         this.leftPadding = 56
@@ -702,6 +728,9 @@ export default {
       'createGitCommit',
       'checkoutBranch'
     ]),
+    ...mapActions('github', {
+      uploadFileContent: 'updateFileContent'
+    }),
     ...mapMutations('github', ['updateFileContent', 'setFileOpened']),
     ...mapActions('metalsmith', ['runMetalsmith']),
     ...mapMutations('navigation', ['setActiveDrawer']),

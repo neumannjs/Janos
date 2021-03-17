@@ -2,7 +2,7 @@ const debug = require('debug')('utils/upload_file')
 
 const { isBinary } = require('istextorbinary')
 
-export const uploadFile = (file, parent, callback) => {
+export const uploadFile = (file, parent, callback, rename) => {
   const reader = new FileReader()
   reader.addEventListener('loadend', () => {
     const binary = isBinary(
@@ -14,8 +14,8 @@ export const uploadFile = (file, parent, callback) => {
     )
     debug(parent.path + '/' + file.name)
     const newFile = {
-      name: file.name,
-      path: parent.path + '/' + file.name,
+      name: rename || file.name,
+      path: rename ? parent.path + '/' + rename : parent.path + '/' + file.name,
       type: 'blob',
       binary,
       mode: '100644',
