@@ -1,7 +1,6 @@
 <template>
   <InputDialog
-    v-model="createDialog"
-    :text="
+    :message="
       repoName
         ? 'The repository ' +
           repoName +
@@ -12,8 +11,9 @@
     :persistent="true"
     title="Create new website"
     label="Name"
-    button="Create"
-    :value="true"
+    agree="Create"
+    cancel=""
+    :dialog="true"
     @submit="createRepo($event)"
   />
 </template>
@@ -35,16 +35,12 @@ export default {
   auth: 'guest',
   methods: {
     createRepo(value) {
-      if (this.$refs.form.validate()) {
-        Cookies.set(
-          'accessTokenEndpoint',
-          process.env.APP_AZURE_FUNCTIONS_URL +
-            '/api/handler/?reponame=' +
-            value,
-          { expires: 1 }
-        )
-        this.$router.push('login')
-      }
+      Cookies.set(
+        'accessTokenEndpoint',
+        process.env.APP_AZURE_FUNCTIONS_URL + '/api/handler/?reponame=' + value,
+        { expires: 1 }
+      )
+      this.$router.push('login')
     }
   }
 }

@@ -54,8 +54,8 @@
             </v-list-item-content>
           </v-list-item>
           <InputDialog
-            v-model="createDialog"
-            :text="
+            :dialog.sync="createDialog"
+            :message="
               repoName
                 ? 'The repository ' +
                   repoName +
@@ -66,8 +66,8 @@
             :persistent="false"
             title="Create new website"
             label="Name"
-            button="Create"
-            @submit="createRepo($event)"
+            agree="Create"
+            @submit="dialogcreateRepo($event)"
           />
           <v-list-item
             @click="

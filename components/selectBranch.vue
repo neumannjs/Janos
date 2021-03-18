@@ -15,15 +15,14 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
-import Commit from '../components/commitDialog'
+import InputDialog from '../components/inputDialog'
 const debug = require('debug')('components/selectBranch')
 
 export default {
   name: 'SelectBranch',
   components: {
-    commit: Commit
+    commit: InputDialog
   },
-
   computed: {
     ...mapGetters('github', ['numberOfChangedFiles']),
     ...mapState('github', ['currentBranch', 'branches']),
@@ -37,17 +36,27 @@ export default {
           this.$refs.commit
             .open(
               'Unsaved changes',
-              'Please commit your changes before you switch branches'
+              'Please commit your changes before switching branches',
+              'Commit',
+              'Cancel',
+              'Commit message',
+              'mdi-source-commit',
+              false
             )
             .then(async commitMessage => {
               debug('commitMessage: %s', commitMessage)
-              if (commitMessage !== null) {
-                await this.createGitTree()
-                await this.createGitCommit({ message: commitMessage })
-                this.changeBranchSelection(value)
-              } else {
-                this.changeBranchSelection(value)
-              }
+              await this.createGitTree()
+              await this.createGitCommit({ message: commitMessage })
+              this.changeBranchSelection(value)
+            })
+            .catch(error => {
+              debug('commit cancelled: %o', error)
+              debug(
+                'return to branch %s %s',
+                this.$store.state.github.selectedBranch,
+                value
+              )
+              // BUG: The dropdown still changes although the value does not.
             })
         } else {
           this.changeBranchSelection(value)
