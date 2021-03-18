@@ -12,61 +12,54 @@
       <v-toolbar color="primary" dark flat>
         <v-toolbar-title>{{ title }}</v-toolbar-title>
       </v-toolbar>
-      <v-card-text v-show="personalRepo"
-        >The repository {{ personalRepo }} for your personal page is still
-        available. Alternatively you can provide a different name for your
-        website.</v-card-text
-      >
-      <v-card-text>
-        <v-form ref="form">
+      <v-card-text v-show="text"> {{ text }}</v-card-text>
+      <v-form ref="form" @submit="submit">
+        <v-card-text>
           <v-text-field
-            v-model="repoName"
+            v-model="input"
             :rules="[rules.required]"
-            label="Name"
-            name="name"
+            :label="label"
+            :name="label"
             prepend-icon="create"
             type="text"
           ></v-text-field>
-        </v-form>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn color="primary" @click="create(repoName)">Create</v-btn>
-      </v-card-actions>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="primary" type="submit">{{ button }}</v-btn>
+        </v-card-actions>
+      </v-form>
     </v-card>
   </v-dialog>
+  <!-- The repository for your personal page is still available. Alternatively you can provide a different name for your website. -->
 </template>
 
 <script>
 export default {
   name: 'CreateDialog',
   props: {
-    title: { type: String, default: 'Create your own website' },
+    title: { type: String, default: '' },
+    text: { type: String, default: '' },
+    button: { type: String, default: 'Submit' },
+    label: { type: String, default: '' },
+    input: { type: String, default: '' },
     personalRepo: { type: String, default: '' },
     persistent: { type: Boolean, default: true },
     value: { type: Boolean, default: false }
   },
   data() {
     return {
-      dialog: false,
       rules: {
         required: value => !!value || 'Required.'
-      },
-      repoName: ''
-    }
-  },
-  watch: {
-    personalRepo(val) {
-      if (val.length > 0) {
-        this.repoName = val
       }
     }
   },
   methods: {
-    create(value) {
+    submit(e) {
+      e.preventDefault()
       if (this.$refs.form.validate()) {
         this.value = false
-        this.$emit('create', value)
+        this.$emit('submit', this.input)
       }
     }
   }
