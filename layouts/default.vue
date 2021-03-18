@@ -342,6 +342,7 @@
           </v-container>
         </v-tab-item>
       </v-tabs-items>
+      <input-filename ref="input" />
     </v-content>
     <!-- Footer -->
     <v-footer fixed app class="footer">
@@ -358,7 +359,8 @@ import Upload from '../components/uploadDialog'
 import MetalsmithDrawer from '../components/metalsmithDrawer'
 import Footer from '../components/footer'
 import SelectBranch from '../components/selectBranch'
-import { findOrCreateParent } from './../utils/utils'
+import InputDialog from '../components/inputDialog'
+import { findOrCreateParent, right } from './../utils/utils'
 import { uploadFile } from './../utils/upload_file'
 const debug = require('debug')('layouts/default')
 
@@ -369,7 +371,8 @@ export default {
     upload: Upload,
     ftr: Footer,
     metalsmithDrawer: MetalsmithDrawer,
-    selectBranch: SelectBranch
+    selectBranch: SelectBranch,
+    inputFilename: InputDialog
   },
   data() {
     return {
@@ -571,20 +574,44 @@ export default {
       const image = event.clipboardData.items[0].type.includes('image')
       if (kind === 'file' && image) {
         const file = event.clipboardData.items[0].getAsFile()
-        const imgName = Date.now() + '.png'
-        const imgLoc = '_src/images/' + imgName
-        const parent = findOrCreateParent(this.items, imgLoc)
-        const callback = newFile => {
-          this.uploadFileContent({
-            content: newFile.content,
-            path: newFile.path
+        const date = new Date(Date.now())
+        const proposedFilename =
+          date.getFullYear().toString() +
+          right('0' + (date.getMonth() + 1).toString(), 2) +
+          right('0' + date.getDate().toString(), 2) +
+          right('0' + date.getHours().toString(), 2) +
+          right('0' + date.getMinutes().toString(), 2) +
+          right('0' + date.getSeconds().toString(), 2) +
+          '.png'
+        this.$refs.input
+          .open(
+            'Upload image',
+            '',
+            'Upload',
+            'Cancel',
+            'File name',
+            'create',
+            false,
+            proposedFilename
+          )
+          .then(filename => {
+            const imgLoc = '_src/images/' + filename
+            const parent = findOrCreateParent(this.items, imgLoc)
+            const callback = newFile => {
+              this.uploadFileContent({
+                content: newFile.content,
+                path: newFile.path
+              })
+            }
+            uploadFile(file, parent, callback, filename)
+            cm.replaceRange(
+              '![Alt text](/images/' + filename + ' "a title")',
+              cm.getCursor()
+            )
           })
-        }
-        uploadFile(file, parent, callback, imgName)
-        cm.replaceRange(
-          '![Alt text](/images/' + imgName + ' "a title")',
-          cm.getCursor()
-        )
+          .catch(error => {
+            debug('image paste cancelled: %o', error)
+          })
       }
     },
     onResize() {
