@@ -10,6 +10,7 @@ local.metalsmithTags = require('metalsmith-tags')
 local.metalsmithAssets = require('metalsmith-assets')
 local.metalsmithFeed = require('metalsmith-feed')
 local.metalsmithHtmlMinifier = require('metalsmith-html-minifier')
+local.metalsmithResponsiveImages = require('../plugins/metalsmith-responsive-images')
 local.cssChangeUrl = require('../plugins/metalsmith-css-change-url')
 local.sourceUrl = require('../plugins/metalsmith-sourceurl')
 local.writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
@@ -107,7 +108,7 @@ export const mutations = {
 }
 
 export const actions = {
-  async runMetalsmith({ commit, state, dispatch, rootState }) {
+  async runMetalsmith({ commit, state, dispatch, rootState, rootGetters }) {
     if (rootState.github.currentBranch === 'source') {
       return
     }
@@ -130,15 +131,8 @@ export const actions = {
       { root: true }
     )
     const devBuild = rootState.github.currentBranch === 'development'
-    let metalsmithConfig = await dispatch(
-      'github/getFile',
-      '_layouts/metalsmith.json',
-      {
-        root: true
-      }
-    )
+    const metalsmithConfig = rootGetters['github/metalsmithConfigObject']
 
-    metalsmithConfig = JSON.parse(metalsmithConfig.content)
     const localPlugins = Object.keys(local).map(name => kebabCase(name))
     debug('kebabCased local plugins %o', localPlugins)
     const findPlugin = find(metalsmithConfig.plugins, 'metalsmith-layouts')
