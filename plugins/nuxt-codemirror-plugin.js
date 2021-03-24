@@ -48,5 +48,5 @@ import 'codemirror/addon/fold/xml-fold.js'
 // more...
 
 Vue.use(VueCodemirror, {
-  events: ['keyup', 'ready', 'paste']
+  events: ['change', 'ready', 'paste']
 })

@@ -36,7 +36,7 @@
 
 <script>
 import { mapActions } from 'vuex'
-import { uploadFile } from './../utils/upload_file'
+import { uploadAndResizeFile } from './../utils/upload_file'
 
 export default {
   name: 'UploadDialog',
@@ -61,7 +61,7 @@ export default {
         this.updateFileContent({ content: newFile.content, path: newFile.path })
       }
       const uploads = this.files.map(file => {
-        uploadFile(file, that.parent, callback)
+        uploadAndResizeFile(file, that.parent, callback)
       })
       await Promise.all(uploads)
       this.loading = false

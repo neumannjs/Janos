@@ -315,12 +315,11 @@
                   <codemirror
                     v-if="!file.binary"
                     :ref="`cmEditor-${file.path}`"
-                    v-debounce:500ms="onCodeChange"
-                    debounce-events="keyup"
                     :value="file.content"
                     :options="cmOption"
                     @ready="onResize"
                     @paste="onPaste"
+                    @change="onCodeChange"
                   />
                   <v-card v-else flat tile class="pa-2"
                     >The contents of this file are binary</v-card
@@ -361,7 +360,7 @@ import Footer from '../components/footer'
 import SelectBranch from '../components/selectBranch'
 import InputDialog from '../components/inputDialog'
 import { findOrCreateParent, right } from './../utils/utils'
-import { uploadFile } from './../utils/upload_file'
+import { uploadAndResizeFile } from './../utils/upload_file'
 const debug = require('debug')('layouts/default')
 
 export default {
@@ -603,7 +602,13 @@ export default {
                 path: newFile.path
               })
             }
-            uploadFile(file, parent, callback, filename)
+            uploadAndResizeFile(
+              file,
+              parent,
+              callback,
+              filename,
+              window.devicePixelRatio
+            )
             cm.replaceRange(
               '![Alt text](/images/' + filename + ' "a title")',
               cm.getCursor()
