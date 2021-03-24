@@ -431,7 +431,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('github', ['numberOfChangedFiles', 'openFiles']),
+    ...mapGetters('github', [
+      'numberOfChangedFiles',
+      'openFiles',
+      'metalsmithConfigObject'
+    ]),
     ...mapState('github', {
       items: state => {
         // add root folder
@@ -605,6 +609,7 @@ export default {
             uploadAndResizeFile(
               file,
               parent,
+              this.metalsmithConfigObject['image-processing'],
               callback,
               filename,
               window.devicePixelRatio

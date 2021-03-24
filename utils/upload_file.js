@@ -30,6 +30,7 @@ export const uploadFile = (file, parent, callback, rename) => {
 export const uploadAndResizeFile = async (
   file,
   parent,
+  conf,
   callback,
   rename,
   devicePixelRatio = 1
@@ -44,14 +45,6 @@ export const uploadAndResizeFile = async (
   }
   // Upload the original file (unprocessed)
   uploadFile(file, parent, callback, rename)
-
-  const conf = {
-    maxWidth: 1080,
-    minWidth: 300,
-    resize: [1, 0.75, 0.5, 0.3],
-    renamePostfix: ['_l', '_m', '_s', '_xs'],
-    format: ['avif', 'webp', 'jpg']
-  }
 
   file.rename = rename
   const imgFiles = await processFiles(file, conf)

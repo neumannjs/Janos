@@ -22,10 +22,15 @@ export const state = () => ({
   janosSites: [],
   branches: [],
   currentBranch: '',
-  selectedBranch: ''
+  selectedBranch: '',
+  metalsmithConfig: ''
 })
 
 export const mutations = {
+  setMetalsmithConfig(state, payload) {
+    state.metalsmithConfig = payload
+  },
+
   setBranches(state, payload) {
     state.branches = payload
   },
@@ -162,6 +167,13 @@ export const mutations = {
 }
 
 export const actions = {
+  async loadMetalsmithConfig({ dispatch, commit }) {
+    const metalsmithConfig = await dispatch(
+      'getFile',
+      '_layouts/metalsmith.json'
+    )
+    commit('setMetalsmithConfig', metalsmithConfig)
+  },
   async getBranches({ state, rootState, commit }) {
     const result = await this.$octoKit.repos.listBranches({
       owner: state.repoOwner,
@@ -699,6 +711,7 @@ export const actions = {
       }
       commit('setCurrentBranch', branch)
       commit('setSelectedBranch', branch)
+      await dispatch('loadMetalsmithConfig')
     }
   },
 
@@ -1047,5 +1060,12 @@ export const getters = {
   },
   openFiles: state => {
     return state.fileContents.filter(file => file.opened)
+  },
+  metalsmithConfigObject: state => {
+    try {
+      return JSON.parse(state.metalsmithConfig.content)
+    } catch (e) {
+      return {}
+    }
   }
 }

@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import { uploadAndResizeFile } from './../utils/upload_file'
 
 export default {
@@ -52,6 +52,9 @@ export default {
       loading: false
     }
   },
+  computed: {
+    ...mapGetters('github', ['metalsmithConfigObject'])
+  },
   methods: {
     async upload() {
       this.loading = true
@@ -61,7 +64,12 @@ export default {
         this.updateFileContent({ content: newFile.content, path: newFile.path })
       }
       const uploads = this.files.map(file => {
-        uploadAndResizeFile(file, that.parent, callback)
+        uploadAndResizeFile(
+          file,
+          that.parent,
+          this.metalsmithConfigObject['image-processing'],
+          callback
+        )
       })
       await Promise.all(uploads)
       this.loading = false
