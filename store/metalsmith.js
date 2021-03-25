@@ -23,45 +23,98 @@ const handlebarsDateHelper = require('handlebars-dateformat')
 const load = (function () {
   // Function which returns a function: https://davidwalsh.name/javascript-functions
   function _load(tag) {
-    return function (url) {
+    return function (script, parent, attributes, customEvent) {
+      // Set default parent based on tag, if parameter not present
+      if (!parent) {
+        switch (tag) {
+          case 'script':
+            parent = 'body'
+            break
+          case 'link':
+            parent = 'head'
+        }
+      }
+
+      // Set default attributes based on tag, if parameter not present
+      if (!attributes) {
+        switch (tag) {
+          case 'script':
+            attributes.async = true
+            break
+          case 'link':
+            attributes.type = 'text/css'
+            attributes.rel = 'stylesheet'
+            attributes.attr = 'href'
+        }
+      }
+
       // This promise will be used by Promise.all to determine success or failure
       return new Promise(function (resolve, reject) {
-        debug('Started loading %s', url)
-        let parent = 'body'
-        let attr = 'src'
-        if (
-          document.querySelector(tag + '[' + attr + '="' + url + '"]') != null
-        ) {
-          debug('Script %s was already found in DOM', url)
-          resolve(url)
-          return
+        let isUrl = false
+        // Test whether content is passed as an url or as the actual source
+        if (/^(ftp|http|https):\/\/[^ "]+$/.test(script)) {
+          isUrl = true
+        }
+
+        debug('Started loading %s', script)
+        if (isUrl) {
+          if (
+            document.querySelector(
+              tag + '[' + attributes.attr + '="' + script + '"]'
+            ) != null
+          ) {
+            debug('Script %s was already found in DOM', script)
+            resolve(script)
+            return
+          }
+        } else {
+          const currentTags = document.getElementsByTagName(tag)
+          for (let i = 0; i < currentTags.length; i++) {
+            if (currentTags[i].innerHTML === script) {
+              debug('Script %s was already found in DOM', script)
+              resolve(script)
+              return
+            }
+          }
         }
         const element = document.createElement(tag)
 
         // Important success and error for the promise
-        element.onload = function () {
-          debug('Loaded %s', url)
-          resolve(url)
-        }
-        element.onerror = function () {
-          debug('Error while loading %s', url)
-          reject(url)
+        if (customEvent) {
+          window.addEventListener(customEvent, event => {
+            debug('Custom event fired for script %s', script)
+            resolve(script)
+          })
+        } else {
+          element.onload = () => {
+            debug('Loaded %s', script)
+            resolve(script)
+          }
         }
 
-        // Need to set different attributes depending on tag type
-        switch (tag) {
-          case 'script':
-            element.async = true
-            break
-          case 'link':
-            element.type = 'text/css'
-            element.rel = 'stylesheet'
-            attr = 'href'
-            parent = 'head'
+        element.onerror = () => {
+          debug('Error while loading %s', script)
+          reject(script)
+        }
+
+        // Set attributes with the corrcet values. If the key is `attr` then the
+        // value belonging to that key is the *name* of the attribute that
+        // should hold the `url`.
+
+        for (const [attribute, value] of Object.entries(attributes)) {
+          if (attribute !== 'attr') {
+            element[attribute] = value
+          } else if (isUrl) {
+            element[value] = script
+          }
+        }
+
+        // If the source is given (instead of an url) load the source as innerHTML
+        if (!isUrl) {
+          element.innerHTML = script
         }
 
         // Inject into document to kick off loading
-        element[attr] = url
         document[parent].appendChild(element)
       })
     }
@@ -202,29 +255,37 @@ export const actions = {
         metalsmithConfig.plugins[index].local = true
       } else {
         metalsmithConfig.plugins[index].url = plugin.pkgVer
-          ? process.env.APP_WZRD_SERVICE +
-            'standalone/' +
+          ? process.env.APP_MODULES_CDN +
             Object.keys(plugin)[0] +
             '@' +
             plugin.pkgVer
-          : process.env.APP_WZRD_SERVICE +
-            'standalone/' +
-            Object.keys(plugin)[0] +
-            '@latest'
+          : process.env.APP_MODULES_CDN + Object.keys(plugin)[0]
         metalsmithConfig.plugins[index].local = false
       }
     })
 
     debug('Metalsmith plugins to be loaded %o', metalsmithConfig.plugins)
 
-    const cdnPlugins = metalsmithConfig.plugins.map(plugin => {
+    let loadScript = ''
+
+    metalsmithConfig.plugins.forEach(plugin => {
       if (!plugin.local) {
-        return load.js(plugin.url)
+        loadScript +=
+          'import ' +
+          camelCase(Object.keys(plugin)[0]) +
+          " from '" +
+          plugin.url +
+          "';window['" +
+          camelCase(Object.keys(plugin)[0]) +
+          "']=" +
+          camelCase(Object.keys(plugin)[0]) +
+          ';'
       }
     })
+    loadScript += "window.dispatchEvent(new CustomEvent('jspm'));"
 
     debug('Lazy load markdown plugins')
-    await Promise.all(cdnPlugins)
+    await load.js(loadScript, 'body', { async: true, type: 'module' }, 'jspm')
     debug('Plugins loaded')
 
     const pagesDomain = rootState.github.repoOwner + '.github.io'
