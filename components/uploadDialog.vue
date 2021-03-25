@@ -35,8 +35,8 @@
 </template>
 
 <script>
-import { mapMutations, mapActions } from 'vuex'
-const { isBinary } = require('istextorbinary')
+import { mapActions, mapGetters } from 'vuex'
+import { uploadAndResizeFile } from './../utils/upload_file'
 
 export default {
   name: 'UploadDialog',
@@ -52,52 +52,31 @@ export default {
       loading: false
     }
   },
+  computed: {
+    ...mapGetters('github', ['metalsmithConfigObject'])
+  },
   methods: {
     async upload() {
       this.loading = true
       this.fileContents = []
       const that = this
+      const callback = newFile => {
+        this.updateFileContent({ content: newFile.content, path: newFile.path })
+      }
       const uploads = this.files.map(file => {
-        const reader = new FileReader()
-        reader.addEventListener('loadend', () => {
-          const binary = isBinary(
-            file.name,
-            Buffer.from(
-              reader.result.substr(reader.result.indexOf(';base64,') + 8),
-              'base64'
-            )
-          )
-          const newFile = {
-            parent: that.parent,
-            name: file.name,
-            type: 'blob',
-            binary,
-            mode: '100644'
-          }
-          if (!binary) {
-            newFile.encoding = 'utf-8'
-          }
-          this.addNodeToTree(newFile).then(node => {
-            this.addFile({
-              ...newFile,
-              path: node.path,
-              content: binary
-                ? reader.result.substr(reader.result.indexOf(';base64,') + 8)
-                : atob(
-                    reader.result.substr(reader.result.indexOf(';base64,') + 8)
-                  )
-            })
-          })
-        })
-        reader.readAsDataURL(file)
+        uploadAndResizeFile(
+          file,
+          that.parent,
+          this.metalsmithConfigObject['image-processing'],
+          callback
+        )
       })
       await Promise.all(uploads)
       this.loading = false
       this.$emit('input', false)
       this.files = null
     },
-    ...mapMutations('github', ['addFile']),
-    ...mapActions('github', ['addNodeToTree'])
+    ...mapActions('github', ['updateFileContent'])
   }
 }
 </script>

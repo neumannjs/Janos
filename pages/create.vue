@@ -1,19 +1,30 @@
 <template>
-  <CreateDialog
-    :personal-repo="reponame"
+  <InputDialog
+    :message="
+      repoName
+        ? 'The repository ' +
+          repoName +
+          ' for your personal page is still available. Alternatively you can provide a different name for your website.'
+        : ''
+    "
+    :input="repoName"
     :persistent="true"
-    :value="true"
-    @create="createRepo($event)"
+    title="Create new website"
+    label="Name"
+    agree="Create"
+    cancel=""
+    :dialog="true"
+    @submit="createRepo($event)"
   />
 </template>
 
 <script>
 import Cookies from 'js-cookie'
-import CreateDialog from '../components/createDialog'
+import InputDialog from '../components/inputDialog'
 
 export default {
   components: {
-    CreateDialog
+    InputDialog
   },
   data() {
     return {
@@ -24,16 +35,12 @@ export default {
   auth: 'guest',
   methods: {
     createRepo(value) {
-      if (this.$refs.form.validate()) {
-        Cookies.set(
-          'accessTokenEndpoint',
-          process.env.APP_AZURE_FUNCTIONS_URL +
-            '/api/handler/?reponame=' +
-            value,
-          { expires: 1 }
-        )
-        this.$router.push('login')
-      }
+      Cookies.set(
+        'accessTokenEndpoint',
+        process.env.APP_AZURE_FUNCTIONS_URL + '/api/handler/?reponame=' + value,
+        { expires: 1 }
+      )
+      this.$router.push('login')
     }
   }
 }

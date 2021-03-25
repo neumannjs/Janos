@@ -315,10 +315,11 @@
                   <codemirror
                     v-if="!file.binary"
                     :ref="`cmEditor-${file.path}`"
-                    v-debounce:500ms="onCodeChange"
                     :value="file.content"
                     :options="cmOption"
-                    @ready="onResize()"
+                    @ready="onResize"
+                    @paste="onPaste"
+                    @change="onCodeChange"
                   />
                   <v-card v-else flat tile class="pa-2"
                     >The contents of this file are binary</v-card
@@ -340,6 +341,7 @@
           </v-container>
         </v-tab-item>
       </v-tabs-items>
+      <input-filename ref="input" />
     </v-content>
     <!-- Footer -->
     <v-footer fixed app class="footer">
@@ -356,6 +358,9 @@ import Upload from '../components/uploadDialog'
 import MetalsmithDrawer from '../components/metalsmithDrawer'
 import Footer from '../components/footer'
 import SelectBranch from '../components/selectBranch'
+import InputDialog from '../components/inputDialog'
+import { findOrCreateParent, right } from './../utils/utils'
+import { uploadAndResizeFile } from './../utils/upload_file'
 const debug = require('debug')('layouts/default')
 
 export default {
@@ -365,7 +370,8 @@ export default {
     upload: Upload,
     ftr: Footer,
     metalsmithDrawer: MetalsmithDrawer,
-    selectBranch: SelectBranch
+    selectBranch: SelectBranch,
+    inputFilename: InputDialog
   },
   data() {
     return {
@@ -425,7 +431,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('github', ['numberOfChangedFiles', 'openFiles']),
+    ...mapGetters('github', [
+      'numberOfChangedFiles',
+      'openFiles',
+      'metalsmithConfigObject'
+    ]),
     ...mapState('github', {
       items: state => {
         // add root folder
@@ -560,6 +570,59 @@ export default {
       await this.createGitCommit({ message: this.commitMessage })
       this.commitMessage = ''
       this.commitDisable = false
+    },
+    onPaste(cm, event) {
+      debug('paste event')
+      const kind = event.clipboardData.items[0].kind
+      const image = event.clipboardData.items[0].type.includes('image')
+      if (kind === 'file' && image) {
+        const file = event.clipboardData.items[0].getAsFile()
+        const date = new Date(Date.now())
+        const proposedFilename =
+          date.getFullYear().toString() +
+          right('0' + (date.getMonth() + 1).toString(), 2) +
+          right('0' + date.getDate().toString(), 2) +
+          right('0' + date.getHours().toString(), 2) +
+          right('0' + date.getMinutes().toString(), 2) +
+          right('0' + date.getSeconds().toString(), 2) +
+          '.png'
+        this.$refs.input
+          .open(
+            'Upload image',
+            '',
+            'Upload',
+            'Cancel',
+            'File name',
+            'create',
+            false,
+            proposedFilename
+          )
+          .then(filename => {
+            const imgLoc = '_src/images/' + filename
+            const parent = findOrCreateParent(this.items, imgLoc)
+            const callback = newFile => {
+              this.uploadFileContent({
+                content: newFile.content,
+                path: newFile.path
+              })
+            }
+            uploadAndResizeFile(
+              file,
+              parent,
+              this.metalsmithConfigObject['image-processing'],
+              callback,
+              filename,
+              window.devicePixelRatio
+            )
+            cm.replaceRange(
+              '![Alt text](/images/' + filename + ' "a title")',
+              cm.getCursor()
+            )
+          })
+          .catch(error => {
+            debug('image paste cancelled: %o', error)
+          })
+      }
     },
     onResize() {
       if (window.innerWidth < 1264) {
@@ -702,6 +765,9 @@ export default {
       'createGitCommit',
       'checkoutBranch'
     ]),
+    ...mapActions('github', {
+      uploadFileContent: 'updateFileContent'
+    }),
     ...mapMutations('github', ['updateFileContent', 'setFileOpened']),
     ...mapActions('metalsmith', ['runMetalsmith']),
     ...mapMutations('navigation', ['setActiveDrawer']),

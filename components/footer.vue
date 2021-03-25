@@ -23,8 +23,8 @@
                   <v-list-item-title>{{ item.title }}</v-list-item-title>
                   <!-- eslint-disable-next-line -->
                   <v-list-item-sub-title
-                    v-html="item.subTitle"
                     class="caption"
+                    v-html="item.subTitle"
                   />
                 </v-list-item-content>
                 <v-list-item-action>

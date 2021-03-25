@@ -53,12 +53,21 @@
               ></v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <CreateDialog
-            v-model="createDialog"
-            :personal-repo="repoName"
+          <InputDialog
+            :dialog.sync="createDialog"
+            :message="
+              repoName
+                ? 'The repository ' +
+                  repoName +
+                  ' for your personal page is still available. Alternatively you can provide a different name for your website.'
+                : ''
+            "
+            :input="repoName"
             :persistent="false"
             title="Create new website"
-            @create="createRepo($event)"
+            label="Name"
+            agree="Create"
+            @submit="dialogcreateRepo($event)"
           />
           <v-list-item
             @click="
@@ -84,13 +93,13 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import CreateDialog from './createDialog'
+import InputDialog from './inputDialog'
 const debug = require('debug')('components/accountDialog')
 
 export default {
   name: 'AccountDialog',
   components: {
-    CreateDialog
+    InputDialog
   },
   props: {
     model: { type: Boolean, default: false }
