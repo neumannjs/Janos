@@ -1065,7 +1065,7 @@ export const getters = {
     try {
       return JSON.parse(state.metalsmithConfig.content)
     } catch (e) {
-      return {}
+      return { error: e }
     }
   }
 }
