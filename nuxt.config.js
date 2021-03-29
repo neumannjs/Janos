@@ -30,7 +30,7 @@ const buildPlugins = [
   new webpack.NormalModuleReplacementPlugin(/uglify-js/, 'uglifyjs-browser')
 ]
 
-if (process.env.NODE_ENV == 'production') {
+if (process.env.NODE_ENV === 'production') {
   buildPlugins.push(
     new ReplaceInFileWebpackPlugin([
       {
@@ -163,8 +163,8 @@ module.exports = {
   hooks: {
     generate: {
       page(page) {
-        if (process.env.NODE_ENV == 'production') {
-          page.html = page.html.replace(/="\/nuxt/gi, '="../nuxt')
+        if (process.env.NODE_ENV === 'production') {
+          page.html = page.html.replace(/"\/nuxt/gi, '"../nuxt')
         }
       }
     }
