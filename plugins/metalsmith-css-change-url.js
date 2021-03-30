@@ -8,11 +8,13 @@ Changes absolute url's in css files to contain the rootpath
 module.exports = function (opts) {
   'use strict'
 
+  if (!opts) {
+    opts = {}
+  }
   opts.pattern = opts.pattern || ['**/*.css']
-  opts.rootpath = opts.rootpath || ['/']
 
   return function (files, metalsmith, done) {
-    if (opts.rootpath !== '/') {
+    if (metalsmith._metadata.rootPath !== '/') {
       for (const file in files) {
         if (multimatch(file, opts.pattern).length) {
           debug('working on: %s', file)

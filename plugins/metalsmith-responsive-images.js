@@ -47,40 +47,59 @@ module.exports = function (opts) {
               for (let j = imageSet[opts.format[i]].length - 1; j >= 0; j--) {
                 const image = imageSet[opts.format[i]][j]
                 // add source to the srcSet
-                srcSet += image.name + ' ' + image.width + 'w,'
-                // add sizesAttr and replace ${width} with the actual width of the image
-                sizes +=
-                  opts['sizes-attr'][j].replace('%width', image.width) + ','
+                srcSet +=
+                  (metalsmith._metadata.rootPath + image.name).replace(
+                    /\/\//g,
+                    '/'
+                  ) +
+                  ' ' +
+                  image.width +
+                  'w,'
+              }
+              for (let j = opts['sizes-attr'].length - 1; j >= 0; j--) {
+                if (
+                  opts['sizes-attr'].length === imageSet[opts.format[i]].length
+                ) {
+                  // add sizesAttr and replace ${width} with the actual width of the image
+                  const image = imageSet[opts.format[i]][j]
+                  sizes +=
+                    opts['sizes-attr'][j].replace('%width', image.width) + ','
+                } else {
+                  // cardinality sizes-attr array isn't equal to imageSet, so only add sizesAttr
+                  sizes += opts['sizes-attr'][j]
+                }
               }
               srcSet = srcSet.substr(0, srcSet.length - 1)
               sizes = sizes.substr(0, sizes.length - 1)
               if (opts.format[i] === 'jpg') {
                 const smallestImage = imageSet.jpg[imageSet.jpg.length - 1]
+                imageSetHtml += '<img srcSet="' + srcSet
+                imageSetHtml += sizes === '' ? '' : '" sizes="' + sizes
                 imageSetHtml +=
-                  '<img srcSet="' +
-                  srcSet +
-                  '" sizes="' +
-                  sizes +
                   '" src="' +
-                  smallestImage.name +
+                  (metalsmith._metadata.rootPath + smallestImage.name).replace(
+                    /\/\//g,
+                    '/'
+                  ) +
                   '" alt="' +
                   p1 +
                   '" title="' +
                   p3 +
-                  '" loading="lazy" decoding="async" width="' +
-                  smallestImage.width +
-                  '" height="' +
-                  smallestImage.height +
-                  '"/>'
-              } else {
+                  '" loading="lazy" decoding="async"'
+
                 imageSetHtml +=
-                  '<source srcSet="' +
-                  srcSet +
-                  '" sizes="' +
-                  sizes +
-                  '" type="image/' +
-                  [opts.format[i]] +
-                  '"/>'
+                  sizes !== ''
+                    ? ''
+                    : ' width="' +
+                      smallestImage.width +
+                      '" height="' +
+                      smallestImage.height +
+                      '"'
+                imageSetHtml += '/>'
+              } else {
+                imageSetHtml += '<source srcSet="' + srcSet
+                imageSetHtml += sizes === '' ? '' : '" sizes="' + sizes
+                imageSetHtml += '" type="image/' + [opts.format[i]] + '"/>'
               }
             }
             imageSetHtml += '</picture>'
