@@ -130,8 +130,11 @@ export default {
     mergeAndRunMetalsmith() {
       debug('merge')
       this.merge({ head: 'source' }).then(() => {
-        debug('run metalsmith')
-        this.runMetalsmith()
+        debug('load metalsmith config')
+        this.loadMetalsmithConfig().then(() => {
+          debug('run metalsmith')
+          this.runMetalsmith()
+        })
       })
     },
 
@@ -141,7 +144,8 @@ export default {
       'searchTemplates',
       'addSubTree',
       'merge',
-      'checkoutBranch'
+      'checkoutBranch',
+      'loadMetalsmithConfig'
     ]),
     ...mapActions('metalsmith', ['runMetalsmith'])
   }
