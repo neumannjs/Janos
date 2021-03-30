@@ -48,7 +48,7 @@ module.exports = function (opts) {
                 const image = imageSet[opts.format[i]][j]
                 // add source to the srcSet
                 srcSet +=
-                  (metalsmith._metadata.rootPath + image.name).replace(
+                  (metalsmith._metadata.rootpath + image.name).replace(
                     /\/\//g,
                     '/'
                   ) +
@@ -77,7 +77,7 @@ module.exports = function (opts) {
                 imageSetHtml += sizes === '' ? '' : '" sizes="' + sizes
                 imageSetHtml +=
                   '" src="' +
-                  (metalsmith._metadata.rootPath + smallestImage.name).replace(
+                  (metalsmith._metadata.rootpath + smallestImage.name).replace(
                     /\/\//g,
                     '/'
                   ) +

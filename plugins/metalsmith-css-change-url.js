@@ -14,7 +14,7 @@ module.exports = function (opts) {
   opts.pattern = opts.pattern || ['**/*.css']
 
   return function (files, metalsmith, done) {
-    if (metalsmith._metadata.rootPath !== '/') {
+    if (metalsmith._metadata.rootpath !== '/') {
       for (const file in files) {
         if (multimatch(file, opts.pattern).length) {
           debug('working on: %s', file)
@@ -22,7 +22,10 @@ module.exports = function (opts) {
             files[file].contents
           )
           files[file].contents = new TextEncoder().encode(
-            fileContents.replace(/url\(\//g, 'url(' + opts.rootpath)
+            fileContents.replace(
+              /url\(\//g,
+              'url(' + metalsmith._metadata.rootpath
+            )
           )
         }
       }
