@@ -73,6 +73,7 @@ module.exports = function (opts) {
               sizes = sizes.substr(0, sizes.length - 1)
               if (opts.format[i] === 'jpg') {
                 const smallestImage = imageSet.jpg[imageSet.jpg.length - 1]
+                const largestImage = imageSet.jpg[0]
                 imageSetHtml += '<img srcSet="' + srcSet
                 imageSetHtml += sizes === '' ? '' : '" sizes="' + sizes
                 imageSetHtml +=
@@ -91,9 +92,9 @@ module.exports = function (opts) {
                   sizes !== ''
                     ? ''
                     : ' width="' +
-                      smallestImage.width +
+                      largestImage.width +
                       '" height="' +
-                      smallestImage.height +
+                      largestImage.height +
                       '"'
                 imageSetHtml += '/>'
               } else {
