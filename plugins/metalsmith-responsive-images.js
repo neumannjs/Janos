@@ -12,6 +12,7 @@ module.exports = function (opts) {
     opts = {}
   }
   opts.pattern = opts.pattern || ['**/*.md']
+  opts.caption = opts.caption || false
 
   return async function (files, metalsmith, done) {
     const store = window.$nuxt.$store
@@ -102,6 +103,9 @@ module.exports = function (opts) {
                 imageSetHtml += sizes === '' ? '' : '" sizes="' + sizes
                 imageSetHtml += '" type="image/' + [opts.format[i]] + '"/>'
               }
+            }
+            if (opts.caption) {
+              imageSetHtml += '<figcaption>' + p3 + '</figcaption>'
             }
             imageSetHtml += '</picture>'
             debug('imageSet HTML: %s', imageSetHtml)
