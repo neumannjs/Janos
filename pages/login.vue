@@ -18,7 +18,7 @@ export default {
     } else {
       this.$auth.loginWith('githubProxy', {
         // TODO: This state should include a random nonce of sorts
-        state:
+        redirect_uri:
           window.location.protocol +
           '//' +
           window.location.host +

@@ -48,7 +48,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 module.exports = {
-  mode: 'spa',
+  ssr: false,
 
   /*
    ** Headers of the page
@@ -121,7 +121,10 @@ module.exports = {
     strategies: {
       githubProxy: {
         _scheme: 'oauth2',
-        authorization_endpoint: 'https://github.com/login/oauth/authorize',
+        authorization_endpoint:
+          process.env.NODE_ENV !== 'production'
+            ? process.env.APP_AZURE_FUNCTIONS_URL_DEV + '/api/authorize/'
+            : process.env.APP_AZURE_FUNCTIONS_URL + '/api/authorize/',
         access_token_endpoint:
           process.env.NODE_ENV !== 'production'
             ? process.env.APP_AZURE_FUNCTIONS_URL_DEV + '/api/handler/'
@@ -130,10 +133,6 @@ module.exports = {
         scope: ['repo', 'read:user'],
         response_type: 'code',
         token_type: 'Bearer',
-        redirect_uri:
-          process.env.NODE_ENV !== 'production'
-            ? process.env.APP_AZURE_FUNCTIONS_URL_DEV + '/api/callback/'
-            : process.env.APP_AZURE_FUNCTIONS_URL + '/api/callback/',
         client_id:
           process.env.NODE_ENV !== 'production'
             ? process.env.APP_CLIENT_ID_DEV
