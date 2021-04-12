@@ -6,6 +6,7 @@ const kebabCase = require('lodash/kebabCase')
 const camelCase = require('lodash/camelCase')
 const local = {}
 local.metalsmithLayouts = require('metalsmith-layouts')
+local.metalsmithPermalinks = require('metalsmith-permalinks')
 local.metalsmithTags = require('metalsmith-tags')
 local.metalsmithAssets = require('metalsmith-assets')
 local.metalsmithFeed = require('metalsmith-feed')

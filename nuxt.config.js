@@ -112,10 +112,10 @@ module.exports = {
   auth: {
     rewriteRedirects: true,
     redirect: {
-      login: '/login',
+      login: '../login',
       logout: '/',
       callback: '/callback',
-      home: '/admin'
+      home: '../admin'
     },
     plugins: ['~/plugins/octokit-plugin'],
     strategies: {
