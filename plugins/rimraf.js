@@ -1,3 +1,5 @@
+const debug = require('debug')('plugins/rimraf')
+
 let store
 
 if (process.browser) {
@@ -7,6 +9,7 @@ if (process.browser) {
 }
 
 module.exports = function rimraf(path, options, callback) {
+  debug('rimraf called for path %s', path)
   if (typeof options === 'function') {
     callback = options
     options = {}

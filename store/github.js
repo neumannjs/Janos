@@ -23,7 +23,8 @@ export const state = () => ({
   branches: [],
   currentBranch: '',
   selectedBranch: '',
-  metalsmithConfig: ''
+  metalsmithConfig: '',
+  baseTree: true
 })
 
 export const mutations = {
@@ -68,6 +69,9 @@ export const mutations = {
   },
   clearFileContents(state) {
     state.fileContents = []
+  },
+  setBaseTree(state, payload) {
+    state.baseTree = payload
   },
   addFile(state, payload) {
     const file = state.fileContents.find(f => f.path === payload.path)
@@ -130,17 +134,6 @@ export const mutations = {
   },
   deleteFileFromTree(state, { parent, index }) {
     parent.splice(index, 1)
-  },
-  deleteChildren(state, folder) {
-    state.fileContents = state.fileContents.filter(file => {
-      return file.path.substring(0, folder.path.length) !== folder.path
-    })
-    if (folder.children) {
-      folder.children = []
-    }
-    if (state.currentBranch === 'source') {
-      state.sourceFileTree = state.fileTree
-    }
   },
   updateFileContent(state, { content, path, builtFile }) {
     const file = state.fileContents.find(f => f.path === path)
@@ -738,6 +731,21 @@ export const actions = {
     }
   },
 
+  async deleteFolder({ commit, dispatch, state }, folder) {
+    await dispatch('getFile', folder.path)
+    debug('deleteFolder %s', folder.path)
+    commit('setFileDeleted', { folder, value: true })
+    if (folder.children) {
+      folder.children.forEach(item => {
+        if (item.type === 'tree') {
+          dispatch('deleteFolder', item)
+        } else {
+          dispatch('deleteFile', item)
+        }
+      })
+    }
+  },
+
   restoreFile({ commit, state }, file) {
     const fileContent = state.fileContents.find(f => f.path === file.path)
     const sha = calculateSha1(fileContent)
@@ -927,25 +935,79 @@ export const actions = {
     // Create a git tree for *all* files with a newSha property (regardless of
     // the value of the propery). This includes files that will be deleted,
     // having a newSha of null.
-    const gitTree = state.fileContents
-      .filter(file => Object.prototype.hasOwnProperty.call(file, 'newSha'))
-      .map(editedFile => {
+    let gitTree = []
+
+    if (state.baseTree) {
+      gitTree = state.fileContents
+        .filter(file => Object.prototype.hasOwnProperty.call(file, 'newSha'))
+        .map(editedFile => {
+          return {
+            path: editedFile.path,
+            mode: editedFile.mode,
+            type: editedFile.type,
+            sha: editedFile.newSha
+          }
+        })
+    } else {
+      // include all files that have been requested at some point.
+      // `state.baseTree` is probably only false if Metalsmith is run with
+      // `clean` set to true. The Metalsmith process will touch all files
+      // required for the complete website. So if you add all these files and
+      // create a git tree without a base tree, you should end up with a
+      // functioning website. The only thing left is to include the files
+      // required by Janos and some other processes.
+      gitTree = state.fileContents.map(editedFile => {
+        const sha = Object.prototype.hasOwnProperty.call(editedFile, 'newSha')
+          ? editedFile.newSha
+          : editedFile.sha
         return {
           path: editedFile.path,
           mode: editedFile.mode,
           type: editedFile.type,
-          sha: editedFile.newSha
+          sha
         }
       })
+      const neverDelete = [
+        'admin',
+        'callback',
+        'create',
+        'login',
+        'nuxt',
+        'select',
+        '_config.yml',
+        '.gitignore',
+        'keybase.txt',
+        'CNAME',
+        '_src',
+        '_layouts'
+      ]
+      gitTree = gitTree.concat(
+        state.fileTree
+          .filter(file => neverDelete.includes(file.name))
+          .map(object => {
+            return {
+              path: object.path,
+              mode: object.mode,
+              type: object.type,
+              sha: object.sha
+            }
+          })
+      )
+    }
 
     debug('Changed tree objects: %o', gitTree)
 
-    const result = await this.$octoKit.git.createTree({
+    const opt = {
       owner: state.repoOwner,
       repo: state.repo,
-      tree: gitTree,
-      base_tree: state.treeSha
-    })
+      tree: gitTree
+    }
+
+    if (state.baseTree) {
+      opt.base_tree = state.treeSha
+    }
+
+    const result = await this.$octoKit.git.createTree(opt)
 
     debug('gitTree created: %o', result.data)
 
@@ -965,7 +1027,8 @@ export const actions = {
       }
     })
 
-    return result
+    // return result
+    return {}
   },
 
   async createGitCommit({ rootState, state, commit, getters }, { message }) {
@@ -1041,11 +1104,26 @@ export const actions = {
     }, 6000)
   },
 
-  clearFolder({ state, commit }, folder) {
+  clearFolder({ state, commit, dispatch }, folder) {
+    debug('clearFolder called for %s', folder)
+    // If folder === '*' then we should clear the root folder. But some folders
+    // are never to be deleted:
+    // - Folders starting with an underscore, because they contain the source
+    //   markdown and the templates.
+    // - All folders belonging to the Janos client itself: admin, callback,
+    //   create, login, nuxt, select To keep the number of API calls low we
+    //   should create a complete new git tree instead of building on a
+    //   base_tree.
     return new Promise((resolve, reject) => {
-      const treeFolder = findFileRecursive(state.fileTree, folder)
-      if (treeFolder) {
-        commit('deleteChildren', treeFolder)
+      if (folder === '*') {
+        commit('setBaseTree', false)
+      } else {
+        const treeFolder = findFileRecursive(state.fileTree, folder)
+        if (treeFolder) {
+          dispatch('deleteFolder', treeFolder)
+        } else {
+          reject(new Error('folder not found'))
+        }
       }
       resolve()
     })
