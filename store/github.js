@@ -5,7 +5,8 @@ import {
   findFileRecursive,
   addTreeItem,
   calculateSha1,
-  setFileSha
+  setFileSha,
+  filterFileTreeRecursive
 } from './../utils/utils'
 const debug = require('debug')('store/github')
 const { isBinary } = require('istextorbinary')
@@ -904,8 +905,8 @@ export const actions = {
     const createBlobs = state.fileContents
       .filter(file => file.newSha)
       .map(editedFile => {
-        debug('Create blob for %s', editedFile.path)
         let content = editedFile.content
+        debug('Create blob for %s with content %s', editedFile.path, content)
         if (editedFile.encoding && editedFile.encoding === 'utf-8') {
           content = btoaUTF8(content)
         }
@@ -950,7 +951,7 @@ export const actions = {
         })
     } else {
       // include all files that have been requested at some point.
-      // `state.baseTree` is probably only false if Metalsmith is run with
+      // `state.baseTree` is only false if Metalsmith is run with
       // `clean` set to true. The Metalsmith process will touch all files
       // required for the complete website. So if you add all these files and
       // create a git tree without a base tree, you should end up with a
@@ -960,6 +961,9 @@ export const actions = {
         const sha = Object.prototype.hasOwnProperty.call(editedFile, 'newSha')
           ? editedFile.newSha
           : editedFile.sha
+        if (editedFile.path === '_src/pages/contact.md') {
+          debug('content of contact.md is %s', editedFile.content)
+        }
         return {
           path: editedFile.path,
           mode: editedFile.mode,
@@ -967,7 +971,8 @@ export const actions = {
           sha
         }
       })
-      const neverDelete = [
+
+      const neverDeletePattern = [
         'admin',
         'callback',
         'create',
@@ -978,21 +983,15 @@ export const actions = {
         '.gitignore',
         'keybase.txt',
         'CNAME',
-        '_src',
-        '_layouts'
+        '_layouts',
+        '_src'
       ]
-      gitTree = gitTree.concat(
-        state.fileTree
-          .filter(file => neverDelete.includes(file.name))
-          .map(object => {
-            return {
-              path: object.path,
-              mode: object.mode,
-              type: object.type,
-              sha: object.sha
-            }
-          })
+      const neverDelete = filterFileTreeRecursive(
+        state.fileTree,
+        neverDeletePattern
       )
+      debug('gitTree neverDelete %o', neverDelete)
+      gitTree = neverDelete.concat(gitTree)
     }
 
     debug('Changed tree objects: %o', gitTree)
@@ -1027,11 +1026,16 @@ export const actions = {
       }
     })
 
+    // if baseTree is false becasue Metalsmith was run with `clean` set to true.
+    // It should now be set to true for future commits. If it is already true it
+    // doesn't change anything.
+    commit('setBaseTree', true)
+
     // return result
     return {}
   },
 
-  async createGitCommit({ rootState, state, commit, getters }, { message }) {
+  async createGitCommit({ state, commit }, { message }) {
     commit(
       'status/addOrUpdateStatusItem',
       {

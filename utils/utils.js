@@ -82,6 +82,29 @@ export function findFileRecursive(array, path) {
   }
 }
 
+export function filterFileTreeRecursive(array, pattern) {
+  let a = []
+  array
+    .filter(
+      file =>
+        pattern.some(element => file.path.startsWith(element)) &&
+        file.type === 'tree'
+    )
+    .forEach(
+      file => (a = a.concat(filterFileTreeRecursive(file.children, pattern)))
+    )
+
+  a = a.concat(
+    array.filter(
+      file =>
+        pattern.some(element => file.path.startsWith(element)) &&
+        file.type !== 'tree'
+    )
+  )
+
+  return a
+}
+
 export function addTreeItem(path, object, array) {
   if (path.indexOf('/') > 0) {
     const folder = path.substring(0, path.indexOf('/'))
