@@ -11,7 +11,14 @@ export default function ({ $axios }) {
       if (sites.length === 1) {
         // TODO: (optional) If things get more complicated, we should move this data exchange through url paramaters to Vuex
         if (sites[0].create) {
-          window.location = '/create?reponame=' + sites[0].create
+          let subfolder = window.location.pathname.split('/')[1]
+          const reservedReponames = ['login', 'admin']
+          if (reservedReponames.includes(subfolder)) {
+            subfolder = ''
+          }
+          subfolder += subfolder.length > 0 ? '/' : ''
+          window.location =
+            '/' + subfolder + 'create?reponame=' + sites[0].create
         } else {
           window.location = sites[0].url
         }

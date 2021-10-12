@@ -28,16 +28,21 @@ export default {
   },
   data() {
     return {
-      reponame: this.$route.query.reponame
+      repoName: this.$route.query.reponame
     }
   },
   layout: 'centered',
   auth: 'guest',
   methods: {
     createRepo(value) {
+      let azureFuncUrl = process.env.APP_AZURE_FUNCTIONS_URL
+      if (process.env.APP_ENV === 'development') {
+        azureFuncUrl = process.env.APP_AZURE_FUNCTIONS_URL_DEV
+      }
+      console.log(azureFuncUrl)
       Cookies.set(
         'accessTokenEndpoint',
-        process.env.APP_AZURE_FUNCTIONS_URL + '/api/handler/?reponame=' + value,
+        azureFuncUrl + '/api/handler/?reponame=' + value,
         { expires: 1 }
       )
       this.$router.push('login')
