@@ -76,11 +76,16 @@ export const mutations = {
   },
   addFile(state, payload) {
     const file = state.fileContents.find(f => f.path === payload.path)
+    const entry = findFileRecursive(state.fileTree, payload.path)
+    entry.sha = calculateSha1(payload)
     if (file === undefined) {
-      const entry = findFileRecursive(state.fileTree, payload.path)
-      entry.sha = calculateSha1(payload)
-      calculateSha1(payload)
       state.fileContents.push(payload)
+    } else {
+      Vue.set(
+        state.fileContents,
+        state.fileContents.findIndex(f => f.path === payload.path),
+        payload
+      )
     }
   },
   setFileOpened(state, { file, value }) {
@@ -162,10 +167,10 @@ export const mutations = {
 
 export const actions = {
   async loadMetalsmithConfig({ dispatch, commit }) {
-    const metalsmithConfig = await dispatch(
-      'getFile',
-      '_layouts/metalsmith.json'
-    )
+    const metalsmithConfig = await dispatch('getFile', {
+      path: '_layouts/metalsmith.json',
+      force: true
+    })
     commit('setMetalsmithConfig', metalsmithConfig)
   },
   async getBranches({ state, rootState, commit }) {
@@ -596,45 +601,14 @@ export const actions = {
             ref: 'heads/' + state.currentBranch,
             sha: resultCommit.data.sha
           })
+          debug('Old treeSha %s, new treeSha %s', state.treeSha, newTreeSha)
           commit('setTreeSha', newTreeSha)
           commit('setBranchSha', {
             name: state.currentBranch,
             sha: resultCommit.data.sha
           })
-          const indexSourceSrc = state.sourceFileTree.findIndex(
-            object => object.path === '_src'
-          )
-          const indexSourceLayouts = state.sourceFileTree.findIndex(
-            object => object.path === '_layouts'
-          )
-          const indexCurrentSrc = state.fileTree.findIndex(
-            object => object.path === '_src'
-          )
-          const indexCurrentLayouts = state.fileTree.findIndex(
-            object => object.path === '_layouts'
-          )
-          debug(
-            'Replace _src in branch %s: %o with _src from source: %o ',
-            state.currentBranch,
-            state.fileTree[indexCurrentSrc],
-            state.sourceFileTree[indexSourceSrc]
-          )
-          Vue.set(
-            state.fileTree,
-            indexCurrentSrc,
-            state.sourceFileTree[indexSourceSrc]
-          )
-          debug(
-            'Replace _layouts in branch %s: %o with _src from source: %o ',
-            state.currentBranch,
-            state.fileTree[indexCurrentLayouts],
-            state.sourceFileTree[indexSourceLayouts]
-          )
-          Vue.set(
-            state.fileTree,
-            indexCurrentLayouts,
-            state.sourceFileTree[indexSourceLayouts]
-          )
+          debug('forced refresh of fileTree')
+          await dispatch('getFileTree', { force: true })
         } else {
           return null
         }
@@ -789,13 +763,23 @@ export const actions = {
     /* eslint-enable no-async-promise-executor */
   },
 
-  async getFile({ rootState, state, commit }, path) {
+  async getFile({ rootState, state, commit }, payload) {
+    let path = ''
+    let force = false
+    if (typeof payload === 'string') {
+      path = payload
+    } else if (Object.prototype.hasOwnProperty.call(payload, 'force')) {
+      path = payload.path
+      force = payload.force
+    } else {
+      path = payload.path
+    }
     debug('getFile will try to find file with path %s.', path)
     if (path[0] === '/') {
       path = path.substr(1)
     }
     let file = state.fileContents.find(f => f.path === path)
-    if (file === undefined) {
+    if (file === undefined || force) {
       try {
         const treeFile = findFileRecursive(state.fileTree, path)
         if (treeFile !== undefined) {
