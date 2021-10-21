@@ -20,7 +20,13 @@ export default function ({ $axios }) {
           window.location =
             '/' + subfolder + 'create?reponame=' + sites[0].create
         } else {
-          window.location = sites[0].url
+          // Before redirect remove cookie used to change access-token endpoint calls
+          Cookies.remove('accessTokenEndpoint')
+          // Hopefully 30 seconds is enough for the Github pages site to build
+          // for the 1st time.
+          setTimeout(() => {
+            window.location = sites[0].url
+          }, 30000)
         }
       } else {
         window.location =
