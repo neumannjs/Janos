@@ -963,6 +963,7 @@ export const actions = {
         'login',
         'nuxt',
         'select',
+        'stream',
         '_config.yml',
         '.gitignore',
         'keybase.txt',
