@@ -5,21 +5,22 @@ const merge = require('lodash/merge')
 const kebabCase = require('lodash/kebabCase')
 const camelCase = require('lodash/camelCase')
 const local = {}
-local.metalsmithLayouts = require('metalsmith-layouts')
-local.metalsmithPermalinks = require('metalsmith-permalinks')
-local.metalsmithTags = require('metalsmith-tags')
+local.cssChangeUrl = require('../plugins/metalsmith-css-change-url')
+local.dumpFile = require('../plugins/metalsmith-dump-file')
+local.inlineSource = require('../plugins/metalsmith-inline-source')
 local.metalsmithAssets = require('metalsmith-assets')
 local.metalsmithFeed = require('metalsmith-feed')
 local.metalsmithHtmlMinifier = require('metalsmith-html-minifier')
+local.metalsmithLayouts = require('metalsmith-layouts')
+local.metalsmithPermalinks = require('metalsmith-permalinks')
 local.metalsmithResponsiveImages = require('../plugins/metalsmith-responsive-images')
-local.cssChangeUrl = require('../plugins/metalsmith-css-change-url')
+local.metalsmithTags = require('metalsmith-tags')
+local.metalsmithWebmentions = require('../plugins/metalsmith-webmentions')
 local.sourceUrl = require('../plugins/metalsmith-sourceurl')
 local.writeBuiltUrl = require('../plugins/metalsmith-write-builturl')
-local.inlineSource = require('../plugins/metalsmith-inline-source')
-local.dumpFile = require('../plugins/metalsmith-dump-file')
 /* eslint-disable no-unused-vars */
 const nunjucksDateFilter = require('nunjucks-date-filter')
-const handlebarsDateHelper = require('handlebars-dateformat')
+// const handlebarsDateHelper = require('handlebars-dateformat')
 /* eslint-enable no-unused-vars */
 
 const load = (function () {
@@ -224,7 +225,7 @@ export const actions = {
       await Promise.all(loadPartials)
     }
 
-    this.handlebarsDateHelper = handlebarsDateHelper
+    // this.handlebarsDateHelper = handlebarsDateHelper
     if (findPlugin['metalsmith-layouts'].engineOptions.helpers) {
       Object.entries(
         findPlugin['metalsmith-layouts'].engineOptions.helpers

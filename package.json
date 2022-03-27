@@ -19,6 +19,7 @@
     "@nuxtjs/dotenv": "^1.4.1",
     "@octokit/rest": "^17.9.2",
     "@open-wc/webpack-import-meta-loader": "^0.4.7",
+    "axios-jsonp": "^1.0.4",
     "bestbase64utf8": "^1.0.3",
     "cross-env": "^5.2.1",
     "debug": "^4.1.1",
