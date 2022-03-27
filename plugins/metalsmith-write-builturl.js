@@ -1,5 +1,11 @@
 const debug = require('debug')('plugins/metalsmith-write-builturl')
 
+/*
+This plugin works in conjunction with metalsmith-sourceurl. It looks for files
+that have a srcUrl (the original markdown files) and then it writes the current
+url of that file to the properties of the original file.
+*/
+
 module.exports = function (opts) {
   'use strict'
 
