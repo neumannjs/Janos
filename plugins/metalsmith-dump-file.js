@@ -15,7 +15,7 @@ module.exports = function (opts) {
           'Dumping file %s\n\n%s',
           filename,
           stringify(dump, (key, value) => {
-            if (typeof value === 'object' && value.type === 'Buffer') {
+            if (value && typeof value === 'object' && value.type === 'Buffer') {
               return Buffer.from(value.data).toString()
             } else {
               return value
