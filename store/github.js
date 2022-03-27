@@ -577,6 +577,7 @@ export const actions = {
 
       const newTreeSha = result.data.sha
 
+      // TODO: This commit shows the problem with the merge. Sometimes it selects the wrong parents. I should fix this.
       const payload = {
         owner: state.repoOwner,
         repo: state.repo,
@@ -957,19 +958,20 @@ export const actions = {
       })
 
       const neverDeletePattern = [
+        '_config.yml',
+        '_layouts',
+        '_src',
+        '.gitignore',
         'admin',
+        'cache',
         'callback',
+        'CNAME',
         'create',
+        'keybase.txt',
         'login',
         'nuxt',
         'select',
-        'stream',
-        '_config.yml',
-        '.gitignore',
-        'keybase.txt',
-        'CNAME',
-        '_layouts',
-        '_src'
+        'stream'
       ]
       const neverDelete = filterFileTreeRecursive(
         state.fileTree,
