@@ -10,7 +10,7 @@ import {
 } from './../utils/utils'
 const debug = require('debug')('store/github')
 const { isBinary } = require('istextorbinary')
-const { btoaUTF8 } = require('bestbase64utf8')
+const { Base64 } = require('js-base64')
 
 export const state = () => ({
   fileTree: [],
@@ -808,7 +808,7 @@ export const actions = {
             debug('File %s is not binary, so decode base64 content.', file.path)
             // Convert non-binary files from base64 to string (utf-8)
             // TODO: Check whether the Unicode problem still is relevant: <https://stackoverflow.com/a/30106551>
-            file.content = atob(file.content)
+            file.content = Base64.decode(file.content)
             file.encoding = 'utf-8'
           }
           commit('addFile', file)
@@ -893,7 +893,7 @@ export const actions = {
         let content = editedFile.content
         debug('Create blob for %s with content %s', editedFile.path, content)
         if (editedFile.encoding && editedFile.encoding === 'utf-8') {
-          content = btoaUTF8(content)
+          content = Base64.encode(content)
         }
         return this.$octoKit.git
           .createBlob({

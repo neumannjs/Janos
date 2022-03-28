@@ -1,4 +1,5 @@
 import { sniffKeyType, processFiles } from '../../frontend-image-encode/lib2'
+const { Base64 } = require('js-base64')
 
 const debug = require('debug')('utils/upload_file')
 
@@ -54,7 +55,7 @@ export const uploadAndResizeFile = async (
   for (let i = 0; i < conf.format.length; i++) {
     for (let j = 0; j < returnImages[conf.format[i]].length; j++) {
       const image = returnImages[conf.format[i]][j]
-      const b64encoded = _uInt8ToBase64(image.data)
+      const b64encoded = Base64.fromUint8Array(image.data)
       const newFile = _newFile(image.name, parent.path, true, b64encoded)
       callback(newFile)
     }
@@ -68,19 +69,10 @@ function _newFile(name, folder, binary, content) {
     type: 'blob',
     binary,
     mode: '100644',
-    content: binary ? content : atob(content)
+    content: binary ? content : Base64.encode(content)
   }
   if (!binary) {
     newFile.encoding = 'utf-8'
   }
   return newFile
-}
-
-function _uInt8ToBase64(uInt8) {
-  let binary = ''
-  const len = uInt8.byteLength
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(uInt8[i])
-  }
-  return btoa(binary)
 }
