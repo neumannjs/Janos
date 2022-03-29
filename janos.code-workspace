@@ -51,6 +51,12 @@
         "command": "Remove-Item /Repositories/Janos-starter/nuxt -Recurse ; Remove-Item /Repositories/Janos-starter/admin -Recurse ; Remove-Item /Repositories/Janos-starter/callback -Recurse ; Remove-Item /Repositories/Janos-starter/create -Recurse ; Remove-Item /Repositories/Janos-starter/login -Recurse ; Remove-Item /Repositories/Janos-starter/select -Recurse; Copy-Item -Path /Repositories/Janos/dist/nuxt -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/admin -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/callback -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/create -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/login -Destination /Repositories/Janos-starter -Recurse; Copy-Item -Path /Repositories/Janos/dist/select -Destination /Repositories/Janos-starter -Recurse",
         "problemMatcher": []
       }
+      {
+        "label": "Copy from dist to gijswijs.github.io",
+        "type": "shell",
+        "command": "Remove-Item /Repositories/gijswijs.github.io/nuxt -Recurse ; Remove-Item /Repositories/gijswijs.github.io/admin -Recurse ; Remove-Item /Repositories/gijswijs.github.io/callback -Recurse ; Remove-Item /Repositories/gijswijs.github.io/create -Recurse ; Remove-Item /Repositories/gijswijs.github.io/login -Recurse ; Remove-Item /Repositories/gijswijs.github.io/select -Recurse; Copy-Item -Path /Repositories/Janos/dist/nuxt -Destination /Repositories/gijswijs.github.io -Recurse; Copy-Item -Path /Repositories/Janos/dist/admin -Destination /Repositories/gijswijs.github.io -Recurse; Copy-Item -Path /Repositories/Janos/dist/callback -Destination /Repositories/gijswijs.github.io -Recurse; Copy-Item -Path /Repositories/Janos/dist/create -Destination /Repositories/gijswijs.github.io -Recurse; Copy-Item -Path /Repositories/Janos/dist/login -Destination /Repositories/gijswijs.github.io -Recurse; Copy-Item -Path /Repositories/Janos/dist/select -Destination /Repositories/gijswijs.github.io -Recurse",
+        "problemMatcher": []
+      }
     ]
   }
 }
