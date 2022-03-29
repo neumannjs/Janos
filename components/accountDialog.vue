@@ -34,6 +34,11 @@
         </v-container>
       </v-card-title>
       <v-card-text class="pa-0">
+        <v-row no-gutters>
+          <v-col cols="12" class="text-center">Janos v{{ version }}</v-col>
+        </v-row>
+      </v-card-text>
+      <v-card-text class="pa-0">
         <v-divider />
         <v-list dense nav class="transparent">
           <v-list-item
@@ -95,6 +100,7 @@
 import { mapState, mapActions } from 'vuex'
 import InputDialog from './inputDialog'
 const debug = require('debug')('components/accountDialog')
+const version = require('./../package.json').version
 
 export default {
   name: 'AccountDialog',
@@ -108,7 +114,8 @@ export default {
     return {
       dialog: false,
       repoName: '',
-      createDialog: false
+      createDialog: false,
+      version
     }
   },
   computed: {
