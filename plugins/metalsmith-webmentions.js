@@ -121,7 +121,14 @@ module.exports = function (opts) {
         }
         const req = baseUrl + files[file].path + '/'
 
-        const feed = await fetchWebmentions(req, cache.lastFetched)
+        const lastFetched = new Date(cache.lastFetched)
+
+        // Allow for one day overlap with cache. Webmentions.io doesn't parse
+        // everything in real time and we don't want to miss any mentions.
+        const feed = await fetchWebmentions(
+          req,
+          new Date(lastFetched.getDate() - 1).toISOString()
+        )
         if (feed) {
           debug('requesting webmentions for url %s', req)
           const children = mergeWebmentions(cache, feed)
