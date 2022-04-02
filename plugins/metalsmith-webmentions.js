@@ -14,11 +14,11 @@ now this plugin assumes it is running in Janos, so it uses the github, flaky
 fs that comes with that. Todo: Make the metalsmith fs be injectable.
 */
 
-async function fetchWebmentions(url, since, perPage = 10000) {
+async function fetchWebmentions(url, lastWmId, perPage = 10000) {
   const axios = window.$nuxt.$axios
 
   let req = `${API}/mentions.jf2?target=${url}&per-page=${perPage}`
-  if (since) req += `&since=${since}`
+  if (lastWmId) req += `&since_id=${lastWmId}`
 
   const response = await axios({
     url: req,
@@ -75,7 +75,7 @@ async function readFromCache(path) {
   }
 
   return {
-    lastFetched: null,
+    lastWmId: null,
     children: []
   }
 }
@@ -121,19 +121,19 @@ module.exports = function (opts) {
         }
         const req = baseUrl + files[file].path + '/'
 
-        const lastFetched = new Date(cache.lastFetched)
+        let lastWmId = cache.lastWmId ? cache.lastWmId : null
 
         // Allow for one day overlap with cache. Webmentions.io doesn't parse
         // everything in real time and we don't want to miss any mentions.
-        const feed = await fetchWebmentions(
-          req,
-          new Date(lastFetched.getDate() - 1).toISOString()
-        )
+        const feed = await fetchWebmentions(req, lastWmId)
         if (feed) {
+          if (feed.children.length > 0) {
+            lastWmId = feed.children[0]['wm-id']
+          }
           debug('requesting webmentions for url %s', req)
           const children = mergeWebmentions(cache, feed)
           const webmentions = {
-            lastFetched: new Date().toISOString(),
+            lastWmId,
             children,
             'reply-count': children.reduce(getSumFactory('in-reply-to'), 0),
             'like-count': children.reduce(getSumFactory('like-of'), 0),
