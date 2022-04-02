@@ -1,6 +1,6 @@
 {
   "name": "janos",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Browser based static site generator",
   "author": "Gijs van Dam",
   "private": true,
