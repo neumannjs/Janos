@@ -122,6 +122,7 @@ module.exports = function (opts) {
         const req = baseUrl + files[file].path + '/'
 
         let lastWmId = cache.lastWmId ? cache.lastWmId : null
+        lastWmId = lastWmId === 'null' ? null : lastWmId
 
         // Allow for one day overlap with cache. Webmentions.io doesn't parse
         // everything in real time and we don't want to miss any mentions.
