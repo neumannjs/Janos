@@ -20,11 +20,14 @@ async function fetchWebmentions(url, lastWmId, perPage = 10000) {
   let req = `${API}/mentions.jf2?target=${url}&per-page=${perPage}`
   if (lastWmId) req += `&since_id=${lastWmId}`
 
+  debug('request: %s', req)
+
   const response = await axios({
     url: req,
     adapter: jsonpAdapter,
     callbackParamName: 'jsonp'
   })
+  debug('response status: %i', response.status)
   if (response.status === 200) {
     const feed = response.data
     debug('>>> %d new webmentions fetched from %s', feed.children.length, API)
@@ -109,8 +112,8 @@ module.exports = function (opts) {
         debug('repoName %s', repoName)
         let baseUrl =
           repoName === '/'
-            ? protocol + pagesDomain + '/'
-            : protocol + pagesDomain + '/' + repoName + '/'
+            ? protocol + '//' + pagesDomain + '/'
+            : protocol + '//' + pagesDomain + '/' + repoName + '/'
 
         if (process.env.APP_ENV === 'development') {
           debug(
@@ -124,8 +127,8 @@ module.exports = function (opts) {
         let lastWmId = cache.lastWmId ? cache.lastWmId : null
         lastWmId = lastWmId === 'null' ? null : lastWmId
 
-        // Allow for one day overlap with cache. Webmentions.io doesn't parse
-        // everything in real time and we don't want to miss any mentions.
+        files[file].webmentions = cache
+
         const feed = await fetchWebmentions(req, lastWmId)
         if (feed) {
           if (feed.children.length > 0) {
@@ -143,8 +146,6 @@ module.exports = function (opts) {
           writeToCache(files[file].path, webmentions)
           files[file].webmentions = webmentions
         }
-
-        files[file].webmentions = cache
       }
     }
     done()
