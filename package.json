@@ -48,7 +48,7 @@
     "uglifyjs-browser": "^3.0.0",
     "vue-codemirror": "^4.0.6",
     "vue-debounce": "^2.5.6",
-    "vuetify": "^2.2.30",
+    "vuetify": "^2.6.10",
     "vuetify-loader": "^1.4.3",
     "vuex-persist": "^2.2.0"
   },
