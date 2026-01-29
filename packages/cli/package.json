@@ -1,0 +1,32 @@
+{
+  "name": "@janos/cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for Janos static site generator",
+  "type": "module",
+  "bin": {
+    "janos": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@janos/core": "workspace:*",
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}
