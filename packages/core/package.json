@@ -1,0 +1,66 @@
+{
+  "name": "@janos/core",
+  "version": "0.1.0",
+  "description": "Core abstractions for Janos static site generator",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./fs": {
+      "import": "./dist/fs/index.js",
+      "types": "./dist/fs/index.d.ts"
+    },
+    "./git": {
+      "import": "./dist/git/index.js",
+      "types": "./dist/git/index.d.ts"
+    },
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    },
+    "./pipeline": {
+      "import": "./dist/pipeline/index.js",
+      "types": "./dist/pipeline/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zenfs/core": "^1.0.0",
+    "@zenfs/dom": "^1.0.0",
+    "isomorphic-git": "^1.27.0",
+    "http-status-codes": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0",
+    "eslint": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT",
+  "author": "Gijs van Dam",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gvandam/janos.git",
+    "directory": "packages/core"
+  }
+}
