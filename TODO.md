@@ -10,12 +10,17 @@
 
 ## Phase 2: Content Pipeline
 
-- [ ] Implement Unified.js-based pipeline
-- [ ] Port metalsmith-webmentions plugin
-- [ ] Port metalsmith-responsive-images plugin
-- [ ] Port metalsmith-css-change-url plugin
-- [ ] Port metalsmith-inline-source plugin
-- [ ] Template engine integrations (Nunjucks, Handlebars, Markdown)
+- [x] Implement Unified.js-based markdown processor (remark/rehype)
+- [x] Port metalsmith-webmentions plugin
+- [ ] Port metalsmith-responsive-images plugin (complex - image processing in browser)
+- [x] Port metalsmith-css-change-url plugin
+- [x] Port metalsmith-inline-source plugin
+- [x] Template engine integrations (Nunjucks, Handlebars)
+- [x] Markdown plugin for pipeline
+- [x] Permalinks plugin for clean URLs
+- [x] Layouts plugin for template rendering
+- [ ] Integration tests with actual site build
+- [ ] Test pipeline with existing Janos templates
 
 ## Phase 3: Authentication & Remote
 
