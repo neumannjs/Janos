@@ -53,3 +53,31 @@ export {
   applyFrontmatter,
   type FrontmatterResult,
 } from './frontmatter.js';
+
+// Markdown processing
+export {
+  createMarkdownProcessor,
+  processMarkdown,
+  processMarkdownSync,
+  defaultMarkdownProcessor,
+  type MarkdownOptions,
+  type MarkdownResult,
+} from './markdown.js';
+
+// Built-in plugins
+export {
+  cssUrls,
+  inlineSource,
+  layouts,
+  markdown,
+  permalinks,
+  webmentions,
+  type CssUrlsOptions,
+  type InlineSourceOptions,
+  type LayoutsOptions,
+  type MarkdownPluginOptions,
+  type PermalinksOptions,
+  type WebmentionsOptions,
+  type Webmention,
+  type WebmentionsCache,
+} from './plugins/index.js';
