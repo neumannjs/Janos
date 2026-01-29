@@ -37,6 +37,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+_legacy/node_modules/
 
 # TypeScript v1 declaration files
 typings/
@@ -82,3 +83,15 @@ dist
 
 # Service worker
 sw.*
+
+# pnpm
+.pnpm-store/
+
+# Build outputs
+packages/*/dist/
+
+# Test coverage
+packages/*/coverage/
+
+# Local env files
+*.local
