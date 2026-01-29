@@ -12,7 +12,7 @@
 
 - [x] Implement Unified.js-based markdown processor (remark/rehype)
 - [x] Port metalsmith-webmentions plugin
-- [ ] Port metalsmith-responsive-images plugin (complex - image processing in browser)
+- [x] Port metalsmith-responsive-images plugin (using jSquash WebAssembly codecs)
 - [x] Port metalsmith-css-change-url plugin
 - [x] Port metalsmith-inline-source plugin
 - [x] Template engine integrations (Nunjucks, Handlebars)
