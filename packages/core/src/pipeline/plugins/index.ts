@@ -10,3 +10,4 @@ export { layouts, type LayoutsOptions } from './layouts.js';
 export { markdown, type MarkdownPluginOptions } from './markdown.js';
 export { permalinks, type PermalinksOptions } from './permalinks.js';
 export { webmentions, type WebmentionsOptions, type Webmention, type WebmentionsCache } from './webmentions.js';
+export { responsiveImages, type ResponsiveImagesOptions } from './responsive-images.js';

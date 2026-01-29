@@ -20,6 +20,9 @@ export * from './pipeline/index.js';
 // Template engines
 export * from './templates/index.js';
 
+// Image processing
+export * from './images/index.js';
+
 /**
  * Version information
  */

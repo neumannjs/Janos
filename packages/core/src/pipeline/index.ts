@@ -72,6 +72,7 @@ export {
   markdown,
   permalinks,
   webmentions,
+  responsiveImages,
   type CssUrlsOptions,
   type InlineSourceOptions,
   type LayoutsOptions,
@@ -80,4 +81,5 @@ export {
   type WebmentionsOptions,
   type Webmention,
   type WebmentionsCache,
+  type ResponsiveImagesOptions,
 } from './plugins/index.js';
