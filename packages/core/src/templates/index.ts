@@ -1,11 +1,31 @@
 /**
  * Template engines module
  *
- * Placeholder for template engine implementations.
- * Will include Nunjucks, Handlebars, and Markdown engines.
+ * Provides template engine implementations for static site generation.
  */
 
 import type { TemplateEngine } from '../pipeline/types.js';
+
+// Re-export types
+export type { TemplateEngine } from '../pipeline/types.js';
+
+// Nunjucks engine
+export {
+  createNunjucksEngine,
+  createNunjucksEngineWithDefaults,
+  dateFilter as nunjucksDateFilter,
+  type NunjucksOptions,
+} from './nunjucks.js';
+
+// Handlebars engine
+export {
+  createHandlebarsEngine,
+  createHandlebarsEngineWithDefaults,
+  dateHelper as handlebarsDateHelper,
+  jsonHelper as handlebarsJsonHelper,
+  eqHelper as handlebarsEqHelper,
+  type HandlebarsOptions,
+} from './handlebars.js';
 
 /**
  * Create a simple passthrough template engine for testing
@@ -44,6 +64,3 @@ export function createSimpleEngine(): TemplateEngine {
     },
   };
 }
-
-// Re-export TemplateEngine type
-export type { TemplateEngine } from '../pipeline/types.js';
