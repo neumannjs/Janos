@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project TODOs
+
+See [TODO.md](./TODO.md) for planned work and migration considerations.
+
 ## Project Overview
 
 Janos is a browser-based static site generator that runs entirely in the browser. The project is undergoing a modernization effort, transitioning from Nuxt.js 2 + Metalsmith to a new architecture based on Vue 3 + Vite with a shared TypeScript core.
