@@ -38,6 +38,25 @@ my-site-repo/
 
 ---
 
+## Phase 1: Foundation ✓
+
+- [x] Move legacy Nuxt 2 codebase to `_legacy/`
+- [x] Set up pnpm monorepo structure
+- [x] **@janos/core package** - Platform-agnostic TypeScript abstractions:
+  - [x] `IFileSystem` interface with `MemoryFileSystem` and `ZenFSFileSystem` (IndexedDB) implementations
+  - [x] `IGitProvider` interface with `IsomorphicGitProvider` (pure JS git)
+  - [x] `IAuthProvider` interface with `GitHubAuthProvider` (OAuth)
+  - [x] `IPipeline` interface with frontmatter parsing utilities
+  - [x] 79 tests for filesystem and frontmatter modules
+- [x] **@janos/web package** - Vue 3 + Vite browser application:
+  - [x] Pinia stores wrapping core abstractions (auth, filesystem, git)
+  - [x] Views: Home (landing), Editor (file tree + editor), AuthCallback
+  - [x] Dark theme styling
+  - [x] Production build ~195KB gzipped
+- [x] **@janos/cli package** - Scaffold for command-line interface
+
+---
+
 ## Phase 2: Content Pipeline
 
 - [x] Implement Unified.js-based markdown processor (remark/rehype)
