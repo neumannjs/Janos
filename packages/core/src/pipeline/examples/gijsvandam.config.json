@@ -30,6 +30,7 @@
   },
   "pipeline": [
     "markdown",
+    { "publish": { "draft": false, "private": false, "future": false } },
     { "excerpts": { "marker": "<!-- more -->" } },
     { "collections": {
       "posts": { "pattern": "_src/posts/**/*.html", "sortBy": "date", "reverse": true },
@@ -81,6 +82,16 @@
       "directory": "_layouts",
       "pattern": ["**/*.html"],
       "default": "miksa/post.njk"
+    }},
+    { "rss": {
+      "collection": "posts",
+      "destination": "rss.xml",
+      "limit": 20,
+      "fullContent": false
+    }},
+    { "sitemap": {
+      "destination": "sitemap.xml",
+      "changefreq": "weekly"
     }},
     { "assets": {
       "sources": [
