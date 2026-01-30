@@ -59,7 +59,7 @@ export class Pipeline implements IPipeline {
         time: new Date(),
         mode: this.config.mode ?? 'development',
       },
-      collections: new Map(),
+      collections: {},
     };
 
     // Add any custom global metadata

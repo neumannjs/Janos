@@ -141,8 +141,8 @@ export interface GlobalMetadata {
     time: Date;
     mode: 'development' | 'production';
   };
-  /** Collections of files (e.g., posts, pages) */
-  collections: Map<string, VirtualFile[]>;
+  /** Collections of files (e.g., posts, pages) - plain object for template access */
+  collections: Record<string, unknown[]>;
   /** Custom global data */
   [key: string]: unknown;
 }
