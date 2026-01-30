@@ -75,18 +75,18 @@ my-site-repo/
 ### Feature Gaps (for full Miksa/gijsvandam.nl support)
 
 **Template Engine Enhancements:**
-- [ ] Nunjucks `{% extends %}` with virtual filesystem loader
-- [ ] Nunjucks `{% include %}` with virtual filesystem loader
-- [ ] Custom `{% asyncEach %}` tag for async iteration
-- [ ] Date formatting filters (`| date("YYYY")`)
+- [x] Nunjucks `{% extends %}` with virtual filesystem loader
+- [x] Nunjucks `{% include %}` with virtual filesystem loader
+- [x] `{% asyncEach %}` support (native Nunjucks, already works with our async render API)
+- [x] Date formatting filters (`| date("YYYY")`) - basic implementation exists
 - [ ] Reading time calculation
 
 **Additional Plugins Needed:**
-- [ ] `collections` - group files by pattern/metadata
-- [ ] `pagination` - paginate collections
+- [x] `collections` - group files by pattern/metadata
+- [x] `pagination` - paginate collections
+- [x] `excerpts` - extract post excerpts (<!-- more -->)
 - [ ] `tags/topics` - generate tag pages from metadata
 - [ ] `publish` - filter drafts/private/future posts
-- [ ] `excerpts` - extract post excerpts (<!-- more -->)
 - [ ] `rss` - generate RSS/Atom feed
 - [ ] `sitemap` - generate sitemap.xml
 
