@@ -68,8 +68,9 @@ my-site-repo/
 - [x] Markdown plugin for pipeline
 - [x] Permalinks plugin for clean URLs
 - [x] Layouts plugin for template rendering
-- [ ] Integration tests with actual site build
+- [x] Integration tests with actual site build
 - [ ] Test pipeline with existing Janos templates
+- [ ] Fix inline-source plugin regex (greedy pattern issue)
 
 ---
 
