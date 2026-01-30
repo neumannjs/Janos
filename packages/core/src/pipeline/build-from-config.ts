@@ -146,8 +146,14 @@ async function build(configPath: string, siteRoot: string, outputDir: string) {
       console.log(`  ${ext}: ${count}`);
     }
 
+    // Clean output directory before writing
+    console.log(`\nCleaning output directory ${outputDir}...`);
+    if (fs.existsSync(outputDir)) {
+      fs.rmSync(outputDir, { recursive: true });
+    }
+
     // Write output
-    console.log(`\nWriting output to ${outputDir}...`);
+    console.log(`Writing output to ${outputDir}...`);
     const skipPrefixes = [sourceDir + '/', layoutsDir + '/'];
     const outputCount = writeFiles(result, outputDir, skipPrefixes);
     console.log(`Wrote ${outputCount} files`);

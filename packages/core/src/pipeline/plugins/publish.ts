@@ -26,6 +26,12 @@ export interface PublishOptions {
   draftField?: string;
   /** Metadata field for private status (default: 'private') */
   privateField?: string;
+  /**
+   * Metadata field for publish status (default: 'publish')
+   * Supports values like 'draft', 'private', 'published'
+   * This is an alternative to separate draft/private boolean fields
+   */
+  publishField?: string;
   /** File patterns to check (default: all files) */
   pattern?: string[];
 }
@@ -60,6 +66,7 @@ export function publish(options: PublishOptions = {}): PipelinePlugin {
     dateField = 'date',
     draftField = 'draft',
     privateField = 'private',
+    publishField = 'publish',
     pattern,
   } = options;
 
@@ -90,7 +97,10 @@ export function publish(options: PublishOptions = {}): PipelinePlugin {
       const metadata = file.metadata;
 
       // Check draft status
-      if (metadata[draftField] === true && !includeDraft) {
+      // Supports both `draft: true` and `publish: draft` conventions
+      const publishValue = metadata[publishField];
+      const isDraft = metadata[draftField] === true || publishValue === 'draft';
+      if (isDraft && !includeDraft) {
         filesToRemove.push(path);
         draftCount++;
         context.log(`publish: filtering draft: ${path}`, 'debug');
@@ -98,7 +108,9 @@ export function publish(options: PublishOptions = {}): PipelinePlugin {
       }
 
       // Check private status
-      if (metadata[privateField] === true && !includePrivate) {
+      // Supports both `private: true` and `publish: private` conventions
+      const isPrivate = metadata[privateField] === true || publishValue === 'private';
+      if (isPrivate && !includePrivate) {
         filesToRemove.push(path);
         privateCount++;
         context.log(`publish: filtering private: ${path}`, 'debug');

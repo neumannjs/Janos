@@ -243,13 +243,31 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
 
       // Prepare template data
       const content = decoder.decode(file.contents);
+
+      // Get site config from context
+      const site = context.metadata.site as Record<string, unknown> | undefined;
+
+      // Build flattened site_* variables for backward compatibility
+      // Templates can use either {{ site.title }} or {{ site_title }}
+      const flattenedSite: Record<string, unknown> = {};
+      if (site) {
+        for (const [key, value] of Object.entries(site)) {
+          // Only flatten primitive values, not nested objects
+          if (typeof value !== 'object' || value === null) {
+            flattenedSite[`site_${key}`] = value;
+          }
+        }
+      }
+
       const templateData: Record<string, unknown> = {
+        ...flattenedSite, // site_title, site_description, etc.
         ...context.metadata,
         ...file.metadata,
         contents: content,
         content, // Alias
         page: file.metadata,
-        site: context.metadata.site,
+        site: site,
+        now: new Date(), // Current date for templates
       };
 
       try {
