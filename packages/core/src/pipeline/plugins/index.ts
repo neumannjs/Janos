@@ -4,6 +4,7 @@
  * These plugins provide common static site generation functionality.
  */
 
+export { assets, type AssetsOptions, type AssetSource } from './assets.js';
 export { collections, type CollectionsOptions, type CollectionConfig, type CollectionItem } from './collections.js';
 export { cssUrls, type CssUrlsOptions } from './css-urls.js';
 export { excerpts, type ExcerptsOptions } from './excerpts.js';
