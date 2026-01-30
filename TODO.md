@@ -42,6 +42,7 @@
 - [ ] CLI: `janos build` command
 - [ ] CLI: `janos serve` command
 - [ ] GitHub Action for CI/CD builds
+- [ ] Node.js image processing with Sharp (fallback for CLI/server environments where jSquash WASM isn't available)
 
 ## Phase 6: Polish
 
