@@ -80,7 +80,7 @@ my-site-repo/
 - [x] Nunjucks `{% include %}` with virtual filesystem loader
 - [x] `{% asyncEach %}` support (native Nunjucks, already works with our async render API)
 - [x] Date formatting filters (`| date("YYYY")`) - basic implementation exists
-- [ ] Date filter: `MMMM` format (month names like "January")
+- [x] Date filter: `MMMM` format (month names like "January")
 - [ ] Reading time calculation macro
 - [ ] Tags transformation: convert raw strings to `{name, slug}` objects for templates
 
