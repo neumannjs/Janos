@@ -88,14 +88,6 @@ All configuration compiles to a single JSON format:
 
 ---
 
-## Migration & Compatibility
-
-- [ ] **Self-update mechanism**: Editor can update its own `_janos/` folder by fetching new releases and committing changes
-- [ ] **Breaking change migrations**: Automated migration tools when config format or folder structure changes
-- [ ] **Version tracking**: `_janos/version.json` tracks embedded version, enables update checks and targeted migrations
-
----
-
 ## Phase 1: Foundation ✓
 
 - [x] Move legacy Nuxt 2 codebase to `_legacy/`
@@ -187,8 +179,9 @@ All configuration compiles to a single JSON format:
 - [ ] **Vite embeddable build config**: Relative base paths, bundle all deps including WASM
 - [ ] **Starter repo** (`Janos-starter`): Template repo with embedded editor, sample content, default templates
 - [ ] **Self-replication UI**: "Start your own site" component that triggers GitHub fork
-- [ ] **Self-update UI**: "Check for updates" button, downloads and commits new `_janos/`
-- [ ] **Version check endpoint**: Where the editor checks for new versions (GitHub releases or npm)
+- [ ] **Self-update mechanism**: Editor checks for updates, downloads new `_janos/` bundle, commits to repo
+- [ ] **Version tracking**: `_janos/version.json` tracks embedded version, enables update checks
+- [ ] **Breaking change migrations**: Automated migration tools when config format or folder structure changes
 
 ---
 
