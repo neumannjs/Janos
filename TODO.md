@@ -1,12 +1,42 @@
 # Janos TODO
 
+## Architecture: Embedded App Model
+
+Janos follows a **fully self-contained, self-owned** architecture. Each Janos site is a complete, independent unit:
+
+```
+my-site-repo/
+├── _janos/                # Embedded editor app (Vue/Vite bundle)
+│   ├── index.html
+│   ├── assets/
+│   └── version.json       # Tracks embedded version
+├── _src/                  # Markdown content
+├── _layouts/              # Templates (Nunjucks/Handlebars)
+├── janos.config.json      # Site configuration
+└── [generated site files] # Built static site in repo root
+```
+
+### Distribution Mechanisms
+
+1. **Self-replication (primary)**: Any Janos site can have a "Start your own site" link. Clicking it forks a starter repo (`Janos-starter`) to the user's GitHub account. No CLI or technical knowledge required.
+
+2. **Self-update**: The embedded editor can check for updates, download new versions, and commit the updated `_janos/` folder to its own repo.
+
+3. **CLI (developer option)**: `npx @janos/cli init|update|build` for those who prefer command line or need CI/CD automation.
+
+### Core Principle
+
+> **You own everything.** No external hosted services required (beyond GitHub/GitLab for git hosting). Once you have a Janos site, it's fully independent and self-sustaining.
+
+---
+
 ## Migration & Compatibility
 
-- [ ] **Website update mechanism**: Existing Janos sites (cloned from original) need a way to update to newer Janos versions without affecting their content. The site's content lives in the repo, but Janos "app" files need to be updatable separately.
+- [ ] **Self-update mechanism**: Editor can update its own `_janos/` folder by fetching new releases and committing changes
+- [ ] **Breaking change migrations**: Automated migration tools when config format or folder structure changes
+- [ ] **Version tracking**: `_janos/version.json` tracks embedded version, enables update checks and targeted migrations
 
-- [ ] **Breaking change migrations**: When introducing breaking changes (config format, folder structure, etc.), provide automated migration tools. Document migration paths for each major version.
-
-- [ ] **Version tracking**: Sites should track which Janos version they were created with, enabling targeted migrations.
+---
 
 ## Phase 2: Content Pipeline
 
@@ -22,30 +52,53 @@
 - [ ] Integration tests with actual site build
 - [ ] Test pipeline with existing Janos templates
 
-## Phase 3: Authentication & Remote
+---
+
+## Phase 3: Authentication & Git
 
 - [ ] Azure Functions OAuth proxy (port existing)
 - [ ] GitLab provider as second implementation
 - [ ] Test full auth flow end-to-end
+- [ ] Self-hosted git server support (future)
 
-## Phase 4: UI Layer
+---
+
+## Phase 4: Editor UI
 
 - [ ] CodeMirror 6 editor integration
 - [ ] File tree component with drag-drop
 - [ ] Git panel (status, commit, branches)
 - [ ] Build/preview panel
+- [ ] Image upload/paste with responsive processing
 - [ ] Mobile-responsive layout
 
-## Phase 5: Multi-Platform
+---
 
-- [ ] CLI: `janos init` command
-- [ ] CLI: `janos build` command
-- [ ] CLI: `janos serve` command
-- [ ] GitHub Action for CI/CD builds
-- [ ] Node.js image processing with Sharp (fallback for CLI/server environments where jSquash WASM isn't available)
+## Phase 5: Embeddable Build & Distribution
 
-## Phase 6: Polish
+- [ ] **Vite embeddable build config**: Relative base paths, bundle all deps including WASM
+- [ ] **Starter repo** (`Janos-starter`): Template repo with embedded editor, sample content, default templates
+- [ ] **Self-replication UI**: "Start your own site" component that triggers GitHub fork
+- [ ] **Self-update UI**: "Check for updates" button, downloads and commits new `_janos/`
+- [ ] **Version check endpoint**: Where the editor checks for new versions (GitHub releases or npm)
+
+---
+
+## Phase 6: CLI (Developer Tools)
+
+Optional command-line interface for developers and CI/CD:
+
+- [ ] `janos init` - Scaffold new site locally
+- [ ] `janos build` - Build site (for CI/CD or local preview)
+- [ ] `janos serve` - Local development server
+- [ ] `janos update` - Update embedded editor
+- [ ] GitHub Action for automated builds
+- [ ] Node.js image processing with Sharp (for CLI/server where jSquash WASM isn't available)
+
+---
+
+## Phase 7: Polish
 
 - [ ] PWA/offline support
-- [ ] Self-replication: Janos deploys itself
-- [ ] Documentation site
+- [ ] Documentation site (built with Janos, of course)
+- [ ] Theming system for editor UI
