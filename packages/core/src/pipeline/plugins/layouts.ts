@@ -3,8 +3,12 @@
  *
  * Renders files through layout templates using the configured template engine.
  * Similar to metalsmith-layouts.
+ *
+ * Supports Nunjucks {% extends %} and {% include %} by creating a virtual
+ * filesystem loader that reads templates from the pipeline's file map.
  */
 import type { PipelinePlugin, VirtualFileMap, PipelineContext, TemplateEngine } from '../types.js';
+import { createNunjucksEngine, createVirtualLoader } from '../../templates/nunjucks.js';
 
 /**
  * Options for layouts plugin
@@ -16,10 +20,14 @@ export interface LayoutsOptions {
   default?: string;
   /** Directory containing layout files */
   directory?: string;
-  /** Template engine to use */
+  /** Template engine to use (if not provided, creates Nunjucks with virtual loader) */
   engine?: TemplateEngine;
   /** Engine name to look up from context.templateEngines */
   engineName?: string;
+  /** Custom Nunjucks filters */
+  filters?: Record<string, (...args: unknown[]) => unknown>;
+  /** Custom Nunjucks globals */
+  globals?: Record<string, unknown>;
 }
 
 /**
@@ -56,46 +64,70 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
     directory = '_layouts',
     engine: providedEngine,
     engineName,
+    filters = {},
+    globals = {},
   } = options;
 
   return async function layoutsPlugin(
     files: VirtualFileMap,
     context: PipelineContext
   ): Promise<void> {
-    // Determine which engine to use
-    let engine: TemplateEngine | undefined = providedEngine;
-
-    if (!engine && engineName) {
-      engine = context.templateEngines.get(engineName);
-    }
-
-    if (!engine) {
-      // Try to find any registered engine
-      const engines = Array.from(context.templateEngines.values());
-      engine = engines[0];
-    }
-
-    if (!engine) {
-      context.log('layouts: no template engine available, skipping', 'warn');
-      return;
-    }
-
-    const decoder = new TextDecoder('utf-8');
     const encoder = new TextEncoder();
-
-    // Build a map of layout templates
-    const layoutTemplates = new Map<string, string>();
+    const decoder = new TextDecoder('utf-8');
     const layoutPrefix = directory.endsWith('/') ? directory : directory + '/';
 
-    for (const [path, file] of files) {
+    // Date filter helper
+    const dateFilter = (date: unknown, format?: unknown): string => {
+      const d = date instanceof Date ? date : new Date(date as string | number);
+      if (isNaN(d.getTime())) return String(date);
+      if (!format || typeof format !== 'string') return d.toISOString();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return format
+        .replace('YYYY', d.getFullYear().toString())
+        .replace('MM', pad(d.getMonth() + 1))
+        .replace('DD', pad(d.getDate()))
+        .replace('HH', pad(d.getHours()))
+        .replace('mm', pad(d.getMinutes()))
+        .replace('ss', pad(d.getSeconds()));
+    };
+
+    // Create a Nunjucks engine with virtual filesystem loader
+    // This enables {% extends %} and {% include %} to work
+    const virtualLoader = createVirtualLoader(files, directory);
+    const engine: TemplateEngine = providedEngine ?? createNunjucksEngine({
+      loader: virtualLoader,
+      noCache: true,
+      filters: {
+        date: dateFilter,
+        ...filters,
+      },
+      globals,
+    });
+
+    // If a different engine was requested from context, use it
+    // (but it won't support extends/include from virtual filesystem)
+    let finalEngine = engine;
+    if (!providedEngine && engineName) {
+      const contextEngine = context.templateEngines.get(engineName);
+      if (contextEngine) {
+        finalEngine = contextEngine;
+        context.log(
+          `layouts: using engine '${engineName}' from context (extends/include may not work)`,
+          'debug'
+        );
+      }
+    }
+
+    // Build set of available layout paths for validation
+    const availableLayouts = new Set<string>();
+    for (const [path] of files) {
       if (path.startsWith(layoutPrefix)) {
         const layoutName = path.substring(layoutPrefix.length);
-        layoutTemplates.set(layoutName, decoder.decode(file.contents));
-
-        // Also map without extension
+        availableLayouts.add(layoutName);
+        // Also add without extension
         const extIndex = layoutName.lastIndexOf('.');
         if (extIndex !== -1) {
-          layoutTemplates.set(layoutName.substring(0, extIndex), decoder.decode(file.contents));
+          availableLayouts.add(layoutName.substring(0, extIndex));
         }
       }
     }
@@ -121,18 +153,20 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
         continue;
       }
 
-      // Find layout template
-      let layoutTemplate = layoutTemplates.get(layoutName);
-
-      // Try with common extensions
-      if (!layoutTemplate) {
-        for (const ext of engine.extensions) {
-          layoutTemplate = layoutTemplates.get(layoutName + ext);
-          if (layoutTemplate) break;
+      // Resolve layout path - check if it exists
+      let resolvedLayoutPath = layoutName;
+      if (!availableLayouts.has(layoutName)) {
+        // Try with common extensions
+        const extensions = ['.njk', '.nunjucks', '.html'];
+        for (const ext of extensions) {
+          if (availableLayouts.has(layoutName + ext)) {
+            resolvedLayoutPath = layoutName + ext;
+            break;
+          }
         }
       }
 
-      if (!layoutTemplate) {
+      if (!availableLayouts.has(resolvedLayoutPath)) {
         context.log(`layouts: layout '${layoutName}' not found for ${path}`, 'warn');
         continue;
       }
@@ -149,9 +183,24 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
       };
 
       try {
-        const rendered = await engine.render(layoutTemplate, templateData);
+        let rendered: string;
+
+        // Use renderFile so Nunjucks resolves {% extends %} and {% include %}
+        if (finalEngine.renderFile) {
+          rendered = await finalEngine.renderFile(resolvedLayoutPath, templateData);
+        } else {
+          // Fallback: load template and use render (won't support extends/include)
+          const layoutFile = files.get(layoutPrefix + resolvedLayoutPath);
+          if (!layoutFile) {
+            context.log(`layouts: layout file not found: ${layoutPrefix + resolvedLayoutPath}`, 'error');
+            continue;
+          }
+          const layoutTemplate = decoder.decode(layoutFile.contents);
+          rendered = await finalEngine.render(layoutTemplate, templateData);
+        }
+
         file.contents = encoder.encode(rendered);
-        context.log(`layouts: rendered ${path} with layout ${layoutName}`, 'debug');
+        context.log(`layouts: rendered ${path} with layout ${resolvedLayoutPath}`, 'debug');
       } catch (error) {
         context.log(
           `layouts: failed to render ${path}: ${error instanceof Error ? error.message : error}`,

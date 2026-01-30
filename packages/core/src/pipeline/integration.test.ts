@@ -581,11 +581,13 @@ Page content.
 `));
 
       const testPipeline = new Pipeline(createSiteConfig());
-      testPipeline.engine(createHandlebarsEngine());
+      const hbsEngine = createHandlebarsEngine();
+      testPipeline.engine(hbsEngine);
 
       testPipeline
         .use(markdown())
-        .use(layouts({ directory: '_layouts' }));
+        // Pass the engine directly since layouts now defaults to Nunjucks with virtual loader
+        .use(layouts({ directory: '_layouts', engine: hbsEngine }));
 
       await testPipeline.process(testFiles);
 

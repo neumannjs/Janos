@@ -2,7 +2,15 @@
  * Nunjucks template engine implementation
  */
 import nunjucks from 'nunjucks';
-import type { TemplateEngine } from '../pipeline/types.js';
+import type { TemplateEngine, VirtualFile } from '../pipeline/types.js';
+
+/**
+ * Nunjucks loader interface
+ */
+export interface NunjucksLoader {
+  async?: boolean;
+  getSource: (name: string, callback: (err: Error | null, result?: { src: string; path: string; noCache?: boolean }) => void) => void;
+}
 
 /**
  * Options for Nunjucks engine
@@ -21,8 +29,70 @@ export interface NunjucksOptions {
   /** Custom globals */
   globals?: Record<string, unknown>;
   /** Async loader for templates */
-  loader?: {
-    getSource: (name: string, callback: (err: Error | null, result?: { src: string; path: string }) => void) => void;
+  loader?: NunjucksLoader;
+}
+
+/**
+ * Create a Nunjucks loader that reads from a virtual file map
+ *
+ * This enables {% extends %} and {% include %} to work with templates
+ * stored in the pipeline's virtual filesystem.
+ *
+ * @param files - Map of virtual files (path -> VirtualFile)
+ * @param baseDir - Base directory for template resolution (e.g., '_layouts')
+ * @returns Nunjucks loader
+ */
+export function createVirtualLoader(
+  files: Map<string, VirtualFile>,
+  baseDir: string = ''
+): NunjucksLoader {
+  const decoder = new TextDecoder('utf-8');
+  const prefix = baseDir ? (baseDir.endsWith('/') ? baseDir : baseDir + '/') : '';
+
+  return {
+    async: true,
+    getSource(name: string, callback: (err: Error | null, result?: { src: string; path: string; noCache?: boolean }) => void): void {
+      // Normalize the template name
+      let templatePath = name;
+
+      // If the name doesn't start with the prefix, add it
+      if (prefix && !name.startsWith(prefix)) {
+        templatePath = prefix + name;
+      }
+
+      // Try to find the template
+      const file = files.get(templatePath);
+
+      if (file) {
+        try {
+          const src = decoder.decode(file.contents);
+          callback(null, {
+            src,
+            path: templatePath,
+            noCache: true, // Disable caching for virtual files
+          });
+        } catch (err) {
+          callback(err instanceof Error ? err : new Error(String(err)));
+        }
+      } else {
+        // Try without the prefix (for absolute paths in templates)
+        const absoluteFile = files.get(name);
+        if (absoluteFile) {
+          try {
+            const src = decoder.decode(absoluteFile.contents);
+            callback(null, {
+              src,
+              path: name,
+              noCache: true,
+            });
+          } catch (err) {
+            callback(err instanceof Error ? err : new Error(String(err)));
+          }
+        } else {
+          callback(new Error(`Template not found: ${name} (tried: ${templatePath}, ${name})`));
+        }
+      }
+    },
   };
 }
 
