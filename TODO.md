@@ -148,7 +148,7 @@ All configuration compiles to a single JSON format:
 
 **Configuration & Pipeline Infrastructure:**
 - [x] JSON config loader: Parse `janos.config.json` and instantiate pipeline
-- [ ] JSON Schema: Define and publish schema for editor autocomplete/validation
+- [x] JSON Schema: Comprehensive schema for editor autocomplete/validation
 - [x] Plugin coordination system: Built-in rules for permalinks → collections sync
 - [x] Config-driven build: `build-from-config.ts` + example `gijsvandam.config.json`
 
