@@ -66,10 +66,11 @@ my-site-repo/
 - [x] Port metalsmith-inline-source plugin
 - [x] Template engine integrations (Nunjucks, Handlebars)
 - [x] Markdown plugin for pipeline
-- [x] Permalinks plugin for clean URLs
+- [x] Permalinks plugin for clean URLs (with linksets for collection-specific patterns)
 - [x] Layouts plugin for template rendering
 - [x] Integration tests with actual site build
 - [x] Test pipeline with existing Janos templates (Miksa - partial, see gaps below)
+- [x] Assets plugin for static file copying
 - [ ] Fix inline-source plugin regex (greedy pattern issue)
 
 ### Feature Gaps (for full Miksa/gijsvandam.nl support)
