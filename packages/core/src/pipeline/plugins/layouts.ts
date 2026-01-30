@@ -76,19 +76,54 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
     const decoder = new TextDecoder('utf-8');
     const layoutPrefix = directory.endsWith('/') ? directory : directory + '/';
 
-    // Date filter helper
+    // Date filter helper - supports moment.js-style format tokens
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthNamesShort = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    const dayNames = [
+      'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+    ];
+    const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
     const dateFilter = (date: unknown, format?: unknown): string => {
       const d = date instanceof Date ? date : new Date(date as string | number);
       if (isNaN(d.getTime())) return String(date);
       if (!format || typeof format !== 'string') return d.toISOString();
+
       const pad = (n: number) => n.toString().padStart(2, '0');
-      return format
-        .replace('YYYY', d.getFullYear().toString())
-        .replace('MM', pad(d.getMonth() + 1))
-        .replace('DD', pad(d.getDate()))
-        .replace('HH', pad(d.getHours()))
-        .replace('mm', pad(d.getMinutes()))
-        .replace('ss', pad(d.getSeconds()));
+
+      // Use a single regex to match all tokens and replace in one pass
+      // This avoids issues where replaced text contains characters that look like tokens
+      const tokens: Record<string, string> = {
+        'YYYY': d.getFullYear().toString(),
+        'YY': d.getFullYear().toString().slice(-2),
+        'MMMM': monthNames[d.getMonth()],
+        'MMM': monthNamesShort[d.getMonth()],
+        'MM': pad(d.getMonth() + 1),
+        'M': (d.getMonth() + 1).toString(),
+        'dddd': dayNames[d.getDay()],
+        'ddd': dayNamesShort[d.getDay()],
+        'DD': pad(d.getDate()),
+        'D': d.getDate().toString(),
+        'HH': pad(d.getHours()),
+        'H': d.getHours().toString(),
+        'mm': pad(d.getMinutes()),
+        'm': d.getMinutes().toString(),
+        'ss': pad(d.getSeconds()),
+        's': d.getSeconds().toString(),
+      };
+
+      // Build regex that matches tokens in order of length (longest first)
+      const tokenPattern = Object.keys(tokens)
+        .sort((a, b) => b.length - a.length)
+        .join('|');
+
+      return format.replace(new RegExp(tokenPattern, 'g'), match => tokens[match] || match);
     };
 
     // Create a Nunjucks engine with virtual filesystem loader
