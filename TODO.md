@@ -30,6 +30,64 @@ my-site-repo/
 
 ---
 
+## Configuration Architecture
+
+### Canonical Format: JSON (`janos.config.json`)
+
+All configuration compiles to a single JSON format:
+
+```json
+{
+  "site": {
+    "title": "My Site",
+    "baseUrl": "https://example.com",
+    "sourceDir": "_src",
+    "layoutsDir": "_layouts"
+  },
+  "metadata": {
+    "author": "John Doe"
+  },
+  "pipeline": [
+    "markdown",
+    { "excerpts": { "marker": "<!-- more -->" } },
+    { "collections": { "posts": { "pattern": "_src/posts/**/*.html", "sortBy": "date" } } },
+    { "permalinks": { "linksets": [...] } },
+    { "layouts": { "default": "post.njk" } }
+  ]
+}
+```
+
+### User Interfaces by Audience
+
+| Audience | Interface | Notes |
+|----------|-----------|-------|
+| Web editor users | GUI form | Never see JSON; form fields map to config |
+| Local non-developers | JSON + Schema | Editors provide autocomplete via JSON Schema |
+| Developers (CLI) | JS/TS optional | Can extend JSON or write full programmatic config |
+
+### JSON Schema
+
+- Provides validation in editors and at build time
+- Enables autocomplete for plugin names and options
+- Documentation embedded in schema
+- Published at stable URL for `$schema` reference
+
+### Plugin Coordination (Hybrid Approach)
+
+**Problem**: Plugins like `collections` capture file paths early, but `permalinks` changes paths later. References become stale.
+
+**Solution**: Pipeline-level coordination with two sources of rules:
+
+1. **Built-in rules**: Pipeline has hardcoded knowledge for common plugin pairs (collections ↔ permalinks ↔ sitemap ↔ RSS). Users don't configure this.
+
+2. **Plugin metadata**: Custom/niche plugins declare `affects` and `watches` topics. Pipeline automatically coordinates them.
+
+**Lifecycle**: Niche plugins start with declared metadata. When widely adopted, their rules get promoted to built-in. Both use the same coordination mechanism.
+
+**User experience**: Users just list plugins in order. Coordination is invisible—it just works.
+
+---
+
 ## Migration & Compatibility
 
 - [ ] **Self-update mechanism**: Editor can update its own `_janos/` folder by fetching new releases and committing changes
@@ -95,6 +153,12 @@ my-site-repo/
 
 **Notes:**
 - `css-change-url` plugin is for GitHub Pages subfolder deployments (e.g., `user.github.io/repo/`). Not needed for root domain sites like gijsvandam.nl.
+
+**Configuration & Pipeline Infrastructure:**
+- [ ] JSON config loader: Parse `janos.config.json` and instantiate pipeline
+- [ ] JSON Schema: Define and publish schema for editor autocomplete/validation
+- [ ] Plugin coordination system: Built-in rules + plugin metadata for `affects`/`watches`
+- [ ] Config-driven build: Replace `build-gijsvandam.ts` with JSON config
 
 ---
 
