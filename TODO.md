@@ -71,7 +71,7 @@ my-site-repo/
 - [x] Integration tests with actual site build
 - [x] Test pipeline with existing Janos templates (Miksa - partial, see gaps below)
 - [x] Assets plugin for static file copying
-- [ ] Fix inline-source plugin regex (greedy pattern issue)
+- [x] ~~Fix inline-source plugin regex~~ - Not needed; inline-source was only for editor preview. Will use Service Worker approach instead (see Phase 4)
 
 ### Feature Gaps (for full Miksa/gijsvandam.nl support)
 
@@ -80,7 +80,9 @@ my-site-repo/
 - [x] Nunjucks `{% include %}` with virtual filesystem loader
 - [x] `{% asyncEach %}` support (native Nunjucks, already works with our async render API)
 - [x] Date formatting filters (`| date("YYYY")`) - basic implementation exists
-- [ ] Reading time calculation
+- [ ] Date filter: `MMMM` format (month names like "January")
+- [ ] Reading time calculation macro
+- [ ] Tags transformation: convert raw strings to `{name, slug}` objects for templates
 
 **Additional Plugins Needed:**
 - [x] `collections` - group files by pattern/metadata
@@ -90,6 +92,9 @@ my-site-repo/
 - [ ] `publish` - filter drafts/private/future posts
 - [ ] `rss` - generate RSS/Atom feed
 - [ ] `sitemap` - generate sitemap.xml
+
+**Notes:**
+- `css-change-url` plugin is for GitHub Pages subfolder deployments (e.g., `user.github.io/repo/`). Not needed for root domain sites like gijsvandam.nl.
 
 ---
 
@@ -107,7 +112,7 @@ my-site-repo/
 - [ ] CodeMirror 6 editor integration
 - [ ] File tree component with drag-drop
 - [ ] Git panel (status, commit, branches)
-- [ ] Build/preview panel
+- [ ] Build/preview panel with **Service Worker-based preview** (the web app acts as its own HTTP server in the browser, serving built files from memory/IndexedDB without needing inline-source hacks)
 - [ ] Image upload/paste with responsive processing
 - [ ] Mobile-responsive layout
 
