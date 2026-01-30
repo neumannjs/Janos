@@ -147,10 +147,10 @@ All configuration compiles to a single JSON format:
 - `css-change-url` plugin is for GitHub Pages subfolder deployments (e.g., `user.github.io/repo/`). Not needed for root domain sites like gijsvandam.nl.
 
 **Configuration & Pipeline Infrastructure:**
-- [ ] JSON config loader: Parse `janos.config.json` and instantiate pipeline
+- [x] JSON config loader: Parse `janos.config.json` and instantiate pipeline
 - [ ] JSON Schema: Define and publish schema for editor autocomplete/validation
-- [ ] Plugin coordination system: Built-in rules + plugin metadata for `affects`/`watches`
-- [ ] Config-driven build: Replace `build-gijsvandam.ts` with JSON config
+- [x] Plugin coordination system: Built-in rules for permalinks → collections sync
+- [x] Config-driven build: `build-from-config.ts` + example `gijsvandam.config.json`
 
 ---
 
