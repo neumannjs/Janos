@@ -16,6 +16,89 @@ import type {
 import { PluginError, ConfigError } from './errors.js';
 
 /**
+ * Built-in coordination rules
+ *
+ * These rules automatically synchronize data between plugins.
+ * For example, after 'permalinks' changes file paths, collection references
+ * need to be updated to point to the new paths.
+ */
+interface CoordinationRule {
+  /** Plugin name that triggers this coordination */
+  after: string;
+  /** Handler to run after the plugin */
+  handler: (files: VirtualFileMap, context: PipelineContext) => void;
+}
+
+/**
+ * Synchronize collection paths after a plugin changes file paths
+ *
+ * This updates collection items to point to the new file paths after
+ * permalinks (or any other path-changing plugin) runs.
+ */
+function syncCollectionPaths(files: VirtualFileMap, context: PipelineContext): void {
+  const collections = context.metadata.collections;
+  if (!collections || typeof collections !== 'object') {
+    return;
+  }
+
+  // Build a map of sourcePath -> current path
+  const pathMap = new Map<string, string>();
+
+  for (const [currentPath, file] of files) {
+    if (file.sourcePath) {
+      pathMap.set(file.sourcePath, currentPath);
+      // Also map the .html version of sourcePath (what collections use after markdown)
+      const sourceAsHtml = file.sourcePath.replace(/\.md$/, '.html');
+      pathMap.set(sourceAsHtml, currentPath);
+    }
+  }
+
+  // Update collection items
+  let updatedCount = 0;
+
+  for (const [collectionName, items] of Object.entries(collections)) {
+    if (!Array.isArray(items)) continue;
+
+    for (const item of items as Array<Record<string, unknown>>) {
+      // Skip items with navpath (navigation items use explicit paths)
+      if (item.navpath) {
+        item.path = item.navpath;
+        continue;
+      }
+
+      const originalPath = item.path as string | undefined;
+      if (originalPath && pathMap.has(originalPath)) {
+        const newPath = pathMap.get(originalPath)!;
+        item.path = newPath;
+        // Set permalink without index.html for cleaner URLs
+        item.permalink = '/' + newPath.replace(/\/index\.html$/, '/').replace(/\.html$/, '/');
+        updatedCount++;
+      }
+    }
+  }
+
+  // Expose collections directly in context metadata for templates
+  // (templates use `posts` not `collections.posts`)
+  for (const [name, items] of Object.entries(collections)) {
+    context.metadata[name] = items;
+  }
+
+  if (updatedCount > 0) {
+    context.log(`coordination: updated ${updatedCount} collection paths`, 'debug');
+  }
+}
+
+/**
+ * Built-in coordination rules for common plugin pairs
+ *
+ * Note: Plugin names match the inner function names (e.g., 'permalinksPlugin'),
+ * not the factory function names (e.g., 'permalinks').
+ */
+const BUILTIN_COORDINATION: CoordinationRule[] = [
+  { after: 'permalinksPlugin', handler: syncCollectionPaths },
+];
+
+/**
  * Default pipeline implementation
  */
 export class Pipeline implements IPipeline {
@@ -144,6 +227,20 @@ export class Pipeline implements IPipeline {
         );
         this.config.events?.onError?.(pluginError);
         throw pluginError;
+      }
+
+      // Run any built-in coordination handlers for this plugin
+      for (const rule of BUILTIN_COORDINATION) {
+        if (rule.after === plugin.name) {
+          try {
+            rule.handler(files, this.context);
+          } catch (error) {
+            this.context.log(
+              `coordination after '${plugin.name}' failed: ${error instanceof Error ? error.message : error}`,
+              'warn'
+            );
+          }
+        }
       }
 
       const duration = Date.now() - startTime;

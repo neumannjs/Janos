@@ -1,0 +1,93 @@
+{
+  "$schema": "https://janos.dev/schemas/config.json",
+  "site": {
+    "title": "Gijs van Dam",
+    "description": "Gijs van Dam is a freelance consultant and crypto researcher with over 20 years of international experience, who tries to make the web a better place.",
+    "baseUrl": "https://www.gijsvandam.nl",
+    "author": {
+      "name": "Gijs van Dam",
+      "url": "https://www.gijsvandam.nl"
+    },
+    "sourceDir": "_src",
+    "layoutsDir": "_layouts",
+    "outputDir": "/"
+  },
+  "metadata": {
+    "rootpath": "/",
+    "about": "<a class=\"p-name u-url\" href=\"/\">Gijs van Dam</a> is a <a href=\"/about\">researcher, consultant and business founder</a>, with more than 20 years of experience. In 2024 he obtained his PhD in computer science at the National University of Malaysia. Gijs lives in Amsterdam.",
+    "about_img": "/images/gijsvandam.jpg",
+    "indie_auth": true,
+    "social_media": {
+      "github": { "url": "https://www.github.com/gijswijs", "icon": "github", "name": "Github", "me": true },
+      "linkedin": { "url": "https://www.linkedin.com/in/gijsvandam/", "icon": "linkedin", "name": "LinkedIn", "me": true },
+      "researchgate": { "url": "https://www.researchgate.net/profile/Gijs_Van_Dam2", "icon": "researchgate", "name": "ResearchGate", "me": true },
+      "stream": { "url": "/feed", "name": "Stream", "me": false, "rel": "feed", "target": "_self" },
+      "rss": { "url": "/rss.xml", "icon": "rss", "name": "RSS", "me": false },
+      "keybase": { "url": "https://keybase.io/gijsvandam", "icon": "keybase", "name": "Keybase", "me": true },
+      "orcid": { "url": "https://orcid.org/0000-0002-6188-6859", "icon": "orcid", "name": "ORCID", "me": true },
+      "google-scholar": { "url": "https://scholar.google.com/citations?user=4dTcK4kAAAAJ&hl=en", "name": "Google Scholar", "me": true }
+    }
+  },
+  "pipeline": [
+    "markdown",
+    { "excerpts": { "marker": "<!-- more -->" } },
+    { "collections": {
+      "posts": { "pattern": "_src/posts/**/*.html", "sortBy": "date", "reverse": true },
+      "stream": { "pattern": ["_src/stream/**/*.html", "_src/posts/**/*.html"], "sortBy": "date", "reverse": true },
+      "navigation": { "pattern": "_src/nav/**/*.html", "sortBy": "sortId" },
+      "event": { "sortBy": "date", "reverse": true },
+      "rsvp": { "sortBy": "date", "reverse": true },
+      "repost": { "sortBy": "date", "reverse": true },
+      "like": { "sortBy": "date", "reverse": true },
+      "reply": { "sortBy": "date", "reverse": true },
+      "video": { "sortBy": "date", "reverse": true },
+      "photo": { "sortBy": "date", "reverse": true },
+      "note": { "sortBy": "date", "reverse": true },
+      "article": { "sortBy": "date", "reverse": true }
+    }},
+    { "pagination": {
+      "collections.posts": {
+        "perPage": 6,
+        "layout": "miksa/home.njk",
+        "first": "index.html",
+        "path": "posts/:num/index.html",
+        "pageMetadata": { "title": "Archive", "feature_image": "/images/cover.jpg" }
+      },
+      "collections.stream": {
+        "perPage": 25,
+        "layout": "miksa/stream.njk",
+        "first": "feed/index.html",
+        "path": "feed/:num/index.html",
+        "pageMetadata": { "title": "Feed" }
+      }
+    }},
+    { "permalinks": {
+      "match": ["**/*.html"],
+      "linksets": [
+        { "match": { "collection": "posts" }, "pattern": "post/:title" },
+        { "match": { "collection": "navigation" }, "pattern": ":label" },
+        { "match": { "collection": "event" }, "pattern": "event/:date-:slug" },
+        { "match": { "collection": "rsvp" }, "pattern": "rsvp/:date-:slug" },
+        { "match": { "collection": "repost" }, "pattern": "repost/:date-:slug" },
+        { "match": { "collection": "like" }, "pattern": "like/:date-:slug" },
+        { "match": { "collection": "reply" }, "pattern": "reply/:date-:slug" },
+        { "match": { "collection": "video" }, "pattern": "video/:date-:slug" },
+        { "match": { "collection": "photo" }, "pattern": "photo/:date-:slug" },
+        { "match": { "collection": "note" }, "pattern": "note/:date-:slug" },
+        { "match": { "collection": "article" }, "pattern": "article/:date-:slug" }
+      ]
+    }},
+    { "layouts": {
+      "directory": "_layouts",
+      "pattern": ["**/*.html"],
+      "default": "miksa/post.njk"
+    }},
+    { "assets": {
+      "sources": [
+        { "source": "_layouts/miksa/assets", "destination": "/" },
+        { "source": "_src/images", "destination": "/images" }
+      ]
+    }}
+  ],
+  "mode": "production"
+}
