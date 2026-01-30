@@ -104,7 +104,7 @@
       "oneOf": [
         {
           "type": "string",
-          "description": "Plugin name (uses default options). Built-in: markdown, excerpts, collections, pagination, permalinks, layouts, assets, css-urls, webmentions, responsive-images. Custom plugins are also allowed."
+          "description": "Plugin name (uses default options). Built-in: markdown, excerpts, collections, pagination, permalinks, layouts, assets, publish, rss, sitemap, tags, tag-pages, css-urls, webmentions, responsive-images. Custom plugins are also allowed."
         },
         { "$ref": "#/$defs/markdownPlugin" },
         { "$ref": "#/$defs/excerptsPlugin" },
@@ -113,6 +113,11 @@
         { "$ref": "#/$defs/permalinksPlugin" },
         { "$ref": "#/$defs/layoutsPlugin" },
         { "$ref": "#/$defs/assetsPlugin" },
+        { "$ref": "#/$defs/publishPlugin" },
+        { "$ref": "#/$defs/rssPlugin" },
+        { "$ref": "#/$defs/sitemapPlugin" },
+        { "$ref": "#/$defs/tagsPlugin" },
+        { "$ref": "#/$defs/tagPagesPlugin" },
         { "$ref": "#/$defs/cssUrlsPlugin" },
         { "$ref": "#/$defs/webmentionsPlugin" },
         { "$ref": "#/$defs/responsiveImagesPlugin" },
@@ -495,7 +500,6 @@
                 { "type": "string" },
                 { "type": "array", "items": { "type": "string" } }
               ],
-              "default": ["**/*.{jpg,jpeg,png,webp}"],
               "description": "Glob pattern(s) for images to process"
             },
             "widths": {
@@ -524,6 +528,230 @@
         }
       },
       "required": ["responsive-images"],
+      "additionalProperties": false
+    },
+    "publishPlugin": {
+      "type": "object",
+      "properties": {
+        "publish": {
+          "type": "object",
+          "description": "Filter drafts, private, and future-dated content",
+          "properties": {
+            "draft": {
+              "type": "boolean",
+              "description": "Include draft posts (default: false in production, true in development)"
+            },
+            "private": {
+              "type": "boolean",
+              "default": false,
+              "description": "Include private posts"
+            },
+            "future": {
+              "type": "boolean",
+              "description": "Include future-dated posts (default: false in production, true in development)"
+            },
+            "dateField": {
+              "type": "string",
+              "default": "date",
+              "description": "Metadata field containing the date"
+            },
+            "draftField": {
+              "type": "string",
+              "default": "draft",
+              "description": "Metadata field for draft status"
+            },
+            "privateField": {
+              "type": "string",
+              "default": "private",
+              "description": "Metadata field for private status"
+            }
+          }
+        }
+      },
+      "required": ["publish"],
+      "additionalProperties": false
+    },
+    "rssPlugin": {
+      "type": "object",
+      "properties": {
+        "rss": {
+          "type": "object",
+          "description": "RSS/Atom feed generation options",
+          "properties": {
+            "collection": {
+              "type": "string",
+              "default": "posts",
+              "description": "Collection to generate feed from"
+            },
+            "destination": {
+              "type": "string",
+              "default": "rss.xml",
+              "description": "Output path for RSS feed"
+            },
+            "atom": {
+              "type": "boolean",
+              "default": false,
+              "description": "Also generate Atom feed"
+            },
+            "atomDestination": {
+              "type": "string",
+              "default": "atom.xml",
+              "description": "Output path for Atom feed"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 20,
+              "description": "Maximum number of items in feed"
+            },
+            "title": {
+              "type": "string",
+              "description": "Feed title (defaults to site.title)"
+            },
+            "description": {
+              "type": "string",
+              "description": "Feed description (defaults to site.description)"
+            },
+            "fullContent": {
+              "type": "boolean",
+              "default": false,
+              "description": "Include full content in feed (vs excerpt)"
+            }
+          }
+        }
+      },
+      "required": ["rss"],
+      "additionalProperties": false
+    },
+    "sitemapPlugin": {
+      "type": "object",
+      "properties": {
+        "sitemap": {
+          "type": "object",
+          "description": "Sitemap generation options",
+          "properties": {
+            "destination": {
+              "type": "string",
+              "default": "sitemap.xml",
+              "description": "Output path"
+            },
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "description": "File patterns to include"
+            },
+            "exclude": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "File patterns to exclude"
+            },
+            "changefreq": {
+              "type": "string",
+              "enum": ["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"],
+              "description": "Default change frequency"
+            },
+            "priority": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Default priority (0.0 to 1.0)"
+            },
+            "hostname": {
+              "type": "string",
+              "description": "Hostname override (defaults to site.baseUrl)"
+            }
+          }
+        }
+      },
+      "required": ["sitemap"],
+      "additionalProperties": false
+    },
+    "tagsPlugin": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "object",
+          "description": "Transform tag strings to structured objects",
+          "properties": {
+            "field": {
+              "type": "string",
+              "default": "tags",
+              "description": "Metadata field containing tags"
+            },
+            "additionalFields": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Additional fields to transform (e.g., categories, topics)"
+            },
+            "collectAll": {
+              "type": "boolean",
+              "default": true,
+              "description": "Collect all unique tags in context.metadata.allTags"
+            }
+          }
+        }
+      },
+      "required": ["tags"],
+      "additionalProperties": false
+    },
+    "tagPagesPlugin": {
+      "type": "object",
+      "properties": {
+        "tag-pages": {
+          "type": "object",
+          "description": "Generate pages for each tag",
+          "required": ["layout"],
+          "properties": {
+            "layout": {
+              "type": "string",
+              "description": "Layout template for tag pages (required)"
+            },
+            "field": {
+              "type": "string",
+              "default": "tags",
+              "description": "Metadata field containing tags"
+            },
+            "path": {
+              "type": "string",
+              "default": "topics/:tag/index.html",
+              "description": "Path pattern for tag pages"
+            },
+            "title": {
+              "type": "string",
+              "default": "Posts tagged \":tag\"",
+              "description": "Page title pattern"
+            },
+            "sortBy": {
+              "type": "string",
+              "default": "date",
+              "description": "Sort items by this field"
+            },
+            "reverse": {
+              "type": "boolean",
+              "default": true,
+              "description": "Reverse sort order (newest first)"
+            },
+            "pagination": {
+              "type": "object",
+              "description": "Pagination options for tag pages",
+              "properties": {
+                "perPage": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Items per page"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path pattern for paginated pages"
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["tag-pages"],
       "additionalProperties": false
     }
   }

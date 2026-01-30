@@ -126,6 +126,36 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
       return format.replace(new RegExp(tokenPattern, 'g'), match => tokens[match] || match);
     };
 
+    // Reading time filter - calculates estimated reading time
+    const readingTimeFilter = (content: unknown, wordsPerMinute?: unknown): string => {
+      if (!content || typeof content !== 'string') return '0 min read';
+
+      // Strip HTML tags for accurate word count
+      const text = content.replace(/<[^>]*>/g, ' ');
+      // Count words (split on whitespace, filter empty strings)
+      const words = text.split(/\s+/).filter(word => word.length > 0);
+      const wordCount = words.length;
+
+      const wpm = typeof wordsPerMinute === 'number' ? wordsPerMinute : 200;
+      const minutes = Math.ceil(wordCount / wpm);
+
+      if (minutes === 0) return 'less than 1 min read';
+      if (minutes === 1) return '1 min read';
+      return `${minutes} min read`;
+    };
+
+    // Slug filter - converts string to URL-friendly slug
+    const slugFilter = (text: unknown): string => {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove non-word chars except spaces and hyphens
+        .replace(/\s+/g, '-')     // Replace spaces with hyphens
+        .replace(/-+/g, '-')      // Replace multiple hyphens with single
+        .replace(/^-+|-+$/g, ''); // Trim hyphens from start/end
+    };
+
     // Create a Nunjucks engine with virtual filesystem loader
     // This enables {% extends %} and {% include %} to work
     const virtualLoader = createVirtualLoader(files, directory);
@@ -134,6 +164,9 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
       noCache: true,
       filters: {
         date: dateFilter,
+        readingTime: readingTimeFilter,
+        reading_time: readingTimeFilter, // Alias with underscore
+        slug: slugFilter,
         ...filters,
       },
       globals,

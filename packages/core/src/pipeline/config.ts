@@ -18,7 +18,12 @@ import { layouts, type LayoutsOptions } from './plugins/layouts.js';
 import { markdown, type MarkdownPluginOptions } from './plugins/markdown.js';
 import { pagination, type PaginationOptions } from './plugins/pagination.js';
 import { permalinks, type PermalinksOptions } from './plugins/permalinks.js';
+import { publish, type PublishOptions } from './plugins/publish.js';
 import { responsiveImages, type ResponsiveImagesOptions } from './plugins/responsive-images.js';
+import { rss, type RssOptions } from './plugins/rss.js';
+import { sitemap, type SitemapOptions } from './plugins/sitemap.js';
+import { tagPages, type TagPagesOptions } from './plugins/tag-pages.js';
+import { tags, type TagsOptions } from './plugins/tags.js';
 import { webmentions, type WebmentionsOptions } from './plugins/webmentions.js';
 
 /**
@@ -77,8 +82,14 @@ const PLUGIN_REGISTRY: Record<string, PluginFactory> = {
   markdown: markdown as PluginFactory<MarkdownPluginOptions>,
   pagination: pagination as PluginFactory<PaginationOptions>,
   permalinks: permalinks as PluginFactory<PermalinksOptions>,
+  publish: publish as PluginFactory<PublishOptions>,
   'responsive-images': responsiveImages as PluginFactory<ResponsiveImagesOptions>,
   responsiveImages: responsiveImages as PluginFactory<ResponsiveImagesOptions>,
+  rss: rss as PluginFactory<RssOptions>,
+  sitemap: sitemap as PluginFactory<SitemapOptions>,
+  'tag-pages': tagPages as PluginFactory<TagPagesOptions>,
+  tagPages: tagPages as PluginFactory<TagPagesOptions>,
+  tags: tags as PluginFactory<TagsOptions>,
   webmentions: webmentions as PluginFactory<WebmentionsOptions>,
 };
 

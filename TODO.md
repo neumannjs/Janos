@@ -131,17 +131,19 @@ All configuration compiles to a single JSON format:
 - [x] `{% asyncEach %}` support (native Nunjucks, already works with our async render API)
 - [x] Date formatting filters (`| date("YYYY")`) - basic implementation exists
 - [x] Date filter: `MMMM` format (month names like "January")
-- [ ] Reading time calculation macro
-- [ ] Tags transformation: convert raw strings to `{name, slug}` objects for templates
+- [x] Reading time filter (`| readingTime` or `| reading_time`)
+- [x] Slug filter (`| slug`)
+- [x] Tags transformation: `tags` plugin converts strings to `{name, slug}` objects
 
 **Additional Plugins Needed:**
 - [x] `collections` - group files by pattern/metadata
 - [x] `pagination` - paginate collections
 - [x] `excerpts` - extract post excerpts (<!-- more -->)
-- [ ] `tags/topics` - generate tag pages from metadata
-- [ ] `publish` - filter drafts/private/future posts
-- [ ] `rss` - generate RSS/Atom feed
-- [ ] `sitemap` - generate sitemap.xml
+- [x] `tags` - transform tag strings to structured objects
+- [x] `tag-pages` - generate tag/topic pages from metadata
+- [x] `publish` - filter drafts/private/future posts
+- [x] `rss` - generate RSS/Atom feed
+- [x] `sitemap` - generate sitemap.xml
 
 **Notes:**
 - `css-change-url` plugin is for GitHub Pages subfolder deployments (e.g., `user.github.io/repo/`). Not needed for root domain sites like gijsvandam.nl.
