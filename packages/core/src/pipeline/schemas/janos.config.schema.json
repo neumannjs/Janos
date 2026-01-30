@@ -104,23 +104,7 @@
       "oneOf": [
         {
           "type": "string",
-          "enum": [
-            "markdown",
-            "excerpts",
-            "collections",
-            "pagination",
-            "permalinks",
-            "layouts",
-            "assets",
-            "css-urls",
-            "cssUrls",
-            "inline-source",
-            "inlineSource",
-            "webmentions",
-            "responsive-images",
-            "responsiveImages"
-          ],
-          "description": "Plugin name (uses default options)"
+          "description": "Plugin name (uses default options). Built-in: markdown, excerpts, collections, pagination, permalinks, layouts, assets, css-urls, webmentions, responsive-images. Custom plugins are also allowed."
         },
         { "$ref": "#/$defs/markdownPlugin" },
         { "$ref": "#/$defs/excerptsPlugin" },
@@ -130,10 +114,20 @@
         { "$ref": "#/$defs/layoutsPlugin" },
         { "$ref": "#/$defs/assetsPlugin" },
         { "$ref": "#/$defs/cssUrlsPlugin" },
-        { "$ref": "#/$defs/inlineSourcePlugin" },
         { "$ref": "#/$defs/webmentionsPlugin" },
-        { "$ref": "#/$defs/responsiveImagesPlugin" }
+        { "$ref": "#/$defs/responsiveImagesPlugin" },
+        { "$ref": "#/$defs/customPlugin" }
       ]
+    },
+    "customPlugin": {
+      "type": "object",
+      "description": "Custom or third-party plugin configuration. Use the plugin name as the key and options object as the value.",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
     },
     "markdownPlugin": {
       "type": "object",
@@ -460,32 +454,6 @@
         }
       },
       "required": ["css-urls"],
-      "additionalProperties": false
-    },
-    "inlineSourcePlugin": {
-      "type": "object",
-      "properties": {
-        "inline-source": {
-          "type": "object",
-          "description": "Inline source embedding options",
-          "properties": {
-            "pattern": {
-              "oneOf": [
-                { "type": "string" },
-                { "type": "array", "items": { "type": "string" } }
-              ],
-              "default": ["**/*.html"],
-              "description": "Glob pattern(s) for files to process"
-            },
-            "compress": {
-              "type": "boolean",
-              "default": false,
-              "description": "Compress inlined content"
-            }
-          }
-        }
-      },
-      "required": ["inline-source"],
       "additionalProperties": false
     },
     "webmentionsPlugin": {

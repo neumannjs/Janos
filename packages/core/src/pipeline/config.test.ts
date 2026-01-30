@@ -397,18 +397,34 @@ describe('JSON Schema', () => {
     expect(defs?.assetsPlugin).toBeDefined();
   });
 
-  it('should list all built-in plugins in pluginConfig enum', () => {
+  it('should allow any string as plugin name for extensibility', () => {
     const schema = getConfigSchema();
     const pluginConfig = schema.$defs?.pluginConfig;
 
-    // Find the string enum option
-    const stringEnum = pluginConfig?.oneOf?.find(
-      (opt: unknown) => typeof opt === 'object' && opt !== null && 'enum' in opt
-    ) as { enum?: string[] } | undefined;
+    // Find the string option (should allow any string, not an enum)
+    const stringOption = pluginConfig?.oneOf?.find(
+      (opt: unknown) => typeof opt === 'object' && opt !== null && (opt as Record<string, unknown>).type === 'string'
+    ) as { type?: string; description?: string } | undefined;
 
-    expect(stringEnum?.enum).toContain('markdown');
-    expect(stringEnum?.enum).toContain('layouts');
-    expect(stringEnum?.enum).toContain('collections');
-    expect(stringEnum?.enum).toContain('permalinks');
+    expect(stringOption?.type).toBe('string');
+    // Should mention built-in plugins in description but not restrict to enum
+    expect(stringOption?.description).toContain('markdown');
+    expect(stringOption?.description).toContain('Custom plugins');
+  });
+
+  it('should have customPlugin definition for extensibility', () => {
+    const schema = getConfigSchema();
+    const customPlugin = schema.$defs?.customPlugin;
+
+    expect(customPlugin).toBeDefined();
+    expect(customPlugin?.type).toBe('object');
+    expect(customPlugin?.additionalProperties).toBeDefined();
+  });
+
+  it('should not have inlineSourcePlugin (deprecated)', () => {
+    const schema = getConfigSchema();
+    const defs = schema.$defs;
+
+    expect(defs?.inlineSourcePlugin).toBeUndefined();
   });
 });
