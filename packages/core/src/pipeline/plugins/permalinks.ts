@@ -7,6 +7,30 @@
 import type { PipelinePlugin, VirtualFileMap, PipelineContext, VirtualFile } from '../types.js';
 
 /**
+ * Linkset match criteria - can match glob patterns or metadata
+ */
+export interface LinksetMatch {
+  /** Glob pattern(s) to match file paths */
+  pattern?: string | string[];
+  /** Metadata key-value pairs to match */
+  [key: string]: unknown;
+}
+
+/**
+ * A linkset defines a permalink pattern for a specific group of files
+ */
+export interface Linkset {
+  /** Match criteria for this linkset */
+  match: LinksetMatch;
+  /** Permalink pattern for matching files */
+  pattern: string;
+  /** Use trailing slash (overrides global setting) */
+  trailingSlash?: boolean;
+  /** Custom slug function (overrides global setting) */
+  slug?: (text: string) => string;
+}
+
+/**
  * Options for permalinks plugin
  */
 export interface PermalinksOptions {
@@ -24,6 +48,8 @@ export interface PermalinksOptions {
   relative?: boolean;
   /** Unique permalinks - append counter if duplicate */
   unique?: boolean;
+  /** Linksets for collection-specific patterns */
+  linksets?: Linkset[];
 }
 
 /**
@@ -71,6 +97,49 @@ function formatDate(date: Date, format: string): string {
     .replace('YYYY', date.getFullYear().toString())
     .replace('MM', pad(date.getMonth() + 1))
     .replace('DD', pad(date.getDate()));
+}
+
+/**
+ * Check if a file matches a linkset's criteria
+ */
+function matchesLinkset(file: VirtualFile, path: string, linkset: Linkset): boolean {
+  const { match: criteria } = linkset;
+
+  for (const [key, value] of Object.entries(criteria)) {
+    if (key === 'pattern') {
+      // Match against file path pattern(s)
+      const patterns = Array.isArray(value) ? value : [value as string];
+      if (!matchPattern(path, patterns)) {
+        return false;
+      }
+    } else {
+      // Match against metadata
+      const metaValue = file.metadata[key];
+
+      if (Array.isArray(metaValue)) {
+        // For array metadata (like tags), check if value is in array
+        if (!metaValue.includes(value)) {
+          return false;
+        }
+      } else if (metaValue !== value) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Find the matching linkset for a file, if any
+ */
+function findMatchingLinkset(file: VirtualFile, path: string, linksets: Linkset[]): Linkset | undefined {
+  for (const linkset of linksets) {
+    if (matchesLinkset(file, path, linkset)) {
+      return linkset;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -137,10 +206,11 @@ export function permalinks(options: PermalinksOptions = {}): PipelinePlugin {
   const {
     pattern,
     match = ['**/*.html'],
-    trailingSlash = true,
+    trailingSlash: globalTrailingSlash = true,
     indexFile = 'index.html',
-    slug = defaultSlug,
+    slug: globalSlug = defaultSlug,
     unique = true,
+    linksets = [],
   } = options;
 
   return function permalinksPlugin(files: VirtualFileMap, context: PipelineContext): void {
@@ -160,15 +230,21 @@ export function permalinks(options: PermalinksOptions = {}): PipelinePlugin {
 
       let newPath: string;
 
-      // Check for custom permalink in frontmatter
+      // Determine which pattern and settings to use
+      const matchingLinkset = findMatchingLinkset(file, path, linksets);
+      const activePattern = matchingLinkset?.pattern ?? pattern;
+      const activeSlug = matchingLinkset?.slug ?? globalSlug;
+      const activeTrailingSlash = matchingLinkset?.trailingSlash ?? globalTrailingSlash;
+
+      // Check for custom permalink in frontmatter (always takes precedence)
       if (file.metadata.permalink) {
         newPath = String(file.metadata.permalink);
         if (!newPath.startsWith('/')) {
           newPath = '/' + newPath;
         }
-      } else if (pattern) {
+      } else if (activePattern) {
         // Use pattern substitution
-        newPath = substitutePattern(pattern, file, path, slug);
+        newPath = substitutePattern(activePattern, file, path, activeSlug);
       } else {
         // Default: remove extension
         const lastDot = path.lastIndexOf('.');
@@ -181,7 +257,7 @@ export function permalinks(options: PermalinksOptions = {}): PipelinePlugin {
       }
 
       // Add trailing slash and index file
-      if (trailingSlash) {
+      if (activeTrailingSlash) {
         if (!newPath.endsWith('/')) {
           newPath += '/';
         }

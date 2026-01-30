@@ -12,6 +12,6 @@ export { pagination, type PaginationOptions, type PaginationConfig, type Paginat
 export { inlineSource, type InlineSourceOptions } from './inline-source.js';
 export { layouts, type LayoutsOptions } from './layouts.js';
 export { markdown, type MarkdownPluginOptions } from './markdown.js';
-export { permalinks, type PermalinksOptions } from './permalinks.js';
+export { permalinks, type PermalinksOptions, type Linkset, type LinksetMatch } from './permalinks.js';
 export { webmentions, type WebmentionsOptions, type Webmention, type WebmentionsCache } from './webmentions.js';
 export { responsiveImages, type ResponsiveImagesOptions } from './responsive-images.js';
