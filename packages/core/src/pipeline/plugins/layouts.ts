@@ -133,6 +133,8 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
     }
 
     // Process files
+    let processedCount = 0;
+
     for (const [path, file] of files) {
       if (!matchPattern(path, pattern)) {
         continue;
@@ -200,6 +202,7 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
         }
 
         file.contents = encoder.encode(rendered);
+        processedCount++;
         context.log(`layouts: rendered ${path} with layout ${resolvedLayoutPath}`, 'debug');
       } catch (error) {
         context.log(
@@ -208,6 +211,8 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
         );
       }
     }
+
+    context.log(`layouts: rendered ${processedCount} files`, 'info');
   };
 }
 
