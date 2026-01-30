@@ -11,6 +11,8 @@ import {
   unregisterPlugin,
   listPlugins,
   hasPlugin,
+  getConfigSchema,
+  janosConfigSchema,
   type JsonConfig,
 } from './config.js';
 import type { VirtualFileMap, PipelineContext } from './types.js';
@@ -349,5 +351,64 @@ describe('Full Pipeline Integration', () => {
     // Process should not throw
     const result = await pipeline.process(files);
     expect(result).toBeDefined();
+  });
+});
+
+describe('JSON Schema', () => {
+  it('should export the schema via getConfigSchema()', () => {
+    const schema = getConfigSchema();
+
+    expect(schema).toBeDefined();
+    expect(schema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
+    expect(schema.$id).toBe('https://janos.dev/schemas/janos.config.schema.json');
+    expect(schema.title).toBe('Janos Configuration');
+  });
+
+  it('should export the schema directly', () => {
+    expect(janosConfigSchema).toBeDefined();
+    expect(janosConfigSchema.type).toBe('object');
+  });
+
+  it('should have required properties defined', () => {
+    const schema = getConfigSchema();
+
+    expect(schema.required).toContain('site');
+    expect(schema.required).toContain('pipeline');
+  });
+
+  it('should have site config definition', () => {
+    const schema = getConfigSchema();
+    const siteConfig = schema.$defs?.siteConfig;
+
+    expect(siteConfig).toBeDefined();
+    expect(siteConfig?.required).toContain('title');
+    expect(siteConfig?.required).toContain('baseUrl');
+  });
+
+  it('should have plugin definitions', () => {
+    const schema = getConfigSchema();
+    const defs = schema.$defs;
+
+    expect(defs?.markdownPlugin).toBeDefined();
+    expect(defs?.layoutsPlugin).toBeDefined();
+    expect(defs?.collectionsPlugin).toBeDefined();
+    expect(defs?.paginationPlugin).toBeDefined();
+    expect(defs?.permalinksPlugin).toBeDefined();
+    expect(defs?.assetsPlugin).toBeDefined();
+  });
+
+  it('should list all built-in plugins in pluginConfig enum', () => {
+    const schema = getConfigSchema();
+    const pluginConfig = schema.$defs?.pluginConfig;
+
+    // Find the string enum option
+    const stringEnum = pluginConfig?.oneOf?.find(
+      (opt: unknown) => typeof opt === 'object' && opt !== null && 'enum' in opt
+    ) as { enum?: string[] } | undefined;
+
+    expect(stringEnum?.enum).toContain('markdown');
+    expect(stringEnum?.enum).toContain('layouts');
+    expect(stringEnum?.enum).toContain('collections');
+    expect(stringEnum?.enum).toContain('permalinks');
   });
 });

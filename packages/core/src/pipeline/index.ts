@@ -110,7 +110,16 @@ export {
   unregisterPlugin,
   listPlugins,
   hasPlugin,
+  getConfigSchema,
+  janosConfigSchema,
   type JsonConfig,
   type JsonSiteConfig,
   type JsonPluginConfig,
 } from './config.js';
+
+// JSON Schema
+export {
+  janosConfigSchema as configSchema,
+  SCHEMA_ID,
+  SCHEMA_DRAFT,
+} from './schemas/index.js';

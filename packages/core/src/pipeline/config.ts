@@ -6,6 +6,7 @@
  */
 import { Pipeline } from './pipeline.js';
 import type { IPipeline, PipelineConfig } from './types.js';
+import { janosConfigSchema } from './schemas/index.js';
 
 // Import all built-in plugins
 import { assets, type AssetsOptions } from './plugins/assets.js';
@@ -274,3 +275,22 @@ export function listPlugins(): string[] {
 export function hasPlugin(name: string): boolean {
   return !!getPluginFactory(name);
 }
+
+/**
+ * Get the JSON Schema for janos.config.json
+ *
+ * This schema can be used for:
+ * - Editor autocomplete (via $schema reference)
+ * - Runtime validation with a JSON Schema validator
+ * - Documentation generation
+ *
+ * @returns JSON Schema object
+ */
+export function getConfigSchema(): typeof janosConfigSchema {
+  return janosConfigSchema;
+}
+
+/**
+ * Re-export the schema for direct access
+ */
+export { janosConfigSchema };

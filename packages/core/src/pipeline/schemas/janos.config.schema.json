@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://janos.dev/schemas/janos.config.schema.json",
+  "title": "Janos Configuration",
+  "description": "Configuration file for Janos static site generator",
+  "type": "object",
+  "required": ["site", "pipeline"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor support"
+    },
+    "site": {
+      "$ref": "#/$defs/siteConfig"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Custom metadata available to all templates",
+      "additionalProperties": true
+    },
+    "pipeline": {
+      "type": "array",
+      "description": "Pipeline plugins in execution order",
+      "items": {
+        "$ref": "#/$defs/pluginConfig"
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["development", "production"],
+      "default": "development",
+      "description": "Build mode affecting logging and optimizations"
+    }
+  },
+  "$defs": {
+    "siteConfig": {
+      "type": "object",
+      "description": "Site configuration",
+      "required": ["title", "baseUrl"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Site title used in templates and metadata"
+        },
+        "baseUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL of the site (e.g., https://example.com)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Site description for metadata"
+        },
+        "language": {
+          "type": "string",
+          "description": "Site language code (e.g., en, nl)",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+        },
+        "author": {
+          "oneOf": [
+            { "type": "string", "description": "Author name" },
+            { "$ref": "#/$defs/authorObject" }
+          ],
+          "description": "Site author information"
+        },
+        "sourceDir": {
+          "type": "string",
+          "default": "_src",
+          "description": "Source content directory"
+        },
+        "layoutsDir": {
+          "type": "string",
+          "default": "_layouts",
+          "description": "Templates/layouts directory"
+        },
+        "outputDir": {
+          "type": "string",
+          "default": "/",
+          "description": "Output directory for built files"
+        }
+      }
+    },
+    "authorObject": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author's full name"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Author's email address"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Author's website URL"
+        }
+      }
+    },
+    "pluginConfig": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "markdown",
+            "excerpts",
+            "collections",
+            "pagination",
+            "permalinks",
+            "layouts",
+            "assets",
+            "css-urls",
+            "cssUrls",
+            "inline-source",
+            "inlineSource",
+            "webmentions",
+            "responsive-images",
+            "responsiveImages"
+          ],
+          "description": "Plugin name (uses default options)"
+        },
+        { "$ref": "#/$defs/markdownPlugin" },
+        { "$ref": "#/$defs/excerptsPlugin" },
+        { "$ref": "#/$defs/collectionsPlugin" },
+        { "$ref": "#/$defs/paginationPlugin" },
+        { "$ref": "#/$defs/permalinksPlugin" },
+        { "$ref": "#/$defs/layoutsPlugin" },
+        { "$ref": "#/$defs/assetsPlugin" },
+        { "$ref": "#/$defs/cssUrlsPlugin" },
+        { "$ref": "#/$defs/inlineSourcePlugin" },
+        { "$ref": "#/$defs/webmentionsPlugin" },
+        { "$ref": "#/$defs/responsiveImagesPlugin" }
+      ]
+    },
+    "markdownPlugin": {
+      "type": "object",
+      "properties": {
+        "markdown": {
+          "type": "object",
+          "description": "Markdown processor options",
+          "properties": {
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "default": ["**/*.md"],
+              "description": "Glob pattern(s) for files to process"
+            },
+            "gfm": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable GitHub Flavored Markdown"
+            },
+            "smartypants": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable smart typography (quotes, dashes)"
+            },
+            "highlightCode": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable syntax highlighting for code blocks"
+            }
+          }
+        }
+      },
+      "required": ["markdown"],
+      "additionalProperties": false
+    },
+    "excerptsPlugin": {
+      "type": "object",
+      "properties": {
+        "excerpts": {
+          "type": "object",
+          "description": "Excerpt extraction options",
+          "properties": {
+            "marker": {
+              "type": "string",
+              "default": "<!-- more -->",
+              "description": "HTML comment marker for excerpt boundary"
+            },
+            "maxLength": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Maximum excerpt length in characters (0 = no limit)"
+            },
+            "stripTags": {
+              "type": "boolean",
+              "default": false,
+              "description": "Remove HTML tags from excerpt"
+            }
+          }
+        }
+      },
+      "required": ["excerpts"],
+      "additionalProperties": false
+    },
+    "collectionsPlugin": {
+      "type": "object",
+      "properties": {
+        "collections": {
+          "type": "object",
+          "description": "Collection definitions",
+          "additionalProperties": {
+            "$ref": "#/$defs/collectionConfig"
+          }
+        }
+      },
+      "required": ["collections"],
+      "additionalProperties": false
+    },
+    "collectionConfig": {
+      "type": "object",
+      "description": "Configuration for a single collection",
+      "properties": {
+        "pattern": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ],
+          "description": "Glob pattern(s) to match files for this collection"
+        },
+        "sortBy": {
+          "type": "string",
+          "description": "Metadata field to sort by (e.g., 'date', 'title')"
+        },
+        "reverse": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reverse sort order (newest first for dates)"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of items in collection"
+        },
+        "filter": {
+          "type": "object",
+          "description": "Metadata filters (key-value pairs to match)",
+          "additionalProperties": true
+        }
+      }
+    },
+    "paginationPlugin": {
+      "type": "object",
+      "properties": {
+        "pagination": {
+          "type": "object",
+          "description": "Pagination configuration for collections",
+          "additionalProperties": {
+            "$ref": "#/$defs/paginationConfig"
+          }
+        }
+      },
+      "required": ["pagination"],
+      "additionalProperties": false
+    },
+    "paginationConfig": {
+      "type": "object",
+      "description": "Pagination settings for a collection",
+      "required": ["perPage", "layout"],
+      "properties": {
+        "perPage": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of items per page"
+        },
+        "layout": {
+          "type": "string",
+          "description": "Layout template for paginated pages"
+        },
+        "first": {
+          "type": "string",
+          "description": "Path for the first page (e.g., 'index.html')"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path pattern for subsequent pages (e.g., 'posts/:num/index.html')"
+        },
+        "pageMetadata": {
+          "type": "object",
+          "description": "Additional metadata for generated pages",
+          "additionalProperties": true
+        }
+      }
+    },
+    "permalinksPlugin": {
+      "type": "object",
+      "properties": {
+        "permalinks": {
+          "type": "object",
+          "description": "Permalink transformation options",
+          "properties": {
+            "match": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "default": ["**/*.html"],
+              "description": "Glob pattern(s) for files to transform"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Default permalink pattern (e.g., ':title')"
+            },
+            "trailingSlash": {
+              "type": "boolean",
+              "default": true,
+              "description": "Add trailing slash to URLs"
+            },
+            "directoryIndex": {
+              "type": "string",
+              "default": "index.html",
+              "description": "Directory index filename"
+            },
+            "linksets": {
+              "type": "array",
+              "description": "Collection-specific permalink patterns",
+              "items": {
+                "$ref": "#/$defs/linkset"
+              }
+            }
+          }
+        }
+      },
+      "required": ["permalinks"],
+      "additionalProperties": false
+    },
+    "linkset": {
+      "type": "object",
+      "description": "A linkset defines permalink patterns for specific files",
+      "required": ["match", "pattern"],
+      "properties": {
+        "match": {
+          "type": "object",
+          "description": "Match criteria (pattern or metadata)",
+          "properties": {
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "description": "Glob pattern(s) to match"
+            },
+            "collection": {
+              "type": "string",
+              "description": "Collection name to match"
+            }
+          },
+          "additionalProperties": true
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Permalink pattern with placeholders (e.g., 'post/:title', ':date-:slug')"
+        },
+        "trailingSlash": {
+          "type": "boolean",
+          "description": "Override trailing slash setting"
+        }
+      }
+    },
+    "layoutsPlugin": {
+      "type": "object",
+      "properties": {
+        "layouts": {
+          "type": "object",
+          "description": "Layout rendering options",
+          "properties": {
+            "directory": {
+              "type": "string",
+              "default": "_layouts",
+              "description": "Directory containing layout templates"
+            },
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "default": ["**/*.html"],
+              "description": "Glob pattern(s) for files to process"
+            },
+            "default": {
+              "type": "string",
+              "description": "Default layout for files without explicit layout"
+            },
+            "engineName": {
+              "type": "string",
+              "description": "Template engine name (nunjucks, handlebars)"
+            }
+          }
+        }
+      },
+      "required": ["layouts"],
+      "additionalProperties": false
+    },
+    "assetsPlugin": {
+      "type": "object",
+      "properties": {
+        "assets": {
+          "type": "object",
+          "description": "Static asset copying options",
+          "properties": {
+            "sources": {
+              "type": "array",
+              "description": "Asset source configurations",
+              "items": {
+                "$ref": "#/$defs/assetSource"
+              }
+            }
+          }
+        }
+      },
+      "required": ["assets"],
+      "additionalProperties": false
+    },
+    "assetSource": {
+      "type": "object",
+      "description": "Asset source configuration",
+      "required": ["source", "destination"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source directory path"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Destination path in output"
+        },
+        "pattern": {
+          "type": "string",
+          "default": "**/*",
+          "description": "Glob pattern for files to copy"
+        }
+      }
+    },
+    "cssUrlsPlugin": {
+      "type": "object",
+      "properties": {
+        "css-urls": {
+          "type": "object",
+          "description": "CSS URL rewriting options",
+          "properties": {
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "default": ["**/*.css"],
+              "description": "Glob pattern(s) for CSS files"
+            },
+            "rootPath": {
+              "type": "string",
+              "description": "Root path to prepend to URLs"
+            }
+          }
+        }
+      },
+      "required": ["css-urls"],
+      "additionalProperties": false
+    },
+    "inlineSourcePlugin": {
+      "type": "object",
+      "properties": {
+        "inline-source": {
+          "type": "object",
+          "description": "Inline source embedding options",
+          "properties": {
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "default": ["**/*.html"],
+              "description": "Glob pattern(s) for files to process"
+            },
+            "compress": {
+              "type": "boolean",
+              "default": false,
+              "description": "Compress inlined content"
+            }
+          }
+        }
+      },
+      "required": ["inline-source"],
+      "additionalProperties": false
+    },
+    "webmentionsPlugin": {
+      "type": "object",
+      "properties": {
+        "webmentions": {
+          "type": "object",
+          "description": "Webmention processing options",
+          "properties": {
+            "domain": {
+              "type": "string",
+              "description": "Site domain for webmention.io"
+            },
+            "token": {
+              "type": "string",
+              "description": "Webmention.io API token"
+            },
+            "cacheTime": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 3600,
+              "description": "Cache duration in seconds"
+            }
+          }
+        }
+      },
+      "required": ["webmentions"],
+      "additionalProperties": false
+    },
+    "responsiveImagesPlugin": {
+      "type": "object",
+      "properties": {
+        "responsive-images": {
+          "type": "object",
+          "description": "Responsive image processing options",
+          "properties": {
+            "pattern": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ],
+              "default": ["**/*.{jpg,jpeg,png,webp}"],
+              "description": "Glob pattern(s) for images to process"
+            },
+            "widths": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 1 },
+              "default": [320, 640, 960, 1280],
+              "description": "Output widths in pixels"
+            },
+            "formats": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["avif", "webp", "jpeg", "png"]
+              },
+              "default": ["avif", "webp", "jpeg"],
+              "description": "Output image formats"
+            },
+            "quality": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 80,
+              "description": "Output quality (1-100)"
+            }
+          }
+        }
+      },
+      "required": ["responsive-images"],
+      "additionalProperties": false
+    }
+  }
+}
