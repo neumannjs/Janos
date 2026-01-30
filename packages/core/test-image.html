@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Janos Image Processing Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #333; }
+    .controls {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    button {
+      background: #4a90d9;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover { background: #3a7bc8; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #progress {
+      margin: 20px 0;
+      padding: 10px;
+      background: #e8f4ff;
+      border-radius: 4px;
+      display: none;
+    }
+    #results {
+      display: none;
+    }
+    .result-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .variants {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .variant {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .variant img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .variant-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .stat {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4a90d9;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+    }
+    #error {
+      background: #ffe0e0;
+      color: #c00;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    pre {
+      background: #333;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🖼️ Janos Image Processing Test</h1>
+
+  <div class="controls">
+    <p>Select an image file or paste from clipboard (Ctrl+V):</p>
+    <input type="file" id="fileInput" accept="image/*">
+    <br><br>
+    <button id="processBtn" disabled>Process Image</button>
+  </div>
+
+  <div id="progress"></div>
+  <div id="error"></div>
+
+  <div id="results">
+    <div class="result-section">
+      <h2>📊 Processing Results</h2>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div class="result-section">
+      <h2>🖼️ Original</h2>
+      <div id="original"></div>
+    </div>
+
+    <div class="result-section">
+      <h2>📦 Generated Variants</h2>
+      <div id="variants"></div>
+    </div>
+
+    <div class="result-section">
+      <h2>📝 Picture HTML</h2>
+      <pre id="pictureHtml"></pre>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import from CDN (ESM)
+    import { decode as decodeJpeg, encode as encodeJpeg } from 'https://esm.sh/@jsquash/jpeg@1.6.0';
+    import { decode as decodePng, encode as encodePng } from 'https://esm.sh/@jsquash/png@3.1.1';
+    import { decode as decodeWebp, encode as encodeWebp } from 'https://esm.sh/@jsquash/webp@1.5.0';
+    import { encode as encodeAvif } from 'https://esm.sh/@jsquash/avif@2.1.1';
+    import resize from 'https://esm.sh/@jsquash/resize@2.1.1';
+
+    const SIZE_PRESETS = { xs: 320, s: 480, m: 768, l: 1024, xl: 1920 };
+    const FORMATS = ['avif', 'webp', 'jpg'];
+    const SIZES = ['s', 'm', 'l'];
+    const QUALITY = { avif: 50, webp: 80, jpg: 80 };
+
+    let selectedFile = null;
+
+    const fileInput = document.getElementById('fileInput');
+    const processBtn = document.getElementById('processBtn');
+    const progressDiv = document.getElementById('progress');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+
+    // File selection
+    fileInput.addEventListener('change', (e) => {
+      selectedFile = e.target.files[0];
+      processBtn.disabled = !selectedFile;
+    });
+
+    // Paste from clipboard
+    document.addEventListener('paste', async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          selectedFile = item.getAsFile();
+          fileInput.value = '';
+          processBtn.disabled = false;
+          showProgress('Image pasted from clipboard. Click "Process Image" to continue.');
+          return;
+        }
+      }
+    });
+
+    // Process button
+    processBtn.addEventListener('click', processImage);
+
+    function showProgress(msg) {
+      progressDiv.style.display = 'block';
+      progressDiv.textContent = msg;
+    }
+
+    function hideProgress() {
+      progressDiv.style.display = 'none';
+    }
+
+    function showError(msg) {
+      errorDiv.style.display = 'block';
+      errorDiv.textContent = msg;
+    }
+
+    function hideError() {
+      errorDiv.style.display = 'none';
+    }
+
+    async function decodeImage(data, mimeType) {
+      // Try browser native decoding first
+      try {
+        const blob = new Blob([data], { type: mimeType });
+        const bitmap = await createImageBitmap(blob);
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+      } catch (e) {
+        console.log('Native decode failed, using jSquash:', e);
+      }
+
+      // Fallback to jSquash
+      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+        return await decodeJpeg(data);
+      }
+      if (mimeType.includes('png')) {
+        return await decodePng(data);
+      }
+      if (mimeType.includes('webp')) {
+        return await decodeWebp(data);
+      }
+      throw new Error('Unsupported format: ' + mimeType);
+    }
+
+    async function encodeImage(imageData, format, quality) {
+      switch (format) {
+        case 'avif':
+          return new Uint8Array(await encodeAvif(imageData, { quality: quality.avif }));
+        case 'webp':
+          return new Uint8Array(await encodeWebp(imageData, { quality: quality.webp }));
+        case 'jpg':
+          return new Uint8Array(await encodeJpeg(imageData, { quality: quality.jpg }));
+        default:
+          throw new Error('Unknown format: ' + format);
+      }
+    }
+
+    async function resizeImage(imageData, targetWidth) {
+      if (targetWidth >= imageData.width) {
+        return imageData;
+      }
+      const aspectRatio = imageData.height / imageData.width;
+      const targetHeight = Math.round(targetWidth * aspectRatio);
+      return await resize(imageData, { width: targetWidth, height: targetHeight });
+    }
+
+    async function processImage() {
+      if (!selectedFile) return;
+
+      hideError();
+      resultsDiv.style.display = 'none';
+      processBtn.disabled = true;
+
+      const startTime = performance.now();
+
+      try {
+        showProgress('Reading file...');
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const mimeType = selectedFile.type || 'image/jpeg';
+
+        showProgress('Decoding image...');
+        const imageData = await decodeImage(arrayBuffer, mimeType);
+        console.log('Decoded:', imageData.width, 'x', imageData.height);
+
+        // Calculate target sizes
+        const targetSizes = SIZES
+          .map(s => ({ preset: s, pixels: Math.min(SIZE_PRESETS[s], imageData.width) }))
+          .filter((s, i, arr) => arr.findIndex(a => a.pixels === s.pixels) === i);
+
+        const variants = new Map();
+        let totalVariants = 0;
+        const totalSteps = FORMATS.length * targetSizes.length;
+        let currentStep = 0;
+
+        // Process each format and size
+        for (const format of FORMATS) {
+          const formatVariants = [];
+
+          for (const { preset, pixels } of targetSizes) {
+            currentStep++;
+            const progress = Math.round((currentStep / totalSteps) * 100);
+            showProgress(`Encoding ${format.toUpperCase()} @ ${pixels}px... (${progress}%)`);
+
+            const resized = await resizeImage(imageData, pixels);
+            const encoded = await encodeImage(resized, format, QUALITY);
+
+            const ext = format === 'jpg' ? 'jpg' : format;
+            const name = `${selectedFile.name.replace(/\.[^.]+$/, '')}-${pixels}.${ext}`;
+
+            formatVariants.push({
+              name,
+              format,
+              width: resized.width,
+              height: resized.height,
+              sizePreset: preset,
+              data: encoded,
+              size: encoded.byteLength,
+            });
+            totalVariants++;
+          }
+
+          variants.set(format, formatVariants);
+        }
+
+        const processingTime = performance.now() - startTime;
+
+        // Display results
+        displayResults({
+          original: {
+            name: selectedFile.name,
+            width: imageData.width,
+            height: imageData.height,
+            size: arrayBuffer.byteLength,
+          },
+          variants,
+          totalVariants,
+          processingTime,
+        });
+
+      } catch (error) {
+        console.error('Processing error:', error);
+        showError('Processing failed: ' + error.message);
+      } finally {
+        hideProgress();
+        processBtn.disabled = false;
+      }
+    }
+
+    function displayResults(result) {
+      resultsDiv.style.display = 'block';
+
+      // Stats
+      const statsDiv = document.getElementById('stats');
+      statsDiv.innerHTML = `
+        <div class="stat">
+          <div class="stat-value">${result.original.width}×${result.original.height}</div>
+          <div class="stat-label">Original Size</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${result.totalVariants}</div>
+          <div class="stat-label">Variants Generated</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${Math.round(result.processingTime)}ms</div>
+          <div class="stat-label">Processing Time</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${(result.original.size / 1024).toFixed(1)} KB</div>
+          <div class="stat-label">Original File Size</div>
+        </div>
+      `;
+
+      // Original image
+      const originalDiv = document.getElementById('original');
+      const originalUrl = URL.createObjectURL(selectedFile);
+      originalDiv.innerHTML = `
+        <img src="${originalUrl}" style="max-width: 400px; max-height: 300px;">
+        <div class="variant-info">${result.original.name} (${result.original.width}×${result.original.height})</div>
+      `;
+
+      // Variants
+      const variantsDiv = document.getElementById('variants');
+      variantsDiv.innerHTML = '';
+
+      for (const [format, formatVariants] of result.variants) {
+        const section = document.createElement('div');
+        section.innerHTML = `<h3>${format.toUpperCase()}</h3>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'variants';
+
+        for (const variant of formatVariants) {
+          const blob = new Blob([variant.data], { type: `image/${format === 'jpg' ? 'jpeg' : format}` });
+          const url = URL.createObjectURL(blob);
+
+          const variantDiv = document.createElement('div');
+          variantDiv.className = 'variant';
+          variantDiv.innerHTML = `
+            <img src="${url}" alt="${variant.name}">
+            <div class="variant-info">
+              <strong>${variant.name}</strong><br>
+              ${variant.width}×${variant.height} • ${(variant.size / 1024).toFixed(1)} KB
+            </div>
+          `;
+          grid.appendChild(variantDiv);
+        }
+
+        section.appendChild(grid);
+        variantsDiv.appendChild(section);
+      }
+
+      // Generate picture HTML
+      const pictureHtml = generatePictureHtml(result, '/images/');
+      document.getElementById('pictureHtml').textContent = pictureHtml;
+    }
+
+    function generatePictureHtml(result, basePath) {
+      let html = '<picture>\n';
+
+      for (const format of ['avif', 'webp']) {
+        const variants = result.variants.get(format);
+        if (!variants || variants.length === 0) continue;
+
+        const sorted = [...variants].sort((a, b) => b.width - a.width);
+        const srcset = sorted.map(v => `${basePath}${v.name} ${v.width}w`).join(', ');
+
+        html += `  <source srcset="${srcset}" type="image/${format}">\n`;
+      }
+
+      const jpgVariants = result.variants.get('jpg');
+      if (jpgVariants && jpgVariants.length > 0) {
+        const sorted = [...jpgVariants].sort((a, b) => b.width - a.width);
+        const smallest = sorted[sorted.length - 1];
+        const largest = sorted[0];
+        const srcset = sorted.map(v => `${basePath}${v.name} ${v.width}w`).join(', ');
+
+        html += `  <img srcset="${srcset}"\n`;
+        html += `       src="${basePath}${smallest.name}"\n`;
+        html += `       alt="Image description"\n`;
+        html += `       width="${largest.width}" height="${largest.height}"\n`;
+        html += `       loading="lazy" decoding="async">\n`;
+      }
+
+      html += '</picture>';
+      return html;
+    }
+  </script>
+</body>
+</html>
