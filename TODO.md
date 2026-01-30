@@ -69,8 +69,26 @@ my-site-repo/
 - [x] Permalinks plugin for clean URLs
 - [x] Layouts plugin for template rendering
 - [x] Integration tests with actual site build
-- [ ] Test pipeline with existing Janos templates
+- [x] Test pipeline with existing Janos templates (Miksa - partial, see gaps below)
 - [ ] Fix inline-source plugin regex (greedy pattern issue)
+
+### Feature Gaps (for full Miksa/gijsvandam.nl support)
+
+**Template Engine Enhancements:**
+- [ ] Nunjucks `{% extends %}` with virtual filesystem loader
+- [ ] Nunjucks `{% include %}` with virtual filesystem loader
+- [ ] Custom `{% asyncEach %}` tag for async iteration
+- [ ] Date formatting filters (`| date("YYYY")`)
+- [ ] Reading time calculation
+
+**Additional Plugins Needed:**
+- [ ] `collections` - group files by pattern/metadata
+- [ ] `pagination` - paginate collections
+- [ ] `tags/topics` - generate tag pages from metadata
+- [ ] `publish` - filter drafts/private/future posts
+- [ ] `excerpts` - extract post excerpts (<!-- more -->)
+- [ ] `rss` - generate RSS/Atom feed
+- [ ] `sitemap` - generate sitemap.xml
 
 ---
 
