@@ -45,8 +45,8 @@ export interface WebmentionsCache {
  * Options for webmentions plugin
  */
 export interface WebmentionsOptions {
-  /** Base URL of the site */
-  baseUrl: string;
+  /** Base URL of the site (optional - derived from site.baseUrl if not provided) */
+  baseUrl?: string;
   /** Domain registered with webmention.io (optional, derived from baseUrl) */
   domain?: string;
   /** Cache directory path (default: 'cache') */
@@ -123,35 +123,40 @@ function shouldFetchWebmentions(file: VirtualFile): boolean {
 }
 
 /**
- * Get the URL path for a file
+ * Get the URL path for a file (without leading slash)
  */
 function getFilePath(file: VirtualFile): string {
   // Use permalink if available, otherwise use path
-  const permalink = file.metadata.permalink as string | undefined;
-  if (permalink) {
-    return permalink;
+  let result = file.metadata.permalink as string | undefined;
+
+  if (!result) {
+    // Convert path to URL path (remove extension, add trailing slash)
+    result = file.path;
+    const extIndex = result.lastIndexOf('.');
+    if (extIndex !== -1) {
+      result = result.substring(0, extIndex);
+    }
+    if (result !== '' && !result.endsWith('/')) {
+      result += '/';
+    }
   }
 
-  // Convert path to URL path (remove extension, add trailing slash)
-  let path = file.path;
-  const extIndex = path.lastIndexOf('.');
-  if (extIndex !== -1) {
-    path = path.substring(0, extIndex);
+  // Remove leading slash to avoid double slashes when combined with baseUrl
+  if (result.startsWith('/')) {
+    result = result.substring(1);
   }
-  if (path !== '' && !path.endsWith('/')) {
-    path += '/';
-  }
-  return path;
+
+  return result;
 }
 
 /**
  * Create the webmentions plugin
- * @param options - Plugin options
+ * @param options - Plugin options (optional - baseUrl derived from site config if not provided)
  * @returns Pipeline plugin
  */
-export function webmentions(options: WebmentionsOptions): PipelinePlugin {
+export function webmentions(options: WebmentionsOptions = {}): PipelinePlugin {
   const {
-    baseUrl,
+    baseUrl: optionsBaseUrl,
     cacheDir = 'cache',
     perPage = 10000,
     fetch: fetchFn = globalThis.fetch,
@@ -159,22 +164,32 @@ export function webmentions(options: WebmentionsOptions): PipelinePlugin {
     writeCache,
   } = options;
 
-  // Ensure baseUrl ends with /
-  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-
   return async function webmentionsPlugin(
     files: VirtualFileMap,
     context: PipelineContext
   ): Promise<void> {
+    // Get baseUrl from options or site config
+    const baseUrl = optionsBaseUrl ?? context.config.baseUrl;
+    if (!baseUrl) {
+      context.log('webmentions: no baseUrl configured, skipping', 'warn');
+      return;
+    }
+
+    // Ensure baseUrl ends with /
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+
     const promises: Promise<void>[] = [];
+    let fileCount = 0;
+    let mentionCount = 0;
 
     for (const [, file] of files) {
       if (!shouldFetchWebmentions(file)) {
         continue;
       }
+      fileCount++;
 
-      const filePath = getFilePath(file);
-      const fullUrl = normalizedBaseUrl + filePath;
+      const urlPath = getFilePath(file);
+      const fullUrl = normalizedBaseUrl + urlPath;
 
       promises.push(
         (async () => {
@@ -185,7 +200,7 @@ export function webmentions(options: WebmentionsOptions): PipelinePlugin {
           };
 
           if (readCache) {
-            const cached = await readCache(`${cacheDir}/${filePath}webmentions.json`);
+            const cached = await readCache(`${cacheDir}/${urlPath}webmentions.json`);
             if (cached) {
               cache = cached;
             }
@@ -198,6 +213,7 @@ export function webmentions(options: WebmentionsOptions): PipelinePlugin {
           const feed = await fetchWebmentions(fullUrl, cache.lastWmId, perPage, fetchFn);
 
           if (feed && feed.children.length > 0) {
+            mentionCount += feed.children.length;
             const newLastWmId = feed.children[0]?.['wm-id'] ?? cache.lastWmId;
             const mergedChildren = mergeWebmentions(cache.children, feed.children);
 
@@ -214,19 +230,15 @@ export function webmentions(options: WebmentionsOptions): PipelinePlugin {
 
             // Write to cache
             if (writeCache) {
-              await writeCache(`${cacheDir}/${filePath}webmentions.json`, webmentionsData);
+              await writeCache(`${cacheDir}/${urlPath}webmentions.json`, webmentionsData);
             }
-
-            context.log(
-              `webmentions: fetched ${feed.children.length} new mentions for ${filePath}`,
-              'debug'
-            );
           }
         })()
       );
     }
 
     await Promise.all(promises);
+    context.log(`webmentions: checked ${fileCount} files, fetched ${mentionCount} mentions`, 'info');
   };
 }
 
