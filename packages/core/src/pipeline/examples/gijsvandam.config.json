@@ -83,6 +83,7 @@
         { "match": { "collection": "article" }, "pattern": "article/:date-:slug" }
       ]
     }},
+    "webmentions",
     { "layouts": {
       "directory": "_layouts",
       "pattern": ["**/*.html"],
