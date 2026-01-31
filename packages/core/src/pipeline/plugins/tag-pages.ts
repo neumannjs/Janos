@@ -169,57 +169,62 @@ export function tagPages(options: TagPagesOptions): PipelinePlugin {
         const totalPages = Math.ceil(sortedItems.length / perPage);
         const paginatedPath = pagination.path || 'topics/:tag/:num/index.html';
 
+        // Build pages array first (same format as pagination plugin)
+        const pages: Array<{ num: number; path: string }> = [];
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-          const startIndex = (pageNum - 1) * perPage;
-          const pageItems = sortedItems.slice(startIndex, startIndex + perPage);
-
-          const isFirst = pageNum === 1;
-          const pagePath = isFirst
+          const pagePath = pageNum === 1
             ? pathPattern.replace(':tag', tagSlug)
             : paginatedPath.replace(':tag', tagSlug).replace(':num', String(pageNum));
+          pages.push({ num: pageNum, path: pagePath });
+        }
 
+        for (let i = 0; i < totalPages; i++) {
+          const pageNum = i + 1;
+          const pageInfo = pages[i]!;
+          const startIndex = i * perPage;
+          const pageItems = sortedItems.slice(startIndex, startIndex + perPage);
+
+          // Match pagination plugin format exactly
           const paginationData = {
-            items: pageItems,
+            files: pageItems,
+            pages,
             current: pageNum,
             total: totalPages,
-            totalItems: sortedItems.length,
-            perPage,
-            first: pathPattern.replace(':tag', tagSlug),
-            previous: pageNum > 1
-              ? (pageNum === 2
-                ? pathPattern.replace(':tag', tagSlug)
-                : paginatedPath.replace(':tag', tagSlug).replace(':num', String(pageNum - 1)))
-              : null,
-            next: pageNum < totalPages
-              ? paginatedPath.replace(':tag', tagSlug).replace(':num', String(pageNum + 1))
-              : null,
-            last: totalPages > 1
-              ? paginatedPath.replace(':tag', tagSlug).replace(':num', String(totalPages))
-              : pathPattern.replace(':tag', tagSlug),
+            next: i < totalPages - 1 ? pages[i + 1]! : null,
+            previous: i > 0 ? pages[i - 1]! : null,
           };
 
           const pageFile: VirtualFile = {
-            path: pagePath,
+            path: pageInfo.path,
             contents: encoder.encode(''), // Content comes from layout
             metadata: {
               ...pageMetadata,
               layout,
               title: titlePattern.replace(':tag', tag.name),
-              tag,
+              tag: tag.name, // Just the tag name string for templates
               tagSlug,
-              items: pageItems,
+              tagInfo: tag, // Full tag object if needed
               pagination: paginationData,
-              allItems: sortedItems,
             },
-            sourcePath: pagePath,
+            sourcePath: pageInfo.path,
           };
 
-          files.set(pagePath, pageFile);
+          files.set(pageInfo.path, pageFile);
           pageCount++;
         }
       } else {
-        // Generate single page per tag
+        // Generate single page per tag (with pagination structure for consistency)
         const pagePath = pathPattern.replace(':tag', tagSlug);
+        const pages = [{ num: 1, path: pagePath }];
+
+        const paginationData = {
+          files: sortedItems,
+          pages,
+          current: 1,
+          total: 1,
+          next: null,
+          previous: null,
+        };
 
         const pageFile: VirtualFile = {
           path: pagePath,
@@ -228,9 +233,10 @@ export function tagPages(options: TagPagesOptions): PipelinePlugin {
             ...pageMetadata,
             layout,
             title: titlePattern.replace(':tag', tag.name),
-            tag,
+            tag: tag.name,
             tagSlug,
-            items: sortedItems,
+            tagInfo: tag,
+            pagination: paginationData,
           },
           sourcePath: pagePath,
         };

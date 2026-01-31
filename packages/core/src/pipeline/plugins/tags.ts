@@ -24,6 +24,17 @@ export interface Tag {
 }
 
 /**
+ * Tag cloud entry for sidebar templates
+ * Format: { urlSafe: string, length: number }
+ */
+export interface TagCloudEntry {
+  /** URL-safe slug */
+  urlSafe: string;
+  /** Number of posts with this tag */
+  length: number;
+}
+
+/**
  * Options for tags plugin
  */
 export interface TagsOptions {
@@ -35,6 +46,12 @@ export interface TagsOptions {
   slugify?: (text: string) => string;
   /** Whether to collect all unique tags in context.metadata.allTags */
   collectAll?: boolean;
+  /**
+   * Build a tag cloud object for sidebar templates
+   * Format: { "Tag Name": { urlSafe: "tag-slug", length: 5 }, ... }
+   * Stored in context.metadata.tagCloud
+   */
+  buildTagCloud?: boolean;
 }
 
 /**
@@ -73,10 +90,18 @@ function transformTag(value: unknown, slugify: (text: string) => string): Tag | 
 }
 
 /**
- * Transform tags array or single tag
+ * Transform tags array, comma-separated string, or single tag
  */
 function transformTags(value: unknown, slugify: (text: string) => string): Tag[] {
   if (!value) return [];
+
+  // Handle comma-separated string: "bitcoin, windows 10" -> ["bitcoin", "windows 10"]
+  if (typeof value === 'string') {
+    const parts = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    return parts
+      .map(part => transformTag(part, slugify))
+      .filter((tag): tag is Tag => tag !== null);
+  }
 
   if (Array.isArray(value)) {
     return value
@@ -99,6 +124,7 @@ export function tags(options: TagsOptions = {}): PipelinePlugin {
     additionalFields = [],
     slugify = defaultSlugify,
     collectAll = true,
+    buildTagCloud = true,
   } = options;
 
   const fieldsToTransform = [field, ...additionalFields];
@@ -109,10 +135,12 @@ export function tags(options: TagsOptions = {}): PipelinePlugin {
   ): Promise<void> {
     // Map to collect all unique tags across all files
     const allTagsMap = new Map<string, Tag>();
+    // Map to count posts per tag (for tag cloud)
+    const tagCounts = new Map<string, { tag: Tag; count: number }>();
 
     let transformedCount = 0;
 
-    for (const [path, file] of files) {
+    for (const [, file] of files) {
       let fileTransformed = false;
 
       for (const fieldName of fieldsToTransform) {
@@ -123,12 +151,17 @@ export function tags(options: TagsOptions = {}): PipelinePlugin {
             file.metadata[fieldName] = transformed;
             fileTransformed = true;
 
-            // Collect unique tags
-            if (collectAll) {
-              for (const tag of transformed) {
-                if (!allTagsMap.has(tag.slug)) {
-                  allTagsMap.set(tag.slug, tag);
-                }
+            // Collect unique tags and count
+            for (const tag of transformed) {
+              if (!allTagsMap.has(tag.slug)) {
+                allTagsMap.set(tag.slug, tag);
+              }
+              // Increment count
+              const existing = tagCounts.get(tag.slug);
+              if (existing) {
+                existing.count++;
+              } else {
+                tagCounts.set(tag.slug, { tag, count: 1 });
               }
             }
           }
@@ -147,6 +180,23 @@ export function tags(options: TagsOptions = {}): PipelinePlugin {
       );
       context.metadata.allTags = allTags;
       context.log(`tags: collected ${allTags.length} unique tags`, 'debug');
+    }
+
+    // Build tag cloud object for sidebar templates
+    // Format: { "Tag Name": { urlSafe: "tag-slug", length: 5 }, ... }
+    // Exposed as both 'tags' (for template compatibility) and 'tagCloud'
+    if (buildTagCloud) {
+      const tagCloud: Record<string, TagCloudEntry> = {};
+      for (const [, { tag, count }] of tagCounts) {
+        tagCloud[tag.name] = {
+          urlSafe: tag.slug,
+          length: count,
+        };
+      }
+      // 'tags' is used by sidebar templates like {% for tag, posts in tags %}
+      context.metadata.tags = tagCloud;
+      context.metadata.tagCloud = tagCloud; // Alias
+      context.log(`tags: built tag cloud with ${Object.keys(tagCloud).length} tags`, 'debug');
     }
 
     context.log(`tags: transformed ${transformedCount} files`, 'info');

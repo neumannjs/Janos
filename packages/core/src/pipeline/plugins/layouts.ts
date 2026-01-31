@@ -97,6 +97,12 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
 
       const pad = (n: number) => n.toString().padStart(2, '0');
 
+      // Get timezone offset
+      const tzOffset = d.getTimezoneOffset();
+      const tzSign = tzOffset <= 0 ? '+' : '-';
+      const tzHours = pad(Math.floor(Math.abs(tzOffset) / 60));
+      const tzMins = pad(Math.abs(tzOffset) % 60);
+
       // Use a single regex to match all tokens and replace in one pass
       // This avoids issues where replaced text contains characters that look like tokens
       const tokens: Record<string, string> = {
@@ -116,6 +122,8 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
         'm': d.getMinutes().toString(),
         'ss': pad(d.getSeconds()),
         's': d.getSeconds().toString(),
+        'ZZ': `${tzSign}${tzHours}${tzMins}`,     // +0100
+        'Z': `${tzSign}${tzHours}:${tzMins}`,     // +01:00
       };
 
       // Build regex that matches tokens in order of length (longest first)
@@ -259,6 +267,15 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
         }
       }
 
+      // For micropub layouts, set 'micropub' to the file metadata
+      // This enables the same template to work for both list and single contexts
+      const isMicropubLayout = resolvedLayoutPath.includes('micropub');
+      const micropubData = isMicropubLayout ? {
+        ...file.metadata,
+        contents: content,
+        path: path,
+      } : undefined;
+
       const templateData: Record<string, unknown> = {
         ...flattenedSite, // site_title, site_description, etc.
         ...context.metadata,
@@ -268,6 +285,7 @@ export function layouts(options: LayoutsOptions = {}): PipelinePlugin {
         page: file.metadata,
         site: site,
         now: new Date(), // Current date for templates
+        micropub: micropubData, // For micropub single pages
       };
 
       try {

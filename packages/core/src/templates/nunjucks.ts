@@ -97,6 +97,84 @@ export function createVirtualLoader(
 }
 
 /**
+ * AsyncEach extension for Nunjucks
+ *
+ * Provides compatibility with legacy Janos templates that use {% asyncEach %}.
+ * This works as a synchronous for loop since we don't need true async iteration.
+ *
+ * Usage: {% asyncEach item in items %} ... {% endeach %}
+ * Or: {% asyncEach key, value in object %} ... {% endeach %}
+ */
+class AsyncEachExtension {
+  tags = ['asyncEach'];
+
+  parse(parser: nunjucks.parser.Parser, nodes: typeof nunjucks.nodes, lexer: typeof nunjucks.lexer) {
+    const token = parser.nextToken();
+
+    // Parse loop variable(s)
+    const loopVars: nunjucks.nodes.Node[] = [];
+    while (true) {
+      const varToken = parser.nextToken();
+      if (!varToken || varToken.type === lexer.TOKEN_BLOCK_END) {
+        parser.fail('asyncEach: expected variable name');
+      }
+
+      loopVars.push(new nodes.Symbol(varToken.lineno, varToken.colno, varToken.value as string));
+
+      const nextToken = parser.peekToken();
+      if (nextToken.type === lexer.TOKEN_COMMA) {
+        parser.nextToken(); // consume comma
+      } else if ((nextToken.value as string) === 'in') {
+        break;
+      } else {
+        parser.fail('asyncEach: expected "," or "in"');
+      }
+    }
+
+    // Consume 'in'
+    parser.nextToken();
+
+    // Parse the iterable expression
+    const iterableExpr = parser.parseExpression();
+
+    parser.advanceAfterBlockEnd(token.value as string);
+
+    // Parse the body
+    const body = parser.parseUntilBlocks('endeach');
+    parser.advanceAfterBlockEnd();
+
+    // Build the For node (asyncEach is just a sync for loop in our implementation)
+    if (loopVars.length === 1) {
+      // Simple iteration: {% asyncEach item in items %}
+      return new nodes.For(
+        token.lineno,
+        token.colno,
+        loopVars[0],
+        iterableExpr,
+        body,
+        null
+      );
+    } else if (loopVars.length === 2) {
+      // Key-value iteration: {% asyncEach key, value in object %}
+      // Nunjucks For node expects: arr, name, body, else_
+      // For key-value, we use a special structure
+      const forNode = new nodes.For(
+        token.lineno,
+        token.colno,
+        new nodes.Array(token.lineno, token.colno, loopVars),
+        iterableExpr,
+        body,
+        null
+      );
+      return forNode;
+    } else {
+      parser.fail('asyncEach: expected 1 or 2 loop variables');
+      return new nodes.For(token.lineno, token.colno, loopVars[0], iterableExpr, body, null);
+    }
+  }
+}
+
+/**
  * Create a Nunjucks environment with the given options
  */
 function createEnvironment(options: NunjucksOptions = {}): nunjucks.Environment {
@@ -137,6 +215,9 @@ function createEnvironment(options: NunjucksOptions = {}): nunjucks.Environment 
       noCache,
     });
   }
+
+  // Register asyncEach extension for legacy template compatibility
+  env.addExtension('AsyncEachExtension', new AsyncEachExtension());
 
   // Register filters
   for (const [name, fn] of Object.entries(filters)) {

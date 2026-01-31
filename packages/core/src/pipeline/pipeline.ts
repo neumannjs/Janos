@@ -30,17 +30,12 @@ interface CoordinationRule {
 }
 
 /**
- * Synchronize collection paths after a plugin changes file paths
+ * Synchronize collection and tag page paths after a plugin changes file paths
  *
- * This updates collection items to point to the new file paths after
- * permalinks (or any other path-changing plugin) runs.
+ * This updates collection items and tag page items to point to the new file
+ * paths after permalinks (or any other path-changing plugin) runs.
  */
 function syncCollectionPaths(files: VirtualFileMap, context: PipelineContext): void {
-  const collections = context.metadata.collections;
-  if (!collections || typeof collections !== 'object') {
-    return;
-  }
-
   // Build a map of sourcePath -> current path
   const pathMap = new Map<string, string>();
 
@@ -53,38 +48,64 @@ function syncCollectionPaths(files: VirtualFileMap, context: PipelineContext): v
     }
   }
 
+  let collectionUpdates = 0;
+  let tagPageUpdates = 0;
+
   // Update collection items
-  let updatedCount = 0;
+  const collections = context.metadata.collections;
+  if (collections && typeof collections === 'object') {
+    for (const [, items] of Object.entries(collections)) {
+      if (!Array.isArray(items)) continue;
 
-  for (const [collectionName, items] of Object.entries(collections)) {
-    if (!Array.isArray(items)) continue;
+      for (const item of items as Array<Record<string, unknown>>) {
+        // Skip items with navpath (navigation items use explicit paths)
+        if (item.navpath) {
+          item.path = item.navpath;
+          continue;
+        }
 
-    for (const item of items as Array<Record<string, unknown>>) {
-      // Skip items with navpath (navigation items use explicit paths)
-      if (item.navpath) {
-        item.path = item.navpath;
-        continue;
+        const originalPath = item.path as string | undefined;
+        if (originalPath && pathMap.has(originalPath)) {
+          const newPath = pathMap.get(originalPath)!;
+          item.path = newPath;
+          // Set permalink without index.html for cleaner URLs
+          item.permalink = '/' + newPath.replace(/\/index\.html$/, '/').replace(/\.html$/, '/');
+          collectionUpdates++;
+        }
       }
+    }
 
-      const originalPath = item.path as string | undefined;
-      if (originalPath && pathMap.has(originalPath)) {
-        const newPath = pathMap.get(originalPath)!;
-        item.path = newPath;
-        // Set permalink without index.html for cleaner URLs
-        item.permalink = '/' + newPath.replace(/\/index\.html$/, '/').replace(/\.html$/, '/');
-        updatedCount++;
+    // Expose collections directly in context metadata for templates
+    // (templates use `posts` not `collections.posts`)
+    for (const [name, items] of Object.entries(collections)) {
+      context.metadata[name] = items;
+    }
+  }
+
+  // Update tag page items (pagination.files in tag page metadata)
+  for (const [, file] of files) {
+    const pagination = file.metadata.pagination as {
+      files?: Array<Record<string, unknown>>;
+    } | undefined;
+
+    if (pagination?.files && Array.isArray(pagination.files)) {
+      for (const item of pagination.files) {
+        const originalPath = item.path as string | undefined;
+        if (originalPath && pathMap.has(originalPath)) {
+          const newPath = pathMap.get(originalPath)!;
+          item.path = newPath;
+          item.permalink = '/' + newPath.replace(/\/index\.html$/, '/').replace(/\.html$/, '/');
+          tagPageUpdates++;
+        }
       }
     }
   }
 
-  // Expose collections directly in context metadata for templates
-  // (templates use `posts` not `collections.posts`)
-  for (const [name, items] of Object.entries(collections)) {
-    context.metadata[name] = items;
+  if (collectionUpdates > 0) {
+    context.log(`coordination: updated ${collectionUpdates} collection paths`, 'debug');
   }
-
-  if (updatedCount > 0) {
-    context.log(`coordination: updated ${updatedCount} collection paths`, 'debug');
+  if (tagPageUpdates > 0) {
+    context.log(`coordination: updated ${tagPageUpdates} tag page item paths`, 'debug');
   }
 }
 
