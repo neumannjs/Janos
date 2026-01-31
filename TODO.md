@@ -156,12 +156,81 @@ All configuration compiles to a single JSON format:
 
 ---
 
-## Phase 3: Authentication & Git
+## Phase 3: Authentication & IndieWeb
 
-- [ ] Azure Functions OAuth proxy (port existing)
-- [ ] GitLab provider as second implementation
-- [ ] Test full auth flow end-to-end
-- [ ] Self-hosted git server support (future)
+See [docs/INDIEWEB_ARCHITECTURE.md](./docs/INDIEWEB_ARCHITECTURE.md) for detailed architecture documentation.
+
+### 3A: Cloudflare Worker for OAuth (Priority: High)
+
+Replace Azure Functions with Cloudflare Worker:
+
+- [ ] Create `packages/auth-worker` in monorepo
+- [ ] Implement `/authorize/{user}/{repo}` endpoint (redirect to GitHub OAuth)
+- [ ] Implement `/callback` endpoint (exchange code for token)
+- [ ] Implement `/token/{user}/{repo}` endpoint (token verification for IndieAuth)
+- [ ] Deploy to `janos-auth.workers.dev` (default hosted instance)
+- [ ] Write self-hosting documentation (`SELF_HOSTING_AUTH.md`)
+- [ ] Update `@janos/web` to support configurable auth worker URL
+- [ ] Test end-to-end auth flow
+
+**Hosting model:**
+- **Default**: Janos project hosts `janos-auth.workers.dev` for all users
+- **Self-hosted option**: Technical users can deploy their own worker for full control
+- Non-technical users don't need to deploy anything
+
+**Design decisions:**
+- No micropub (editor handles posting directly via isomorphic-git)
+- No syndication targets (removed Twitter/Mastodon/GitHub syndication)
+- Simplified flow: Worker only does OAuth token exchange
+
+### 3B: Editor Quick Post UI (Priority: High)
+
+Native support for posting shorter content types:
+
+- [ ] Design "Quick Post" component for notes, photos, bookmarks, replies
+- [ ] Implement post type selection form
+- [ ] Generate appropriate frontmatter based on post type
+- [ ] Commit via existing isomorphic-git integration
+- [ ] Add collection routing for new post types in pipeline
+
+### 3C: Webmentions (Priority: High)
+
+Webmentions are a core feature - update plugin and templates:
+
+- [ ] Make webmention API endpoint configurable (not hardcoded to webmention.io)
+- [ ] Update plugin to use `site.baseUrl` from config for target URLs
+- [ ] Add `endpoint` option to webmentions plugin config
+- [ ] Add graceful fallback when webmention service is unavailable
+- [ ] Improve webmention display templates:
+  - [ ] Better visual design for likes (avatar grid)
+  - [ ] Better visual design for replies (threaded comments style)
+  - [ ] Better visual design for reposts
+  - [ ] Responsive layout for mobile
+- [ ] Add webmention count display in post metadata
+- [ ] Document webmention configuration in README
+
+### 3D: Template Cleanup (Priority: Medium)
+
+Remove unused IndieWeb features:
+
+- [ ] Remove `rel="micropub"` link element (not using micropub clients)
+- [ ] Remove `rel="microsub"` link element (not using microsub readers)
+- [ ] Remove `rel="pingback"` link element (legacy, webmention sufficient)
+- [ ] Keep `rel="webmention"` with configurable endpoint
+- [ ] Make IndieAuth endpoints optional (only if user wants IndieAuth login)
+- [ ] Update default templates with configurable IndieWeb settings
+
+### 3E: GitLab Provider (Priority: Low)
+
+- [ ] GitLab OAuth provider implementation
+- [ ] GitLab API adapter for isomorphic-git
+- [ ] Test full auth flow with GitLab
+
+### Future Considerations
+
+- [ ] Self-hosted webmention receiver (Cloudflare Worker + D1 or go-jamming)
+- [ ] Webmention sending at build time (notify linked sites)
+- [ ] IndieAuth token endpoint (if users want to use site as identity provider)
 
 ---
 
@@ -173,6 +242,7 @@ All configuration compiles to a single JSON format:
 - [ ] Build/preview panel with **Service Worker-based preview** (the web app acts as its own HTTP server in the browser, serving built files from memory/IndexedDB without needing inline-source hacks)
 - [ ] Image upload/paste with responsive processing
 - [ ] Mobile-responsive layout
+- [ ] **Quick Post UI**: Simple form for notes, photos, bookmarks, replies (see Phase 3B)
 
 ---
 
