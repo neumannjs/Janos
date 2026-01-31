@@ -110,6 +110,73 @@ function syncCollectionPaths(files: VirtualFileMap, context: PipelineContext): v
 }
 
 /**
+ * Synchronize webmentions from files to collection items
+ *
+ * After webmentions plugin fetches data and adds it to file.metadata,
+ * this copies the webmentions to corresponding collection items so they're
+ * available when rendering lists (e.g., feed pages).
+ */
+function syncWebmentionsToCollections(files: VirtualFileMap, context: PipelineContext): void {
+  // Build a map of file path -> webmentions data
+  const webmentionsMap = new Map<string, unknown>();
+
+  for (const [currentPath, file] of files) {
+    if (file.metadata.webmentions) {
+      webmentionsMap.set(currentPath, file.metadata.webmentions);
+      // Also map by sourcePath for collection items that still use old paths
+      if (file.sourcePath) {
+        webmentionsMap.set(file.sourcePath, file.metadata.webmentions);
+        const sourceAsHtml = file.sourcePath.replace(/\.md$/, '.html');
+        webmentionsMap.set(sourceAsHtml, file.metadata.webmentions);
+      }
+    }
+  }
+
+  let collectionUpdates = 0;
+  let paginationUpdates = 0;
+
+  // Update collection items
+  const collections = context.metadata.collections;
+  if (collections && typeof collections === 'object') {
+    for (const [, items] of Object.entries(collections)) {
+      if (!Array.isArray(items)) continue;
+
+      for (const item of items as Array<Record<string, unknown>>) {
+        const itemPath = item.path as string | undefined;
+        if (itemPath && webmentionsMap.has(itemPath)) {
+          item.webmentions = webmentionsMap.get(itemPath);
+          collectionUpdates++;
+        }
+      }
+    }
+  }
+
+  // Update pagination.files items (for feed pages, tag pages, etc.)
+  for (const [, file] of files) {
+    const pagination = file.metadata.pagination as {
+      files?: Array<Record<string, unknown>>;
+    } | undefined;
+
+    if (pagination?.files && Array.isArray(pagination.files)) {
+      for (const item of pagination.files) {
+        const itemPath = item.path as string | undefined;
+        if (itemPath && webmentionsMap.has(itemPath)) {
+          item.webmentions = webmentionsMap.get(itemPath);
+          paginationUpdates++;
+        }
+      }
+    }
+  }
+
+  if (collectionUpdates > 0 || paginationUpdates > 0) {
+    context.log(
+      `coordination: synced webmentions to ${collectionUpdates} collection items and ${paginationUpdates} pagination items`,
+      'info'
+    );
+  }
+}
+
+/**
  * Built-in coordination rules for common plugin pairs
  *
  * Note: Plugin names match the inner function names (e.g., 'permalinksPlugin'),
@@ -117,6 +184,7 @@ function syncCollectionPaths(files: VirtualFileMap, context: PipelineContext): v
  */
 const BUILTIN_COORDINATION: CoordinationRule[] = [
   { after: 'permalinksPlugin', handler: syncCollectionPaths },
+  { after: 'webmentionsPlugin', handler: syncWebmentionsToCollections },
 ];
 
 /**
