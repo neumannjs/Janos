@@ -25,6 +25,20 @@ export const useAuthStore = defineStore('auth', () => {
   // Initialize provider
   function initProvider(): IAuthProvider {
     if (!provider) {
+      // Get auth worker URL from environment, default to hosted instance
+      const authWorkerUrl = import.meta.env.VITE_AUTH_WORKER_URL ?? 'https://janos-auth.workers.dev';
+
+      // Determine the GitHub user and repo from config or URL
+      // For now, these can be passed as env vars or derived from the hostname
+      const githubUser = import.meta.env.VITE_GITHUB_USER ?? '';
+      const githubRepo = import.meta.env.VITE_GITHUB_REPO ?? '';
+
+      // Build authorize URL for the auth worker
+      // If user/repo are set, use the auth worker; otherwise fall back to direct GitHub OAuth
+      const authorizeUrl = githubUser && githubRepo
+        ? `${authWorkerUrl}/authorize/${githubUser}/${githubRepo}`
+        : undefined;
+
       provider = createGitHubAuth({
         type: 'github',
         oauth: {
@@ -32,6 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
           redirectUri: `${window.location.origin}/auth/callback`,
           scopes: ['repo', 'read:user', 'user:email'],
           proxyUrl: import.meta.env.VITE_OAUTH_PROXY_URL,
+          authorizeUrl,
         },
       });
 

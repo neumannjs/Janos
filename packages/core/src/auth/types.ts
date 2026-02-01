@@ -65,8 +65,15 @@ export interface OAuthConfig {
   redirectUri: string;
   /** OAuth scopes to request */
   scopes: string[];
-  /** OAuth proxy URL (for CORS) */
+  /** OAuth proxy URL (for CORS) - used for code-to-token exchange */
   proxyUrl?: string;
+  /**
+   * Custom authorize URL (e.g., auth worker's /authorize endpoint)
+   * If set, redirects here instead of directly to the OAuth provider.
+   * The auth worker handles the provider redirect and token exchange,
+   * returning the access_token in the callback URL.
+   */
+  authorizeUrl?: string;
 }
 
 /**

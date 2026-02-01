@@ -135,6 +135,9 @@ export class GitHubAuthProvider implements IAuthProvider {
     const stateParam = this.generateStateParam();
     this.saveToStorage(this.storageKeys.state, stateParam);
 
+    // Determine authorize URL - use custom auth worker URL if provided
+    const baseAuthorizeUrl = this.config.oauth.authorizeUrl ?? GITHUB_AUTHORIZE_URL;
+
     // Build authorization URL
     const params = new URLSearchParams({
       client_id: this.config.oauth.clientId,
@@ -143,7 +146,7 @@ export class GitHubAuthProvider implements IAuthProvider {
       state: stateParam,
     });
 
-    const authorizeUrl = `${GITHUB_AUTHORIZE_URL}?${params.toString()}`;
+    const authorizeUrl = `${baseAuthorizeUrl}?${params.toString()}`;
 
     if (options?.popup) {
       // Open in popup window
@@ -184,14 +187,27 @@ export class GitHubAuthProvider implements IAuthProvider {
       throw new StateValidationError();
     }
 
-    // Get authorization code
-    const code = params.get('code');
-    if (!code) {
-      throw new AuthCallbackError('missing_code', 'No authorization code in callback');
+    // Check if access_token is directly in the URL
+    // (auth worker flow returns token directly in redirect)
+    const directAccessToken = params.get('access_token');
+    let token: AuthToken;
+
+    if (directAccessToken) {
+      // Token provided directly (auth worker handled the exchange)
+      token = {
+        accessToken: directAccessToken,
+        tokenType: params.get('token_type') ?? 'bearer',
+        scope: (params.get('scope') ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+      };
+    } else {
+      // Get authorization code and exchange via proxy
+      const code = params.get('code');
+      if (!code) {
+        throw new AuthCallbackError('missing_code', 'No authorization code in callback');
+      }
+      token = await this.exchangeCodeForToken(code);
     }
 
-    // Exchange code for token via proxy
-    const token = await this.exchangeCodeForToken(code);
     this.saveToStorage(this.storageKeys.token, JSON.stringify(token));
 
     // Fetch user info
