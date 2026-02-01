@@ -183,17 +183,7 @@ Replace Azure Functions with Cloudflare Worker:
 - No syndication targets (removed Twitter/Mastodon/GitHub syndication)
 - Simplified flow: Worker only does OAuth token exchange
 
-### 3B: Editor Quick Post UI (Priority: High)
-
-Native support for posting shorter content types:
-
-- [ ] Design "Quick Post" component for notes, photos, bookmarks, replies
-- [ ] Implement post type selection form
-- [ ] Generate appropriate frontmatter based on post type
-- [ ] Commit via existing isomorphic-git integration
-- [ ] Add collection routing for new post types in pipeline
-
-### 3C: Webmentions (Priority: High)
+### 3B: Webmentions (Priority: High)
 
 Webmentions are a core feature - update plugin and templates:
 
@@ -209,28 +199,11 @@ Webmentions are a core feature - update plugin and templates:
 - [ ] Add webmention count display in post metadata
 - [ ] Document webmention configuration in README
 
-### 3D: Template Cleanup (Priority: Medium)
+### 3C: IndieAuth (Priority: High)
 
-Remove unused IndieWeb features:
+Required for webmention.io integration:
 
-- [ ] Remove `rel="micropub"` link element (not using micropub clients)
-- [ ] Remove `rel="microsub"` link element (not using microsub readers)
-- [ ] Remove `rel="pingback"` link element (legacy, webmention sufficient)
-- [ ] Keep `rel="webmention"` with configurable endpoint
-- [ ] Make IndieAuth endpoints optional (only if user wants IndieAuth login)
-- [ ] Update default templates with configurable IndieWeb settings
-
-### 3E: GitLab Provider (Priority: Low)
-
-- [ ] GitLab OAuth provider implementation
-- [ ] GitLab API adapter for isomorphic-git
-- [ ] Test full auth flow with GitLab
-
-### Future Considerations
-
-- [ ] Self-hosted webmention receiver (Cloudflare Worker + D1 or go-jamming)
-- [ ] Webmention sending at build time (notify linked sites)
-- [ ] IndieAuth token endpoint (if users want to use site as identity provider)
+- [ ] IndieAuth token endpoint (allows site to act as identity provider)
 
 ---
 
@@ -242,7 +215,16 @@ Remove unused IndieWeb features:
 - [ ] Build/preview panel with **Service Worker-based preview** (the web app acts as its own HTTP server in the browser, serving built files from memory/IndexedDB without needing inline-source hacks)
 - [ ] Image upload/paste with responsive processing
 - [ ] Mobile-responsive layout
-- [ ] **Quick Post UI**: Simple form for notes, photos, bookmarks, replies (see Phase 3B)
+
+### Quick Post UI
+
+Native support for posting shorter content types:
+
+- [ ] Design "Quick Post" component for notes, photos, bookmarks, replies
+- [ ] Implement post type selection form
+- [ ] Generate appropriate frontmatter based on post type
+- [ ] Commit via existing isomorphic-git integration
+- [ ] Add collection routing for new post types in pipeline
 
 ---
 
@@ -270,8 +252,30 @@ Optional command-line interface for developers and CI/CD:
 
 ---
 
-## Phase 7: Polish
+## Phase 7: Polish & Extensions
 
 - [ ] PWA/offline support
 - [ ] Documentation site (built with Janos, of course)
 - [ ] Theming system for editor UI
+
+### Template Cleanup
+
+Remove unused IndieWeb features:
+
+- [ ] Remove `rel="micropub"` link element (not using micropub clients)
+- [ ] Remove `rel="microsub"` link element (not using microsub readers)
+- [ ] Remove `rel="pingback"` link element (legacy, webmention sufficient)
+- [ ] Keep `rel="webmention"` with configurable endpoint
+- [ ] Make IndieAuth endpoints optional (only if user wants IndieAuth login)
+- [ ] Update default templates with configurable IndieWeb settings
+
+### GitLab Provider
+
+- [ ] GitLab OAuth provider implementation
+- [ ] GitLab API adapter for isomorphic-git
+- [ ] Test full auth flow with GitLab
+
+### Advanced Webmentions
+
+- [ ] Self-hosted webmention receiver (Cloudflare Worker + D1 or go-jamming)
+- [ ] Webmention sending at build time (notify linked sites)
