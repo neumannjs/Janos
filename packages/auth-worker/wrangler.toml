@@ -1,0 +1,27 @@
+# Cloudflare Worker configuration for Janos OAuth
+# See: https://developers.cloudflare.com/workers/configuration/wrangler
+
+name = "janos-auth"
+main = "src/index.ts"
+compatibility_date = "2024-02-01"
+
+# Development settings
+[dev]
+port = 8787
+
+# Environment variables (non-secret)
+[vars]
+# These are public - client ID can be exposed
+# GITHUB_CLIENT_ID = "your_client_id"
+
+# For self-hosted deployments, set these secrets via `wrangler secret put`:
+# - GITHUB_CLIENT_ID (or set in [vars] since it's public)
+# - GITHUB_CLIENT_SECRET (MUST be a secret)
+#
+# Example:
+#   wrangler secret put GITHUB_CLIENT_SECRET
+#   wrangler secret put GITHUB_CLIENT_ID
+
+# Production environment (override for production deployment)
+# [env.production]
+# vars = { GITHUB_CLIENT_ID = "production_client_id" }

@@ -95,3 +95,4 @@ packages/*/coverage/
 
 # Local env files
 *.local
+.dev.vars
