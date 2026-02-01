@@ -164,13 +164,13 @@ See [docs/INDIEWEB_ARCHITECTURE.md](./docs/INDIEWEB_ARCHITECTURE.md) for detaile
 
 Replace Azure Functions with Cloudflare Worker:
 
-- [ ] Create `packages/auth-worker` in monorepo
-- [ ] Implement `/authorize/{user}/{repo}` endpoint (redirect to GitHub OAuth)
-- [ ] Implement `/callback` endpoint (exchange code for token)
-- [ ] Implement `/token/{user}/{repo}` endpoint (token verification for IndieAuth)
+- [x] Create `packages/auth-worker` in monorepo
+- [x] Implement `/authorize/{user}/{repo}` endpoint (redirect to GitHub OAuth)
+- [x] Implement `/callback` endpoint (exchange code for token)
+- [x] Implement `/token/{user}/{repo}` endpoint (token verification for IndieAuth)
 - [ ] Deploy to `janos-auth.workers.dev` (default hosted instance)
-- [ ] Write self-hosting documentation (`SELF_HOSTING_AUTH.md`)
-- [ ] Update `@janos/web` to support configurable auth worker URL
+- [x] Write self-hosting documentation (`SELF_HOSTING_AUTH.md`)
+- [x] Update `@janos/web` to support configurable auth worker URL
 - [ ] Test end-to-end auth flow
 
 **Hosting model:**
