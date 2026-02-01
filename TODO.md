@@ -168,10 +168,10 @@ Replace Azure Functions with Cloudflare Worker:
 - [x] Implement `/authorize/{user}/{repo}` endpoint (redirect to GitHub OAuth)
 - [x] Implement `/callback` endpoint (exchange code for token)
 - [x] Implement `/token/{user}/{repo}` endpoint (token verification for IndieAuth)
-- [ ] Deploy to `janos-auth.workers.dev` (default hosted instance)
+- [x] Deploy to `janos-auth.workers.dev` (default hosted instance)
 - [x] Write self-hosting documentation (`SELF_HOSTING_AUTH.md`)
 - [x] Update `@janos/web` to support configurable auth worker URL
-- [ ] Test end-to-end auth flow
+- [x] Test end-to-end auth flow
 
 **Hosting model:**
 - **Default**: Janos project hosts `janos-auth.workers.dev` for all users
