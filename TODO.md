@@ -183,21 +183,21 @@ Replace Azure Functions with Cloudflare Worker:
 - No syndication targets (removed Twitter/Mastodon/GitHub syndication)
 - Simplified flow: Worker only does OAuth token exchange
 
-### 3B: Webmentions (Priority: High)
+### 3B: Webmentions (Priority: High) ✓
 
 Webmentions are a core feature - update plugin and templates:
 
-- [ ] Make webmention API endpoint configurable (not hardcoded to webmention.io)
-- [ ] Update plugin to use `site.baseUrl` from config for target URLs
-- [ ] Add `endpoint` option to webmentions plugin config
-- [ ] Add graceful fallback when webmention service is unavailable
-- [ ] Improve webmention display templates:
-  - [ ] Better visual design for likes (avatar grid)
-  - [ ] Better visual design for replies (threaded comments style)
-  - [ ] Better visual design for reposts
-  - [ ] Responsive layout for mobile
-- [ ] Add webmention count display in post metadata
-- [ ] Document webmention configuration in README
+- [x] Make webmention API endpoint configurable (not hardcoded to webmention.io)
+- [x] Update plugin to use `site.baseUrl` from config for target URLs
+- [x] Add `endpoint` option to webmentions plugin config
+- [x] Add graceful fallback when webmention service is unavailable
+- [x] Improve webmention display templates:
+  - [x] Better visual design for likes (avatar grid)
+  - [x] Better visual design for replies (threaded comments style)
+  - [x] Better visual design for reposts
+  - [x] Responsive layout for mobile
+- [x] Add webmention count display in post metadata
+- [x] Document webmention configuration (see `docs/WEBMENTIONS.md`)
 
 ### 3C: IndieAuth (Priority: High)
 

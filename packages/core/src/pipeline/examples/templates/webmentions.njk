@@ -1,0 +1,246 @@
+{#
+  Webmentions Display Template
+
+  Include this partial in your post template to display webmentions:
+  {% include "partials/webmentions.njk" %}
+
+  Requires webmentions data in the file metadata (populated by the webmentions plugin).
+
+  Data structure expected:
+  webmentions: {
+    children: Webmention[],
+    'like-count': number,
+    'reply-count': number,
+    'repost-count': number
+  }
+#}
+
+{% if webmentions and webmentions.children and webmentions.children.length > 0 %}
+<aside class="webmentions" aria-labelledby="webmentions-title">
+  <h2 id="webmentions-title">Webmentions</h2>
+
+  {# Likes - Avatar Grid #}
+  {% set likes = webmentions.children | selectattr("wm-property", "equalto", "like-of") | list %}
+  {% if likes.length > 0 %}
+  <section class="webmentions__section webmentions__likes" aria-labelledby="likes-title">
+    <h3 id="likes-title">
+      <span class="webmentions__icon" aria-hidden="true">&#10084;</span>
+      Likes <span class="webmentions__count">({{ likes.length }})</span>
+    </h3>
+    <ul class="webmentions__avatars">
+      {% for like in likes %}
+      <li class="webmentions__avatar-item">
+        {% if like.author %}
+        <a href="{{ like.author.url or like.url or like['wm-source'] }}"
+           class="webmentions__avatar-link"
+           title="{{ like.author.name or 'Anonymous' }}"
+           rel="nofollow noopener">
+          {% if like.author.photo %}
+          <img src="{{ like.author.photo }}"
+               alt="{{ like.author.name or 'Anonymous' }}"
+               class="webmentions__avatar-img"
+               loading="lazy"
+               width="48"
+               height="48">
+          {% else %}
+          <span class="webmentions__avatar-placeholder" aria-hidden="true">
+            {{ (like.author.name or '?') | first | upper }}
+          </span>
+          {% endif %}
+        </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# Reposts / Boosts #}
+  {% set reposts = webmentions.children | selectattr("wm-property", "equalto", "repost-of") | list %}
+  {% if reposts.length > 0 %}
+  <section class="webmentions__section webmentions__reposts" aria-labelledby="reposts-title">
+    <h3 id="reposts-title">
+      <span class="webmentions__icon" aria-hidden="true">&#128257;</span>
+      Reposts <span class="webmentions__count">({{ reposts.length }})</span>
+    </h3>
+    <ul class="webmentions__avatars">
+      {% for repost in reposts %}
+      <li class="webmentions__avatar-item">
+        {% if repost.author %}
+        <a href="{{ repost.author.url or repost.url or repost['wm-source'] }}"
+           class="webmentions__avatar-link"
+           title="{{ repost.author.name or 'Anonymous' }} reposted this"
+           rel="nofollow noopener">
+          {% if repost.author.photo %}
+          <img src="{{ repost.author.photo }}"
+               alt="{{ repost.author.name or 'Anonymous' }}"
+               class="webmentions__avatar-img"
+               loading="lazy"
+               width="48"
+               height="48">
+          {% else %}
+          <span class="webmentions__avatar-placeholder" aria-hidden="true">
+            {{ (repost.author.name or '?') | first | upper }}
+          </span>
+          {% endif %}
+        </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# Replies - Threaded Comments Style #}
+  {% set replies = webmentions.children | selectattr("wm-property", "equalto", "in-reply-to") | list %}
+  {% if replies.length > 0 %}
+  <section class="webmentions__section webmentions__replies" aria-labelledby="replies-title">
+    <h3 id="replies-title">
+      <span class="webmentions__icon" aria-hidden="true">&#128172;</span>
+      Replies <span class="webmentions__count">({{ replies.length }})</span>
+    </h3>
+    <ol class="webmentions__thread">
+      {% for reply in replies | sort(attribute="wm-received") %}
+      <li class="webmentions__reply h-cite" id="wm-{{ reply['wm-id'] }}">
+        <article class="webmentions__reply-content">
+          <header class="webmentions__reply-header">
+            {% if reply.author %}
+            <a href="{{ reply.author.url or reply['wm-source'] }}"
+               class="webmentions__reply-author p-author h-card"
+               rel="nofollow noopener">
+              {% if reply.author.photo %}
+              <img src="{{ reply.author.photo }}"
+                   alt=""
+                   class="webmentions__reply-avatar u-photo"
+                   loading="lazy"
+                   width="40"
+                   height="40">
+              {% endif %}
+              <span class="webmentions__reply-name p-name">{{ reply.author.name or 'Anonymous' }}</span>
+            </a>
+            {% else %}
+            <span class="webmentions__reply-author">Anonymous</span>
+            {% endif %}
+            <a href="{{ reply.url or reply['wm-source'] }}"
+               class="webmentions__reply-permalink u-url"
+               rel="nofollow noopener">
+              <time class="webmentions__reply-date dt-published"
+                    datetime="{{ reply.published or reply['wm-received'] }}">
+                {{ (reply.published or reply['wm-received']) | date("MMMM D, YYYY") }}
+              </time>
+            </a>
+          </header>
+          {% if reply.content %}
+          <div class="webmentions__reply-body p-content">
+            {% if reply.content.html %}
+            {{ reply.content.html | safe }}
+            {% elif reply.content.text %}
+            <p>{{ reply.content.text }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+        </article>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
+  {# Mentions (not replies, likes, or reposts) #}
+  {% set mentions = webmentions.children | selectattr("wm-property", "equalto", "mention-of") | list %}
+  {% if mentions.length > 0 %}
+  <section class="webmentions__section webmentions__mentions" aria-labelledby="mentions-title">
+    <h3 id="mentions-title">
+      <span class="webmentions__icon" aria-hidden="true">&#128279;</span>
+      Mentions <span class="webmentions__count">({{ mentions.length }})</span>
+    </h3>
+    <ul class="webmentions__mention-list">
+      {% for mention in mentions | sort(attribute="wm-received") %}
+      <li class="webmentions__mention">
+        <a href="{{ mention.url or mention['wm-source'] }}"
+           class="webmentions__mention-link"
+           rel="nofollow noopener">
+          {% if mention.author and mention.author.name %}
+          {{ mention.author.name }}
+          {% else %}
+          {{ mention['wm-source'] | truncate(50) }}
+          {% endif %}
+        </a>
+        {% if mention.published %}
+        <time class="webmentions__mention-date" datetime="{{ mention.published }}">
+          {{ mention.published | date("MMMM D, YYYY") }}
+        </time>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# Bookmarks #}
+  {% set bookmarks = webmentions.children | selectattr("wm-property", "equalto", "bookmark-of") | list %}
+  {% if bookmarks.length > 0 %}
+  <section class="webmentions__section webmentions__bookmarks" aria-labelledby="bookmarks-title">
+    <h3 id="bookmarks-title">
+      <span class="webmentions__icon" aria-hidden="true">&#128278;</span>
+      Bookmarked by <span class="webmentions__count">({{ bookmarks.length }})</span>
+    </h3>
+    <ul class="webmentions__avatars">
+      {% for bookmark in bookmarks %}
+      <li class="webmentions__avatar-item">
+        {% if bookmark.author %}
+        <a href="{{ bookmark.author.url or bookmark.url or bookmark['wm-source'] }}"
+           class="webmentions__avatar-link"
+           title="{{ bookmark.author.name or 'Anonymous' }} bookmarked this"
+           rel="nofollow noopener">
+          {% if bookmark.author.photo %}
+          <img src="{{ bookmark.author.photo }}"
+               alt="{{ bookmark.author.name or 'Anonymous' }}"
+               class="webmentions__avatar-img"
+               loading="lazy"
+               width="48"
+               height="48">
+          {% else %}
+          <span class="webmentions__avatar-placeholder" aria-hidden="true">
+            {{ (bookmark.author.name or '?') | first | upper }}
+          </span>
+          {% endif %}
+        </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+</aside>
+{% endif %}
+
+{# Webmention summary for post metadata (likes/replies count) #}
+{% macro webmentionCounts() %}
+{% if webmentions %}
+<span class="webmentions-summary">
+  {% if webmentions['like-count'] > 0 %}
+  <span class="webmentions-summary__item">
+    <span aria-hidden="true">&#10084;</span>
+    <span class="webmentions-summary__count">{{ webmentions['like-count'] }}</span>
+    <span class="sr-only">{{ webmentions['like-count'] }} like{{ 's' if webmentions['like-count'] != 1 }}</span>
+  </span>
+  {% endif %}
+  {% if webmentions['reply-count'] > 0 %}
+  <span class="webmentions-summary__item">
+    <span aria-hidden="true">&#128172;</span>
+    <span class="webmentions-summary__count">{{ webmentions['reply-count'] }}</span>
+    <span class="sr-only">{{ webmentions['reply-count'] }} repl{{ 'ies' if webmentions['reply-count'] != 1 else 'y' }}</span>
+  </span>
+  {% endif %}
+  {% if webmentions['repost-count'] > 0 %}
+  <span class="webmentions-summary__item">
+    <span aria-hidden="true">&#128257;</span>
+    <span class="webmentions-summary__count">{{ webmentions['repost-count'] }}</span>
+    <span class="sr-only">{{ webmentions['repost-count'] }} repost{{ 's' if webmentions['repost-count'] != 1 }}</span>
+  </span>
+  {% endif %}
+</span>
+{% endif %}
+{% endmacro %}

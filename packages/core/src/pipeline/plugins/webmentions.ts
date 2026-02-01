@@ -1,8 +1,11 @@
 /**
  * Webmentions plugin
  *
- * Fetches webmentions from webmention.io and adds them to file metadata.
+ * Fetches webmentions from a webmention API and adds them to file metadata.
  * Supports caching to avoid repeated API calls.
+ *
+ * Default endpoint is webmention.io but can be configured to use
+ * alternative services like go-jamming or webmention.app.
  *
  * Ported from: _legacy/plugins/metalsmith-webmentions.js
  */
@@ -49,6 +52,14 @@ export interface WebmentionsOptions {
   baseUrl?: string;
   /** Domain registered with webmention.io (optional, derived from baseUrl) */
   domain?: string;
+  /**
+   * Webmention API endpoint URL (default: 'https://webmention.io/api')
+   * Can be set to use alternative webmention services like:
+   * - Self-hosted go-jamming instance
+   * - webmention.app
+   * - Custom webmention receiver
+   */
+  endpoint?: string;
   /** Cache directory path (default: 'cache') */
   cacheDir?: string;
   /** Number of mentions to fetch per request (default: 10000) */
@@ -61,18 +72,20 @@ export interface WebmentionsOptions {
   writeCache?: (path: string, data: WebmentionsCache) => Promise<void>;
 }
 
-const API = 'https://webmention.io/api';
+const DEFAULT_ENDPOINT = 'https://webmention.io/api';
 
 /**
- * Fetch webmentions from webmention.io API
+ * Fetch webmentions from API
+ * Supports webmention.io JF2 format and compatible APIs
  */
 async function fetchWebmentions(
   url: string,
   lastWmId: number | null,
   perPage: number,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
+  endpoint: string
 ): Promise<{ children: Webmention[] } | null> {
-  let requestUrl = `${API}/mentions.jf2?target=${encodeURIComponent(url)}&per-page=${perPage}`;
+  let requestUrl = `${endpoint}/mentions.jf2?target=${encodeURIComponent(url)}&per-page=${perPage}`;
   if (lastWmId) {
     requestUrl += `&since_id=${lastWmId}`;
   }
@@ -83,9 +96,12 @@ async function fetchWebmentions(
       const data = await response.json() as { children: Webmention[] };
       return data;
     }
+    // Log non-OK responses at debug level for troubleshooting
+    console.debug(`Webmentions API returned status ${response.status} for ${url}`);
   } catch (error) {
-    // Silently fail - webmentions are optional
-    console.warn('Failed to fetch webmentions:', error);
+    // Graceful fallback - webmentions are optional enhancement
+    // Don't fail the build if the service is unavailable
+    console.warn('Failed to fetch webmentions:', error instanceof Error ? error.message : error);
   }
 
   return null;
@@ -157,6 +173,7 @@ function getFilePath(file: VirtualFile): string {
 export function webmentions(options: WebmentionsOptions = {}): PipelinePlugin {
   const {
     baseUrl: optionsBaseUrl,
+    endpoint = DEFAULT_ENDPOINT,
     cacheDir = 'cache',
     perPage = 10000,
     fetch: fetchFn = globalThis.fetch,
@@ -210,7 +227,7 @@ export function webmentions(options: WebmentionsOptions = {}): PipelinePlugin {
           file.metadata['webmentions'] = cache;
 
           // Fetch new webmentions
-          const feed = await fetchWebmentions(fullUrl, cache.lastWmId, perPage, fetchFn);
+          const feed = await fetchWebmentions(fullUrl, cache.lastWmId, perPage, fetchFn, endpoint);
 
           if (feed && feed.children.length > 0) {
             mentionCount += feed.children.length;

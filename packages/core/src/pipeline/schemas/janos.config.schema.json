@@ -466,21 +466,33 @@
       "properties": {
         "webmentions": {
           "type": "object",
-          "description": "Webmention processing options",
+          "description": "Webmention processing options. Fetches webmentions from a webmention API and adds them to file metadata.",
           "properties": {
+            "baseUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "Base URL of the site (optional - derived from site.baseUrl if not provided)"
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri",
+              "default": "https://webmention.io/api",
+              "description": "Webmention API endpoint URL. Can be set to use alternative services like go-jamming or webmention.app"
+            },
             "domain": {
               "type": "string",
-              "description": "Site domain for webmention.io"
+              "description": "Site domain for webmention.io (optional, derived from baseUrl)"
             },
-            "token": {
+            "cacheDir": {
               "type": "string",
-              "description": "Webmention.io API token"
+              "default": "cache",
+              "description": "Cache directory path for storing webmentions"
             },
-            "cacheTime": {
+            "perPage": {
               "type": "integer",
-              "minimum": 0,
-              "default": 3600,
-              "description": "Cache duration in seconds"
+              "minimum": 1,
+              "default": 10000,
+              "description": "Number of mentions to fetch per request"
             }
           }
         }
