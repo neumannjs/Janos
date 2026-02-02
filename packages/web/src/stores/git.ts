@@ -72,7 +72,7 @@ export const useGitStore = defineStore('git', () => {
   }
 
   // Clone a repository
-  async function clone(url: string, options?: { ref?: string; depth?: number }): Promise<void> {
+  async function clone(url: string, options?: { ref?: string; depth?: number; singleBranch?: boolean }): Promise<void> {
     loading.value = true;
     error.value = null;
 
@@ -94,7 +94,7 @@ export const useGitStore = defineStore('git', () => {
         url,
         ref: options?.ref,
         depth: options?.depth,
-        singleBranch: true,
+        singleBranch: options?.singleBranch ?? false,
       });
 
       await refreshStatus();
@@ -149,12 +149,18 @@ export const useGitStore = defineStore('git', () => {
 
   // Refresh branch list
   async function refreshBranches(): Promise<void> {
+    console.log('refreshBranches called, git.value:', !!git.value);
     if (!git.value) return;
 
     try {
-      branches.value = await git.value.listBranches();
-      currentBranch.value = await git.value.currentBranch();
+      const branchList = await git.value.listBranches();
+      console.log('Branches loaded:', branchList);
+      branches.value = branchList;
+      const current = await git.value.currentBranch();
+      console.log('Current branch:', current);
+      currentBranch.value = current;
     } catch (err) {
+      console.error('Failed to refresh branches:', err);
       // Ignore branch errors for uninitialized repos
     }
   }
@@ -269,11 +275,32 @@ export const useGitStore = defineStore('git', () => {
         throw new Error('Git not initialized');
       }
 
-      await git.value.checkout(ref, options);
+      console.log('Checking out:', ref);
+
+      // Fetch the branch tree data (needed for shallow clones)
+      console.log('Fetching branch data for:', ref);
+      await git.value.fetch({ ref });
+
+      // Clean working directory before checkout (keep .git)
+      console.log('Cleaning working directory...');
+      const entries = await fsStore.fs!.readdir(repoPath.value);
+      for (const entry of entries) {
+        if (entry !== '.git') {
+          await fsStore.fs!.rm(`${repoPath.value}/${entry}`, { recursive: true, force: true });
+        }
+      }
+
+      await git.value.checkout(ref, { ...options, force: true });
+      console.log('Checkout complete, refreshing...');
       await refreshStatus();
       await refreshBranches();
       await loadCommits();
+      // Refresh file tree to show new branch contents
+      console.log('Reloading directory:', repoPath.value);
+      await fsStore.loadDirectory(repoPath.value);
+      console.log('Directory reloaded, tree:', fsStore.fileTree.length, 'items');
     } catch (err) {
+      console.error('Checkout failed:', err);
       error.value = err instanceof Error ? err.message : 'Checkout failed';
       throw err;
     } finally {
