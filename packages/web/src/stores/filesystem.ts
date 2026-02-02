@@ -22,6 +22,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
   const error = ref<string | null>(null);
   const fileTree = ref<FileTreeNode[]>([]);
   const currentPath = ref<string>('/');
+  const treeVersion = ref(0); // Used to trigger reactivity on tree mutations
 
   // Initialize filesystem
   async function initialize(): Promise<void> {
@@ -100,7 +101,9 @@ export const useFileSystemStore = defineStore('filesystem', () => {
     try {
       node.children = await buildTree(node.path);
       node.expanded = true;
+      treeVersion.value++; // Trigger reactivity
     } catch (err) {
+      console.error('Failed to expand directory:', node.path, err);
       error.value = err instanceof Error ? err.message : 'Failed to expand directory';
     }
   }
@@ -184,6 +187,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
     error,
     fileTree,
     currentPath,
+    treeVersion,
 
     // Actions
     initialize,

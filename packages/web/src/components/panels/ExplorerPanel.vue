@@ -48,14 +48,22 @@ function nodeToTreeOption(node: FileTreeNode): TreeOption {
       }),
   };
 
-  if (node.isDirectory && node.children && node.children.length > 0) {
-    option.children = node.children.map(nodeToTreeOption);
+  if (node.isDirectory) {
+    if (node.children && node.children.length > 0) {
+      option.children = node.children.map(nodeToTreeOption);
+    } else if (!node.expanded) {
+      // Mark as expandable (will trigger on-load)
+      option.children = undefined;
+      option.isLeaf = false;
+    }
   }
 
   return option;
 }
 
 const treeData = computed<TreeOption[]>(() => {
+  // treeVersion triggers re-computation when tree is mutated
+  void fsStore.treeVersion;
   return fsStore.fileTree.map(nodeToTreeOption);
 });
 
@@ -75,19 +83,16 @@ function handleNodeClick(info: { option: TreeOption }): void {
 }
 
 // Handle expand/collapse
-async function handleExpand(
-  keys: string[],
-  _option: Array<TreeOption | null>,
-  meta: { node: TreeOption | null; action: 'expand' | 'collapse' | 'filter' }
-): Promise<void> {
+function handleExpand(keys: string[]): void {
   expandedKeys.value = keys;
+}
 
-  if (meta.action === 'expand' && meta.node) {
-    const path = meta.node.key as string;
-    const node = findNode(path);
-    if (node && node.isDirectory) {
-      await fsStore.expandNode(node);
-    }
+// Async load children for a node
+async function handleLoad(option: TreeOption): Promise<void> {
+  const path = option.key as string;
+  const node = findNode(path);
+  if (node && node.isDirectory) {
+    await fsStore.expandNode(node);
   }
 }
 
@@ -219,10 +224,10 @@ async function refresh(): Promise<void> {
         :expanded-keys="expandedKeys"
         selectable
         block-line
-        expand-on-click
+        :on-load="handleLoad"
         @update:selected-keys="handleSelect"
         @update:expanded-keys="handleExpand"
-        @node-props="({ option }) => ({
+        :node-props="({ option }) => ({
           onClick: () => handleNodeClick({ option }),
           onContextmenu: (e: MouseEvent) => handleContextMenu({ event: e, option }),
         })"
