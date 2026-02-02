@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import {
+  NConfigProvider,
+  NNotificationProvider,
+  NDialogProvider,
+  NMessageProvider,
+  NLoadingBarProvider,
+  darkTheme,
+} from 'naive-ui';
 import { useAuthStore } from './stores/auth';
+import { janosThemeOverrides } from './main';
 
 const authStore = useAuthStore();
 
@@ -11,9 +20,19 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div id="janos-app">
-    <router-view />
-  </div>
+  <NConfigProvider :theme="darkTheme" :theme-overrides="janosThemeOverrides">
+    <NLoadingBarProvider>
+      <NNotificationProvider placement="bottom-right">
+        <NDialogProvider>
+          <NMessageProvider>
+            <div id="janos-app">
+              <router-view />
+            </div>
+          </NMessageProvider>
+        </NDialogProvider>
+      </NNotificationProvider>
+    </NLoadingBarProvider>
+  </NConfigProvider>
 </template>
 
 <style>
@@ -61,5 +80,10 @@ a:hover {
 button {
   cursor: pointer;
   font-family: inherit;
+}
+
+/* Naive UI global overrides */
+.n-config-provider {
+  height: 100%;
 }
 </style>

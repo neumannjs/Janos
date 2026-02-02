@@ -4,22 +4,31 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useFileSystemStore } from '../stores/filesystem';
 import { useGitStore } from '../stores/git';
+import { useUIStore } from '../stores/ui';
+import { useEditorStore } from '../stores/editor';
+import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
+import { useDialog } from '../composables/useDialog';
+import EditorLayout from '../components/layout/EditorLayout.vue';
+import EditorPane from '../components/editor/EditorPane.vue';
+import ConfirmDialog from '../components/dialogs/ConfirmDialog.vue';
+import InputDialog from '../components/dialogs/InputDialog.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const fsStore = useFileSystemStore();
 const gitStore = useGitStore();
+const uiStore = useUIStore();
+const editorStore = useEditorStore();
+const dialog = useDialog();
+
+// Set up keyboard shortcuts
+useKeyboardShortcuts();
 
 const repoUrl = ref('');
-const currentFile = ref<string | null>(null);
-const fileContent = ref('');
 const loading = ref(false);
 const error = ref<string | null>(null);
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
-const fileTree = computed(() => fsStore.fileTree);
-const currentBranch = computed(() => gitStore.currentBranch);
-const hasChanges = computed(() => gitStore.hasChanges);
 
 onMounted(async () => {
   if (!isAuthenticated.value) {
@@ -27,6 +36,10 @@ onMounted(async () => {
     return;
   }
 
+  // Set up resize listener for responsive behavior
+  uiStore.setupResizeListener();
+
+  // Initialize stores
   await fsStore.initialize();
   await gitStore.initialize();
 
@@ -36,7 +49,7 @@ onMounted(async () => {
   }
 });
 
-async function cloneRepo() {
+async function cloneRepo(): Promise<void> {
   if (!repoUrl.value) return;
 
   loading.value = true;
@@ -52,7 +65,7 @@ async function cloneRepo() {
   }
 }
 
-async function loadRepo() {
+async function loadRepo(): Promise<void> {
   try {
     await fsStore.loadDirectory(gitStore.repoPath);
     await gitStore.refreshStatus();
@@ -63,83 +76,30 @@ async function loadRepo() {
   }
 }
 
-async function openFile(path: string) {
-  loading.value = true;
-  error.value = null;
-
-  try {
-    currentFile.value = path;
-    fileContent.value = await fsStore.readFile(path);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to open file';
-  } finally {
-    loading.value = false;
+// Handle tab close with unsaved changes
+async function handleCloseTabRequest(tabId: string): Promise<void> {
+  const confirmed = await dialog.confirmDiscard();
+  if (confirmed) {
+    editorStore.forceCloseTab(tabId);
   }
-}
-
-async function saveFile() {
-  if (!currentFile.value) return;
-
-  loading.value = true;
-  error.value = null;
-
-  try {
-    await fsStore.writeFile(currentFile.value, fileContent.value);
-    await gitStore.refreshStatus();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to save file';
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function expandFolder(node: typeof fileTree.value[0]) {
-  if (node.expanded) {
-    fsStore.collapseNode(node);
-  } else {
-    await fsStore.expandNode(node);
-  }
-}
-
-function getFileName(path: string): string {
-  return path.split('/').pop() ?? path;
 }
 </script>
 
 <template>
-  <div class="editor">
-    <header class="toolbar">
-      <div class="toolbar-left">
-        <router-link to="/" class="logo">Janos</router-link>
-        <span v-if="currentBranch" class="branch">
-          {{ currentBranch }}
-        </span>
-        <span v-if="hasChanges" class="changes-indicator">
-          Modified
-        </span>
-      </div>
-      <div class="toolbar-right">
-        <button
-          v-if="currentFile"
-          class="btn btn-primary"
-          @click="saveFile"
-          :disabled="loading"
-        >
-          Save
-        </button>
-      </div>
-    </header>
+  <div class="editor-view">
+    <!-- Clone repository prompt if no repo loaded -->
+    <div v-if="!gitStore.isRepo" class="clone-overlay">
+      <div class="clone-card">
+        <h2>Clone Repository</h2>
+        <p>Enter the URL of a GitHub repository to get started.</p>
 
-    <div class="workspace">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <div v-if="!gitStore.isRepo" class="clone-form">
-          <h3>Clone Repository</h3>
+        <div class="clone-form">
           <input
             v-model="repoUrl"
             type="text"
             placeholder="https://github.com/user/repo"
             @keyup.enter="cloneRepo"
+            :disabled="loading"
           />
           <button
             class="btn btn-primary"
@@ -150,336 +110,97 @@ function getFileName(path: string): string {
           </button>
         </div>
 
-        <div v-else class="file-tree">
-          <h3>Files</h3>
-          <ul class="tree">
-            <li
-              v-for="node in fileTree"
-              :key="node.path"
-              class="tree-item"
-            >
-              <div
-                class="tree-item-content"
-                :class="{ directory: node.isDirectory, selected: currentFile === node.path }"
-                @click="node.isDirectory ? expandFolder(node) : openFile(node.path)"
-              >
-                <span class="tree-icon">
-                  {{ node.isDirectory ? (node.expanded ? '📂' : '📁') : '📄' }}
-                </span>
-                <span class="tree-name">{{ node.name }}</span>
-              </div>
-              <ul v-if="node.expanded && node.children" class="tree nested">
-                <li
-                  v-for="child in node.children"
-                  :key="child.path"
-                  class="tree-item"
-                >
-                  <div
-                    class="tree-item-content"
-                    :class="{ directory: child.isDirectory, selected: currentFile === child.path }"
-                    @click="child.isDirectory ? expandFolder(child) : openFile(child.path)"
-                  >
-                    <span class="tree-icon">
-                      {{ child.isDirectory ? '📁' : '📄' }}
-                    </span>
-                    <span class="tree-name">{{ child.name }}</span>
-                  </div>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </aside>
-
-      <!-- Editor pane -->
-      <main class="editor-pane">
-        <div v-if="error" class="error-banner">
-          {{ error }}
-        </div>
-
-        <div v-if="!currentFile" class="no-file">
-          <p>Select a file from the sidebar to edit</p>
-        </div>
-
-        <div v-else class="file-editor">
-          <div class="file-header">
-            <span class="file-name">{{ getFileName(currentFile) }}</span>
-          </div>
-          <textarea
-            v-model="fileContent"
-            class="editor-textarea"
-            spellcheck="false"
-          ></textarea>
-        </div>
-      </main>
-
-      <!-- Git panel -->
-      <aside class="git-panel">
-        <h3>Git Status</h3>
-        <div v-if="gitStore.stagedFiles.length > 0" class="status-section">
-          <h4>Staged</h4>
-          <ul class="status-list">
-            <li v-for="file in gitStore.stagedFiles" :key="file.path">
-              {{ getFileName(file.path) }}
-              <span class="status-badge staged">{{ file.stagedStatus }}</span>
-            </li>
-          </ul>
-        </div>
-        <div v-if="gitStore.unstagedFiles.length > 0" class="status-section">
-          <h4>Changes</h4>
-          <ul class="status-list">
-            <li v-for="file in gitStore.unstagedFiles" :key="file.path">
-              {{ getFileName(file.path) }}
-              <span class="status-badge modified">{{ file.workdirStatus }}</span>
-            </li>
-          </ul>
-        </div>
-        <div v-if="!hasChanges && gitStore.isRepo" class="no-changes">
-          No uncommitted changes
-        </div>
-      </aside>
+        <p v-if="error" class="error-message">{{ error }}</p>
+      </div>
     </div>
+
+    <!-- Main editor layout -->
+    <EditorLayout v-else>
+      <EditorPane @close-tab-request="handleCloseTabRequest" />
+    </EditorLayout>
+
+    <!-- Global dialogs -->
+    <ConfirmDialog />
+    <InputDialog />
   </div>
 </template>
 
 <style scoped>
-.editor {
+.editor-view {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  font-weight: bold;
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.branch {
-  padding: 0.25rem 0.5rem;
-  background-color: var(--color-bg-tertiary);
-  border-radius: 4px;
-  font-size: 0.875rem;
-}
-
-.changes-indicator {
-  padding: 0.25rem 0.5rem;
-  background-color: var(--color-warning);
-  color: black;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.workspace {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 250px 1fr 250px;
-  overflow: hidden;
-}
-
-.sidebar {
-  background-color: var(--color-bg-secondary);
-  border-right: 1px solid var(--color-border);
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-.clone-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.clone-form h3 {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.clone-form input {
-  padding: 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-}
-
-.file-tree h3 {
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.tree {
-  list-style: none;
-}
-
-.tree.nested {
-  padding-left: 1rem;
-}
-
-.tree-item-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.tree-item-content:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
-.tree-item-content.selected {
-  background-color: var(--color-primary);
-}
-
-.tree-icon {
-  font-size: 0.875rem;
-}
-
-.tree-name {
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.editor-pane {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.error-banner {
-  padding: 0.75rem 1rem;
-  background-color: var(--color-error);
-  color: white;
-}
-
-.no-file {
+.clone-overlay {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--color-bg);
+  padding: 20px;
+}
+
+.clone-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 32px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.clone-card h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.clone-card p {
   color: var(--color-text-secondary);
+  margin-bottom: 24px;
 }
 
-.file-editor {
-  flex: 1;
+.clone-form {
   display: flex;
-  flex-direction: column;
+  gap: 12px;
 }
 
-.file-header {
-  padding: 0.5rem 1rem;
-  background-color: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.file-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.editor-textarea {
+.clone-form input {
   flex: 1;
-  padding: 1rem;
-  border: none;
-  resize: none;
-  font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
   background-color: var(--color-bg);
   color: var(--color-text);
+  font-size: 14px;
 }
 
-.editor-textarea:focus {
+.clone-form input:focus {
   outline: none;
+  border-color: var(--color-primary);
 }
 
-.git-panel {
-  background-color: var(--color-bg-secondary);
-  border-left: 1px solid var(--color-border);
-  overflow-y: auto;
-  padding: 1rem;
+.clone-form input:disabled {
+  opacity: 0.6;
 }
 
-.git-panel h3 {
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-bottom: 1rem;
-}
-
-.status-section {
-  margin-bottom: 1rem;
-}
-
-.status-section h4 {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.status-list {
-  list-style: none;
-}
-
-.status-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.25rem 0;
-  font-size: 0.875rem;
-}
-
-.status-badge {
-  padding: 0.125rem 0.25rem;
-  border-radius: 2px;
-  font-size: 0.625rem;
-  text-transform: uppercase;
-}
-
-.status-badge.staged {
-  background-color: var(--color-success);
-  color: black;
-}
-
-.status-badge.modified {
-  background-color: var(--color-warning);
-  color: black;
-}
-
-.no-changes {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
+.error-message {
+  margin-top: 16px;
+  color: var(--color-error);
+  font-size: 14px;
 }
 
 .btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 500;
   border: none;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn:disabled {
