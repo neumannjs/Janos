@@ -210,14 +210,100 @@ Required for webmention.io integration:
 
 ---
 
-## Phase 4: Editor UI
+## Phase 4: Editor UI with Naive UI
 
-- [ ] CodeMirror 6 editor integration
-- [ ] File tree component with drag-drop
-- [ ] Git panel (status, commit, branches)
-- [ ] Build/preview panel with **Service Worker-based preview** (the web app acts as its own HTTP server in the browser, serving built files from memory/IndexedDB without needing inline-source hacks)
-- [ ] Image upload/paste with responsive processing
-- [ ] Mobile-responsive layout
+VS Code-inspired editor interface using Naive UI and CodeMirror 6.
+
+### Target Layout
+
+```
+┌──┬─────────────┬───────────────────────────────────┬──────────────┐
+│  │ EXPLORER    │ [file1.md | file2.njk | ...]      │ [Profile ▼]  │
+│📁│ ▼ Repository├───────────────────────────────────┴──────────────┤
+│🔧│   _src/     │                                                  │
+│🧩│   _layouts/ │              Main Editor Area                    │
+│🎨│   ...       │               (CodeMirror 6)                     │
+│🌿│             │                                                  │
+├──┴─────────────┴──────────────────────────────────────────────────┤
+│ [Git: idle] [Build: idle]                        [Notifications]  │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+**Activities:** Explorer, Build, Plugins (stub), Themes (stub), Git
+
+### 4A: Setup & Layout Shell ✓
+
+- [x] Add Naive UI + CodeMirror dependencies to `@janos/web`
+- [x] Configure Naive UI theme mapping to existing CSS variables
+- [x] Create `styles/naive-overrides.css` for component tweaks
+- [x] Create layout components:
+  - [x] `EditorLayout.vue` - CSS Grid main shell
+  - [x] `ActivityBar.vue` - Left icon strip (48px)
+  - [x] `SidePanel.vue` - Collapsible panel (250px)
+  - [x] `TabBar.vue` - Editor tabs + profile button
+  - [x] `StatusBar.vue` - Bottom status bar
+
+### 4B: Pinia Stores ✓
+
+- [x] `stores/ui.ts` - Panel state, responsive breakpoints
+- [x] `stores/editor.ts` - Tabs, active file, dirty state
+- [x] `stores/notifications.ts` - Notification queue with auto-dismiss
+- [x] `stores/build.ts` - Pipeline status, progress, logs
+
+### 4C: Explorer Panel ✓
+
+- [x] `ExplorerPanel.vue` with NTree
+- [x] File CRUD (new, rename, delete) - basic implementation
+- [x] Context menu with NDropdown
+- [x] Connect to filesystem store
+
+### 4D: Code Editor ✓
+
+- [x] `CodeEditor.vue` - CodeMirror 6 wrapper with syntax highlighting
+- [x] `EditorPane.vue` - Tabs + editor container
+- [x] `WelcomePane.vue` - Empty state
+- [x] Language detection by file extension
+- [x] Dirty state tracking
+- [x] Keyboard shortcuts (Cmd+S save, Cmd+W close tab)
+
+### 4E: Image Upload & Paste
+
+- [ ] `useImageProcessor.ts` composable (wraps @janos/core ImageProcessor)
+- [ ] `ImageUploadDialog.vue` with drag-drop, multi-file, progress
+- [ ] Paste handler in CodeMirror (detect image paste, prompt filename, insert markdown)
+
+### 4F: Git Panel ✓
+
+- [x] `GitPanel.vue` with visual staging (click to stage/unstage)
+- [x] Commit form with validation
+- [x] Branch selector with unsaved changes check
+- [x] Connect to git store
+
+### 4G: Build Panel (Partial)
+
+- [x] `BuildPanel.vue` with progress bar + log output
+- [ ] Integrate with @janos/core pipeline events
+- [ ] Service Worker for preview (`preview-sw.ts`)
+- [ ] `MarkdownPreview.vue` with iframe to `/preview/`
+
+### 4H: Dialogs & Composables ✓
+
+- [x] `ConfirmDialog.vue`, `InputDialog.vue`, `CommitDialog.vue`
+- [x] `useDialog.ts` - Promise-based dialog API
+- [x] `useNotifications.ts` - Toast notifications
+- [x] `useKeyboardShortcuts.ts` - Global shortcuts
+
+### 4I: Stub Panels (for Phase 7) ✓
+
+- [x] `PluginsPanel.vue` - Placeholder for pipeline plugin management
+- [x] `ThemesPanel.vue` - Placeholder for site theme/template management
+
+### 4J: Integration & Polish (Partial)
+
+- [x] Refactor `EditorView.vue` to use new layout
+- [x] Update `App.vue` with Naive UI providers
+- [x] Mobile responsive adjustments (icons-only activity bar)
+- [ ] Keyboard navigation (advanced)
 
 ### Quick Post UI
 
@@ -259,7 +345,31 @@ Optional command-line interface for developers and CI/CD:
 
 - [ ] PWA/offline support
 - [ ] Documentation site (built with Janos, of course)
-- [ ] Theming system for editor UI
+
+### 7A: Site Theming System
+
+Full implementation of site themes/templates (replacing Phase 4 stub):
+
+- [ ] `ThemesPanel.vue` - Theme browsing and selection UI
+- [ ] Theme registry (curated list of starter themes like Miksa)
+- [ ] Theme preview (screenshot + live preview in iframe)
+- [ ] Theme installation (copy template files to `_layouts/`)
+- [ ] Theme switching with file diff/merge UI
+- [ ] Theme customization (colors, fonts via `janos.config.json`)
+- [ ] Custom theme import (from GitHub repo URL)
+- [ ] Theme version tracking and updates
+
+### 7B: Plugin Management
+
+Full implementation of plugin management (replacing Phase 4 stub):
+
+- [ ] `PluginsPanel.vue` - Plugin management UI
+- [ ] Plugin registry (curated list of available plugins)
+- [ ] Enable/disable plugins per site
+- [ ] Plugin configuration UI (JSON Schema-driven forms)
+- [ ] Plugin order visualization (drag-drop reordering)
+- [ ] Plugin dependency resolution
+- [ ] Custom plugin support (load from URL/npm)
 
 ### Template Cleanup
 
