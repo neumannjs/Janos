@@ -1,13 +1,23 @@
 <script setup lang="ts">
+import { computed, inject, type Ref } from 'vue';
 import { NIcon } from 'naive-ui';
 import {
   FolderOpenOutline,
   GitBranchOutline,
   RocketOutline,
+  CloudDownloadOutline,
 } from '@vicons/ionicons5';
 import { useUIStore } from '../../stores/ui';
 
 const uiStore = useUIStore();
+
+// Get context from parent (EditorView)
+const editorView = inject<{
+  openCloneDialog?: () => void;
+  repoLoaded?: Ref<boolean>;
+}>('editorView', {});
+
+const hasRepo = computed(() => editorView.repoLoaded?.value ?? false);
 
 function openExplorer(): void {
   uiStore.setActivePanel('explorer');
@@ -20,6 +30,10 @@ function openGit(): void {
 function openBuild(): void {
   uiStore.setActivePanel('build');
 }
+
+function openCloneDialog(): void {
+  editorView.openCloneDialog?.();
+}
 </script>
 
 <template>
@@ -30,8 +44,21 @@ function openBuild(): void {
 
       <div class="quick-actions">
         <h3>Get Started</h3>
+
+        <!-- Clone action when no repo - prominent full-width button -->
+        <button v-if="!hasRepo" class="clone-button" @click="openCloneDialog">
+          <NIcon :size="28">
+            <CloudDownloadOutline />
+          </NIcon>
+          <div class="clone-button-text">
+            <span class="clone-button-label">Clone Repository</span>
+            <span class="clone-button-hint">Connect to your GitHub repository to get started</span>
+          </div>
+        </button>
+
+        <!-- Regular actions grid -->
         <div class="action-grid">
-          <button class="action-card" @click="openExplorer">
+          <button class="action-card" :disabled="!hasRepo" @click="openExplorer">
             <NIcon :size="24">
               <FolderOpenOutline />
             </NIcon>
@@ -39,7 +66,7 @@ function openBuild(): void {
             <span class="action-hint">Browse your repository</span>
           </button>
 
-          <button class="action-card" @click="openGit">
+          <button class="action-card" :disabled="!hasRepo" @click="openGit">
             <NIcon :size="24">
               <GitBranchOutline />
             </NIcon>
@@ -47,7 +74,7 @@ function openBuild(): void {
             <span class="action-hint">Commit and push changes</span>
           </button>
 
-          <button class="action-card" @click="openBuild">
+          <button class="action-card" :disabled="!hasRepo" @click="openBuild">
             <NIcon :size="24">
               <RocketOutline />
             </NIcon>
@@ -116,6 +143,48 @@ function openBuild(): void {
   margin-bottom: 16px;
 }
 
+.clone-button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  background-color: rgba(233, 69, 96, 0.1);
+  border: 2px solid var(--color-primary);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.clone-button:hover {
+  background-color: rgba(233, 69, 96, 0.2);
+  transform: translateY(-2px);
+}
+
+.clone-button .n-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.clone-button-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clone-button-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.clone-button-hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
 .action-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -136,9 +205,14 @@ function openBuild(): void {
   transition: all 0.2s ease;
 }
 
-.action-card:hover {
+.action-card:hover:not(:disabled) {
   background-color: var(--color-bg-tertiary);
   border-color: var(--color-primary);
+}
+
+.action-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .action-card .n-icon {
