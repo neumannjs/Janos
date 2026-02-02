@@ -1,3 +1,7 @@
+// Buffer polyfill for isomorphic-git
+import { Buffer } from 'buffer';
+(globalThis as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
+
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory } from 'vue-router';
