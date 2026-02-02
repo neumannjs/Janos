@@ -17,6 +17,7 @@ export interface EditorTab {
 const LANGUAGE_MAP: Record<string, string> = {
   '.md': 'markdown',
   '.markdown': 'markdown',
+  '.txt': 'text',
   '.html': 'html',
   '.htm': 'html',
   '.njk': 'html',
@@ -37,6 +38,8 @@ const LANGUAGE_MAP: Record<string, string> = {
   '.yml': 'yaml',
   '.xml': 'html',
   '.svg': 'html',
+  '.gitignore': 'text',
+  '.env': 'text',
 };
 
 function getLanguageFromPath(path: string): string {
@@ -85,6 +88,8 @@ export const useEditorStore = defineStore('editor', () => {
 
   // Actions
   async function openFile(path: string): Promise<EditorTab> {
+    console.log('Opening file:', path);
+
     // Check if already open
     const existing = tabByPath.value.get(path);
     if (existing) {
@@ -112,6 +117,7 @@ export const useEditorStore = defineStore('editor', () => {
 
       return tab;
     } catch (err) {
+      console.error('Failed to open file:', path, err);
       error.value = err instanceof Error ? err.message : 'Failed to open file';
       throw err;
     } finally {
