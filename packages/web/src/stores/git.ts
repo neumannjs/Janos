@@ -53,6 +53,8 @@ export const useGitStore = defineStore('git', () => {
     git.value = createIsomorphicGit({
       fs,
       dir: path,
+      // Use CORS proxy for browser-based git operations
+      corsProxy: 'https://cors.isomorphic-git.org',
       onAuth: () => {
         const token = authStore.accessToken;
         if (!token) {

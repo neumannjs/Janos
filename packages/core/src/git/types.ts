@@ -267,6 +267,8 @@ export interface GitProviderConfig {
   authorEmail?: string;
   /** Default authentication callback */
   onAuth?: () => AuthResult | Promise<AuthResult>;
+  /** CORS proxy URL for browser environments (e.g., 'https://cors.isomorphic-git.org') */
+  corsProxy?: string;
 }
 
 /**

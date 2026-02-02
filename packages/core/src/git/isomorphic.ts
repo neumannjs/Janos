@@ -123,6 +123,7 @@ export class IsomorphicGitProvider implements IGitProvider {
   private authorEmail?: string;
   private defaultOnAuth?: () => AuthResult | Promise<AuthResult>;
   private remoteProvider: IRemoteProvider | null = null;
+  private corsProxy?: string;
 
   constructor(config: GitProviderConfig) {
     this.fs = config.fs;
@@ -131,6 +132,7 @@ export class IsomorphicGitProvider implements IGitProvider {
     this.authorName = config.authorName;
     this.authorEmail = config.authorEmail;
     this.defaultOnAuth = config.onAuth;
+    this.corsProxy = config.corsProxy;
   }
 
   private getAuthCallback(onAuth?: () => AuthResult | Promise<AuthResult>): git.AuthCallback | undefined {
@@ -165,6 +167,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         ref: options.ref,
         singleBranch: options.singleBranch,
         depth: options.depth,
+        corsProxy: this.corsProxy,
         onAuth: this.getAuthCallback(options.onAuth),
         onProgress: options.onProgress,
       });
@@ -390,7 +393,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         dir: this.dir,
         fullname: false,
       });
-      return branch ?? null;
+      return branch || null;
     } catch (error) {
       throw mapGitError(error);
     }
@@ -427,6 +430,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         ref: options?.ref,
         tags: options?.tags,
         prune: options?.prune,
+        corsProxy: this.corsProxy,
         onAuth: this.getAuthCallback(options?.onAuth),
         onProgress: options?.onProgress,
       });
@@ -444,6 +448,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         remote: options?.remote ?? 'origin',
         ref: options?.ref,
         force: options?.force,
+        corsProxy: this.corsProxy,
         onAuth: this.getAuthCallback(options?.onAuth),
         onProgress: options?.onProgress,
       });
@@ -461,6 +466,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         remote: options?.remote ?? 'origin',
         ref: options?.ref,
         singleBranch: true,
+        corsProxy: this.corsProxy,
         onAuth: this.getAuthCallback(options?.onAuth),
         onProgress: options?.onProgress,
         author: {
