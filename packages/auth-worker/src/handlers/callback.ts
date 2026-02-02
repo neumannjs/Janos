@@ -1,19 +1,20 @@
 /**
  * OAuth callback handler
  *
- * Receives the callback from GitHub OAuth, exchanges the authorization
- * code for an access token, and redirects back to the original client.
+ * Receives the callback from GitHub OAuth and redirects back to the
+ * original client with the authorization code.
+ *
+ * This is a pass-through handler - it does NOT exchange the code for a token.
+ * The client will exchange the code at the token endpoint.
  *
  * Flow:
  * 1. GitHub redirects here with code and state
  * 2. Decode state to get original redirect_uri
- * 3. Exchange code for token using client secret
- * 4. Redirect to original client with token (or code for IndieAuth)
+ * 3. Redirect to original client with GitHub's code
+ * 4. Client exchanges code at /token endpoint
  */
 
 import type { Env } from '../index.js';
-
-const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 
 interface DecodedState {
   redirectUri: string;
@@ -22,14 +23,8 @@ interface DecodedState {
   me?: string;
   codeChallenge?: string;
   codeChallengeMethod?: string;
-}
-
-interface GitHubTokenResponse {
-  access_token?: string;
-  token_type?: string;
-  scope?: string;
-  error?: string;
-  error_description?: string;
+  user?: string;
+  repo?: string;
 }
 
 /**
@@ -43,38 +38,9 @@ function decodeState(state: string): DecodedState | null {
   }
 }
 
-/**
- * Exchange authorization code for access token
- */
-async function exchangeCodeForToken(
-  code: string,
-  env: Env,
-  workerOrigin: string
-): Promise<GitHubTokenResponse> {
-  const response = await fetch(GITHUB_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: env.GITHUB_CLIENT_ID,
-      client_secret: env.GITHUB_CLIENT_SECRET,
-      code,
-      redirect_uri: `${workerOrigin}/callback`,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub token exchange failed: ${response.statusText}`);
-  }
-
-  return (await response.json()) as GitHubTokenResponse;
-}
-
 export async function handleCallback(
   request: Request,
-  env: Env,
+  _env: Env,
   _params: Record<string, string>
 ): Promise<Response> {
   const url = new URL(request.url);
@@ -136,51 +102,10 @@ export async function handleCallback(
     );
   }
 
-  // Exchange code for token
-  let tokenResponse: GitHubTokenResponse;
-  try {
-    tokenResponse = await exchangeCodeForToken(code, env, url.origin);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Token exchange failed';
-    const redirectUrl = new URL(decoded.redirectUri);
-    redirectUrl.searchParams.set('error', 'token_exchange_failed');
-    redirectUrl.searchParams.set('error_description', message);
-    if (decoded.clientState) {
-      redirectUrl.searchParams.set('state', decoded.clientState);
-    }
-    return Response.redirect(redirectUrl.toString(), 302);
-  }
-
-  // Handle token exchange error
-  if (tokenResponse.error) {
-    const redirectUrl = new URL(decoded.redirectUri);
-    redirectUrl.searchParams.set('error', tokenResponse.error);
-    if (tokenResponse.error_description) {
-      redirectUrl.searchParams.set(
-        'error_description',
-        tokenResponse.error_description
-      );
-    }
-    if (decoded.clientState) {
-      redirectUrl.searchParams.set('state', decoded.clientState);
-    }
-    return Response.redirect(redirectUrl.toString(), 302);
-  }
-
-  // Success! Redirect with token
+  // Pass through the GitHub code to the client
+  // The client will exchange it at the token endpoint
   const redirectUrl = new URL(decoded.redirectUri);
-
-  // For the Janos editor: return the token directly
-  // The editor will use this to make Git operations
-  if (tokenResponse.access_token) {
-    redirectUrl.searchParams.set('access_token', tokenResponse.access_token);
-  }
-  if (tokenResponse.token_type) {
-    redirectUrl.searchParams.set('token_type', tokenResponse.token_type);
-  }
-  if (tokenResponse.scope) {
-    redirectUrl.searchParams.set('scope', tokenResponse.scope);
-  }
+  redirectUrl.searchParams.set('code', code);
   if (decoded.clientState) {
     redirectUrl.searchParams.set('state', decoded.clientState);
   }

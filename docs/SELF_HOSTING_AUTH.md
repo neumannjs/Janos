@@ -123,16 +123,55 @@ To use a custom domain like `auth.yourdomain.com`:
 3. Redeploy: `pnpm deploy`
 4. Update your GitHub OAuth App callback URL
 
-## Optional: Enable IndieAuth
+## IndieAuth Support
 
-If you want your website to serve as an IndieAuth provider (allowing you to sign into other IndieWeb tools with your domain), add these link tags to your site's template:
+The auth worker implements the [IndieAuth](https://indieauth.spec.indieweb.org/) specification, which allows you to use your domain as your identity when signing into IndieWeb services like [webmention.io](https://webmention.io).
+
+### How IndieAuth Works
+
+1. You visit a service (e.g., webmention.io) and enter your domain
+2. The service discovers your `authorization_endpoint` and `token_endpoint` from your site's HTML
+3. You're redirected to the authorization endpoint, which sends you to GitHub to authenticate
+4. After GitHub authentication, you're redirected back to the service with an authorization code
+5. The service exchanges the code at your token endpoint to verify your identity
+6. The token endpoint returns your domain as the `me` URL, confirming you own it
+
+### Enabling IndieAuth
+
+Add these link tags to your site's `<head>`:
 
 ```html
 <link rel="authorization_endpoint" href="https://your-worker-url/authorize/{github-user}/{github-repo}">
 <link rel="token_endpoint" href="https://your-worker-url/token/{github-user}/{github-repo}">
 ```
 
-Replace `{github-user}` and `{github-repo}` with your actual GitHub username and repository name.
+Replace:
+- `your-worker-url` with your auth worker URL (e.g., `janos-auth.workers.dev`)
+- `{github-user}` with your GitHub username
+- `{github-repo}` with your repository name (e.g., `username.github.io`)
+
+Example for a user "alice" with repo "alice.github.io":
+```html
+<link rel="authorization_endpoint" href="https://janos-auth.workers.dev/authorize/alice/alice.github.io">
+<link rel="token_endpoint" href="https://janos-auth.workers.dev/token/alice/alice.github.io">
+```
+
+### What You Can Do With IndieAuth
+
+Once enabled, you can sign into:
+- **[webmention.io](https://webmention.io)** - Receive and display webmentions on your site
+- **[IndieLogin.com](https://indielogin.com)** - Test your IndieAuth setup
+- **[Quill](https://quill.p3k.io)** - Micropub client for posting
+- **[Indigenous](https://indigenous.realize.be/)** - Mobile app for IndieWeb
+- Other services that support "Sign in with your domain"
+
+### The "me" URL
+
+When you authenticate, the token endpoint returns a `me` URL - this is your identity URL. The worker determines this by:
+
+1. Checking the GitHub Pages API for your repository's published URL
+2. This correctly handles custom domains (e.g., `https://www.gijsvandam.nl`)
+3. Falls back to `https://{user}.github.io/{repo}` if the API is unavailable
 
 ## Local Development
 
@@ -155,6 +194,96 @@ For testing locally:
    ```
 
 4. Test at `http://localhost:8787`
+
+## Testing IndieAuth
+
+### Testing the OAuth Flow Locally
+
+You can test the basic OAuth flow with a locally running auth worker:
+
+1. Start the worker: `pnpm dev`
+2. Visit the authorize endpoint in your browser:
+   ```
+   http://localhost:8787/authorize/your-user/your-repo?redirect_uri=http://localhost:3000/callback&state=test
+   ```
+3. After GitHub authentication, you'll be redirected to your `redirect_uri` with a `code` parameter
+4. Exchange the code at the token endpoint:
+   ```bash
+   curl -X POST http://localhost:8787/token/your-user/your-repo \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "code=THE_CODE_FROM_STEP_3"
+   ```
+5. You should receive a JSON response with `access_token` and `me`
+
+### Testing with IndieLogin.com
+
+The easiest way to test IndieAuth in production:
+
+1. Deploy your auth worker to Cloudflare
+2. Add the IndieAuth link tags to your published site
+3. Visit [IndieLogin.com](https://indielogin.com) and enter your domain
+4. Complete the authentication flow
+5. If successful, you'll see your profile information
+
+### Testing with webmention.io
+
+1. Deploy your auth worker and publish your site with IndieAuth link tags
+2. Visit [webmention.io](https://webmention.io)
+3. Enter your domain and click "Sign In"
+4. Authenticate with GitHub
+5. You should be logged in and see your webmention dashboard
+
+### Testing IndieAuth Locally with External Services
+
+Services like webmention.io need to access your site to discover endpoints. For local testing:
+
+**Option 1: Use ngrok (exposes local services to internet)**
+```bash
+# Terminal 1: Run auth worker
+cd packages/auth-worker && pnpm dev
+
+# Terminal 2: Expose auth worker
+ngrok http 8787
+# Note the https URL, e.g., https://abc123.ngrok.io
+
+# Terminal 3: Serve your local site
+# (your local dev server)
+
+# Terminal 4: Expose local site
+ngrok http 3000
+# Note the https URL, e.g., https://xyz789.ngrok.io
+```
+
+Then:
+1. Update your local site's template to use the ngrok auth worker URL
+2. Update your GitHub OAuth App callback to `https://abc123.ngrok.io/callback`
+3. Test at webmention.io with your ngrok site URL
+
+**Option 2: Use deployed auth worker with local site**
+```bash
+# Just expose your local site
+ngrok http 3000
+```
+
+Point your local site's template to the production auth worker (`janos-auth.workers.dev`), then test with your ngrok URL.
+
+### Verifying Token Endpoint
+
+Test that token verification works with a valid GitHub token:
+
+```bash
+curl https://your-worker-url/token/your-user/your-repo \
+  -H "Authorization: Bearer ghp_your_github_token"
+```
+
+Should return:
+```json
+{
+  "me": "https://your-domain.com",
+  "client_id": "https://github.com",
+  "scope": "create update delete media"
+}
+```
 
 ## Troubleshooting
 

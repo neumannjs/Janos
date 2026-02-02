@@ -43,6 +43,8 @@ function encodeState(params: {
   me?: string;
   codeChallenge?: string;
   codeChallengeMethod?: string;
+  user?: string;
+  repo?: string;
 }): string {
   return btoa(JSON.stringify(params));
 }
@@ -93,6 +95,7 @@ export async function handleAuthorize(
   }
 
   // Encode our state containing all the original parameters
+  // Include user/repo so callback knows which endpoint was used
   const encodedState = encodeState({
     redirectUri: queryParams.redirect_uri,
     clientState: queryParams.state,
@@ -100,6 +103,8 @@ export async function handleAuthorize(
     me: queryParams.me,
     codeChallenge: queryParams.code_challenge,
     codeChallengeMethod: queryParams.code_challenge_method,
+    user,
+    repo,
   });
 
   // Build GitHub OAuth URL

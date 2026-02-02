@@ -199,11 +199,14 @@ Webmentions are a core feature - update plugin and templates:
 - [x] Add webmention count display in post metadata
 - [x] Document webmention configuration (see `docs/WEBMENTIONS.md`)
 
-### 3C: IndieAuth (Priority: High)
+### 3C: IndieAuth (Priority: High) ✓
 
 Required for webmention.io integration:
 
-- [ ] IndieAuth token endpoint (allows site to act as identity provider)
+- [x] IndieAuth token endpoint (allows site to act as identity provider)
+  - Callback passes through GitHub authorization code to client
+  - Token endpoint exchanges code with GitHub and returns `me` URL
+  - Template updated to point to janos-auth.workers.dev
 
 ---
 

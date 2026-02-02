@@ -151,6 +151,51 @@ describe('Auth Worker', () => {
       const data = await response.json() as JsonResponse;
       expect(data.error).toBe('Invalid state parameter');
     });
+
+    it('passes through the GitHub code to the client redirect_uri', async () => {
+      // Create encoded state with redirect_uri and client state
+      const state = btoa(JSON.stringify({
+        redirectUri: 'https://example.com/callback',
+        clientState: 'client_state_123',
+      }));
+
+      const request = new Request(
+        `https://auth.example.com/callback?code=github_code_xyz&state=${encodeURIComponent(state)}`
+      );
+      const response = await worker.fetch(request, mockEnv);
+
+      // Should redirect to client with code
+      expect(response.status).toBe(302);
+      const location = response.headers.get('Location');
+      expect(location).toBeTruthy();
+
+      const redirectUrl = new URL(location!);
+      expect(redirectUrl.origin).toBe('https://example.com');
+      expect(redirectUrl.pathname).toBe('/callback');
+      expect(redirectUrl.searchParams.get('code')).toBe('github_code_xyz');
+      expect(redirectUrl.searchParams.get('state')).toBe('client_state_123');
+    });
+
+    it('redirects with error when GitHub returns an error', async () => {
+      const state = btoa(JSON.stringify({
+        redirectUri: 'https://example.com/callback',
+        clientState: 'client_state_123',
+      }));
+
+      const request = new Request(
+        `https://auth.example.com/callback?error=access_denied&error_description=User+denied&state=${encodeURIComponent(state)}`
+      );
+      const response = await worker.fetch(request, mockEnv);
+
+      expect(response.status).toBe(302);
+      const location = response.headers.get('Location');
+      expect(location).toBeTruthy();
+
+      const redirectUrl = new URL(location!);
+      expect(redirectUrl.searchParams.get('error')).toBe('access_denied');
+      expect(redirectUrl.searchParams.get('error_description')).toBe('User denied');
+      expect(redirectUrl.searchParams.get('state')).toBe('client_state_123');
+    });
   });
 
   describe('Token endpoint', () => {

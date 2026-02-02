@@ -8,14 +8,11 @@
  *   - Returns token info (me, scope, client_id) if valid
  *   - Used by IndieAuth clients to verify tokens
  *
- * POST: Token exchange (alternative to callback redirect)
- *   - Client sends authorization code
- *   - Returns access token in JSON response
- *   - Some IndieAuth clients prefer this over redirect
- *
- * Note: The Janos editor typically doesn't use this endpoint - it gets
- * the token directly from the /callback redirect. This endpoint exists
- * for IndieAuth compliance.
+ * POST: Token exchange
+ *   - Client sends GitHub authorization code (received from /callback)
+ *   - Exchanges code with GitHub for access token
+ *   - Returns access token, me URL, and scope in JSON response
+ *   - Used by IndieAuth clients (e.g., webmention.io) to complete login
  */
 
 import type { Env } from '../index.js';
@@ -62,47 +59,46 @@ async function verifyToken(
 
 /**
  * Get the "me" URL for a user/repo combination
- * This is the user's GitHub Pages URL
+ * This is the user's GitHub Pages URL, including custom domains
  */
 async function getMeUrl(
   user: string,
   repo: string,
   token: string
-): Promise<string | null> {
+): Promise<string> {
   try {
-    // Check if it's a username.github.io repo
-    if (repo.toLowerCase() === `${user.toLowerCase()}.github.io`) {
-      return `https://${user.toLowerCase()}.github.io`;
-    }
-
-    // Try to get the repo's homepage (custom domain)
-    const response = await fetch(`${GITHUB_API_URL}/repos/${user}/${repo}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'Janos-Auth-Worker/0.1.0',
-      },
-    });
+    // Use the GitHub Pages API to get the actual published URL
+    // This correctly handles custom domains
+    const response = await fetch(
+      `${GITHUB_API_URL}/repos/${user}/${repo}/pages`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'Janos-Auth-Worker/0.1.0',
+        },
+      }
+    );
 
     if (response.ok) {
-      const repoData = (await response.json()) as {
-        homepage?: string;
-        html_url: string;
+      const pagesData = (await response.json()) as {
+        html_url?: string;
+        cname?: string;
       };
 
-      // If there's a custom homepage, use that
-      if (repoData.homepage && repoData.homepage.startsWith('https://')) {
-        return repoData.homepage;
+      if (pagesData.html_url) {
+        // Remove trailing slash if present
+        return pagesData.html_url.replace(/\/$/, '');
       }
-
-      // Otherwise, construct GitHub Pages URL
-      return `https://${user.toLowerCase()}.github.io/${repo}`;
     }
   } catch {
     // Fall through to default
   }
 
-  // Default to constructed GitHub Pages URL
+  // Fallback: construct GitHub Pages URL
+  if (repo.toLowerCase() === `${user.toLowerCase()}.github.io`) {
+    return `https://${user.toLowerCase()}.github.io`;
+  }
   return `https://${user.toLowerCase()}.github.io/${repo}`;
 }
 
@@ -260,6 +256,8 @@ async function handleExchange(
   }
 
   // Exchange code for token with GitHub
+  // redirect_uri must match what was used in the authorization request,
+  // which is always our /callback endpoint
   const tokenResponse = await fetch(GITHUB_TOKEN_URL, {
     method: 'POST',
     headers: {
@@ -270,7 +268,7 @@ async function handleExchange(
       client_id: env.GITHUB_CLIENT_ID,
       client_secret: env.GITHUB_CLIENT_SECRET,
       code: body.code,
-      redirect_uri: body.redirect_uri ?? `${url.origin}/callback`,
+      redirect_uri: `${url.origin}/callback`,
     }),
   });
 
