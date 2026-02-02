@@ -33,11 +33,16 @@ export const useAuthStore = defineStore('auth', () => {
       const githubUser = import.meta.env.VITE_GITHUB_USER ?? '';
       const githubRepo = import.meta.env.VITE_GITHUB_REPO ?? '';
 
-      // Build authorize URL for the auth worker
+      // Build authorize URL and token proxy URL for the auth worker
       // If user/repo are set, use the auth worker; otherwise fall back to direct GitHub OAuth
       const authorizeUrl = githubUser && githubRepo
         ? `${authWorkerUrl}/authorize/${githubUser}/${githubRepo}`
         : undefined;
+
+      // Token endpoint for exchanging authorization code
+      // Can be explicitly set via VITE_OAUTH_PROXY_URL, or auto-constructed from auth worker
+      const proxyUrl = import.meta.env.VITE_OAUTH_PROXY_URL
+        ?? (githubUser && githubRepo ? `${authWorkerUrl}/token/${githubUser}/${githubRepo}` : undefined);
 
       provider = createGitHubAuth({
         type: 'github',
@@ -45,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
           clientId: import.meta.env.VITE_GITHUB_CLIENT_ID ?? '',
           redirectUri: `${window.location.origin}/auth/callback`,
           scopes: ['repo', 'read:user', 'user:email'],
-          proxyUrl: import.meta.env.VITE_OAUTH_PROXY_URL,
+          proxyUrl,
           authorizeUrl,
         },
       });
