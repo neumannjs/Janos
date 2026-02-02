@@ -20,15 +20,15 @@
   <h2 id="webmentions-title">Webmentions</h2>
 
   {# Likes - Avatar Grid #}
-  {% set likes = webmentions.children | selectattr("wm-property", "equalto", "like-of") | list %}
-  {% if likes.length > 0 %}
+  {% if webmentions['like-count'] > 0 %}
   <section class="webmentions__section webmentions__likes" aria-labelledby="likes-title">
     <h3 id="likes-title">
       <span class="webmentions__icon" aria-hidden="true">&#10084;</span>
-      Likes <span class="webmentions__count">({{ likes.length }})</span>
+      Likes <span class="webmentions__count">({{ webmentions['like-count'] }})</span>
     </h3>
     <ul class="webmentions__avatars">
-      {% for like in likes %}
+      {% for like in webmentions.children %}
+      {% if like['wm-property'] == 'like-of' %}
       <li class="webmentions__avatar-item">
         {% if like.author %}
         <a href="{{ like.author.url or like.url or like['wm-source'] }}"
@@ -50,21 +50,22 @@
         </a>
         {% endif %}
       </li>
+      {% endif %}
       {% endfor %}
     </ul>
   </section>
   {% endif %}
 
   {# Reposts / Boosts #}
-  {% set reposts = webmentions.children | selectattr("wm-property", "equalto", "repost-of") | list %}
-  {% if reposts.length > 0 %}
+  {% if webmentions['repost-count'] > 0 %}
   <section class="webmentions__section webmentions__reposts" aria-labelledby="reposts-title">
     <h3 id="reposts-title">
       <span class="webmentions__icon" aria-hidden="true">&#128257;</span>
-      Reposts <span class="webmentions__count">({{ reposts.length }})</span>
+      Reposts <span class="webmentions__count">({{ webmentions['repost-count'] }})</span>
     </h3>
     <ul class="webmentions__avatars">
-      {% for repost in reposts %}
+      {% for repost in webmentions.children %}
+      {% if repost['wm-property'] == 'repost-of' %}
       <li class="webmentions__avatar-item">
         {% if repost.author %}
         <a href="{{ repost.author.url or repost.url or repost['wm-source'] }}"
@@ -86,21 +87,22 @@
         </a>
         {% endif %}
       </li>
+      {% endif %}
       {% endfor %}
     </ul>
   </section>
   {% endif %}
 
   {# Replies - Threaded Comments Style #}
-  {% set replies = webmentions.children | selectattr("wm-property", "equalto", "in-reply-to") | list %}
-  {% if replies.length > 0 %}
+  {% if webmentions['reply-count'] > 0 %}
   <section class="webmentions__section webmentions__replies" aria-labelledby="replies-title">
     <h3 id="replies-title">
       <span class="webmentions__icon" aria-hidden="true">&#128172;</span>
-      Replies <span class="webmentions__count">({{ replies.length }})</span>
+      Replies <span class="webmentions__count">({{ webmentions['reply-count'] }})</span>
     </h3>
     <ol class="webmentions__thread">
-      {% for reply in replies | sort(attribute="wm-received") %}
+      {% for reply in webmentions.children %}
+      {% if reply['wm-property'] == 'in-reply-to' %}
       <li class="webmentions__reply h-cite" id="wm-{{ reply['wm-id'] }}">
         <article class="webmentions__reply-content">
           <header class="webmentions__reply-header">
@@ -141,21 +143,27 @@
           {% endif %}
         </article>
       </li>
+      {% endif %}
       {% endfor %}
     </ol>
   </section>
   {% endif %}
 
   {# Mentions (not replies, likes, or reposts) #}
-  {% set mentions = webmentions.children | selectattr("wm-property", "equalto", "mention-of") | list %}
-  {% if mentions.length > 0 %}
+  {# Note: No mention-count from API, so we check if any exist #}
+  {% set hasMentions = false %}
+  {% for item in webmentions.children %}
+    {% if item['wm-property'] == 'mention-of' %}{% set hasMentions = true %}{% endif %}
+  {% endfor %}
+  {% if hasMentions %}
   <section class="webmentions__section webmentions__mentions" aria-labelledby="mentions-title">
     <h3 id="mentions-title">
       <span class="webmentions__icon" aria-hidden="true">&#128279;</span>
-      Mentions <span class="webmentions__count">({{ mentions.length }})</span>
+      Mentions
     </h3>
     <ul class="webmentions__mention-list">
-      {% for mention in mentions | sort(attribute="wm-received") %}
+      {% for mention in webmentions.children %}
+      {% if mention['wm-property'] == 'mention-of' %}
       <li class="webmentions__mention">
         <a href="{{ mention.url or mention['wm-source'] }}"
            class="webmentions__mention-link"
@@ -172,21 +180,27 @@
         </time>
         {% endif %}
       </li>
+      {% endif %}
       {% endfor %}
     </ul>
   </section>
   {% endif %}
 
   {# Bookmarks #}
-  {% set bookmarks = webmentions.children | selectattr("wm-property", "equalto", "bookmark-of") | list %}
-  {% if bookmarks.length > 0 %}
+  {# Note: No bookmark-count from API, so we check if any exist #}
+  {% set hasBookmarks = false %}
+  {% for item in webmentions.children %}
+    {% if item['wm-property'] == 'bookmark-of' %}{% set hasBookmarks = true %}{% endif %}
+  {% endfor %}
+  {% if hasBookmarks %}
   <section class="webmentions__section webmentions__bookmarks" aria-labelledby="bookmarks-title">
     <h3 id="bookmarks-title">
       <span class="webmentions__icon" aria-hidden="true">&#128278;</span>
-      Bookmarked by <span class="webmentions__count">({{ bookmarks.length }})</span>
+      Bookmarked by
     </h3>
     <ul class="webmentions__avatars">
-      {% for bookmark in bookmarks %}
+      {% for bookmark in webmentions.children %}
+      {% if bookmark['wm-property'] == 'bookmark-of' %}
       <li class="webmentions__avatar-item">
         {% if bookmark.author %}
         <a href="{{ bookmark.author.url or bookmark.url or bookmark['wm-source'] }}"
@@ -208,6 +222,7 @@
         </a>
         {% endif %}
       </li>
+      {% endif %}
       {% endfor %}
     </ul>
   </section>
