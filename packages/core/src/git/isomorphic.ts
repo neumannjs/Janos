@@ -354,15 +354,32 @@ export class IsomorphicGitProvider implements IGitProvider {
 
   async listBranches(): Promise<GitBranch[]> {
     try {
-      const branches = await git.listBranches({
+      // Get local branches
+      const localBranches = await git.listBranches({
         fs: this.fsAdapter,
         dir: this.dir,
       });
 
-      const currentBranch = await this.currentBranch();
+      // Get remote branches
+      let remoteBranches: string[] = [];
+      try {
+        remoteBranches = await git.listBranches({
+          fs: this.fsAdapter,
+          dir: this.dir,
+          remote: 'origin',
+        });
+      } catch {
+        // Remote might not exist
+      }
 
+      const currentBranch = await this.currentBranch();
       const result: GitBranch[] = [];
-      for (const name of branches) {
+      const seen = new Set<string>();
+
+      // Add local branches
+      for (const name of localBranches) {
+        if (seen.has(name)) continue;
+        seen.add(name);
         try {
           const oid = await git.resolveRef({
             fs: this.fsAdapter,
@@ -374,6 +391,28 @@ export class IsomorphicGitProvider implements IGitProvider {
             name,
             oid,
             isCurrent: name === currentBranch,
+          });
+        } catch {
+          // Skip branches that can't be resolved
+        }
+      }
+
+      // Add remote branches that don't have local counterparts
+      for (const name of remoteBranches) {
+        if (seen.has(name)) continue;
+        seen.add(name);
+        try {
+          const oid = await git.resolveRef({
+            fs: this.fsAdapter,
+            dir: this.dir,
+            ref: `refs/remotes/origin/${name}`,
+          });
+
+          result.push({
+            name,
+            oid,
+            isCurrent: false,
+            upstream: `origin/${name}`,
           });
         } catch {
           // Skip branches that can't be resolved
