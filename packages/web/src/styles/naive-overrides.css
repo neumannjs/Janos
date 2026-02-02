@@ -1,0 +1,251 @@
+/**
+ * Naive UI component overrides for Janos editor
+ * These complement the theme configuration in main.ts
+ */
+
+/* Activity bar buttons - icon only, no background */
+.activity-bar .n-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+}
+
+.activity-bar .n-button.n-button--quaternary-type:not(.n-button--disabled):hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.activity-bar .n-button.n-button--quaternary-type.active {
+  background-color: rgba(233, 69, 96, 0.2);
+  color: var(--color-primary);
+}
+
+/* Editor tabs - compact, VS Code style */
+.editor-tabs .n-tabs-tab {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 0;
+}
+
+.editor-tabs .n-tabs-tab.n-tabs-tab--active {
+  background-color: var(--color-bg);
+}
+
+.editor-tabs .n-tabs-tab__close {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.editor-tabs .n-tabs-tab__close:hover {
+  color: var(--color-primary);
+}
+
+/* Tab dirty indicator */
+.editor-tabs .n-tabs-tab.dirty .n-tabs-tab__label::after {
+  content: '●';
+  margin-left: 6px;
+  color: var(--color-primary);
+  font-size: 10px;
+}
+
+/* File tree - tighter spacing */
+.file-tree .n-tree-node {
+  padding: 2px 0;
+}
+
+.file-tree .n-tree-node-content {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.file-tree .n-tree-node-content:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.file-tree .n-tree-node--selected > .n-tree-node-content {
+  background-color: rgba(233, 69, 96, 0.15);
+}
+
+.file-tree .n-tree-node-switcher {
+  width: 20px;
+  height: 20px;
+}
+
+/* Git status badges in file tree */
+.file-tree .git-status-badge {
+  margin-left: auto;
+  padding: 1px 4px;
+  font-size: 10px;
+  border-radius: 2px;
+}
+
+.file-tree .git-status-badge.modified {
+  background-color: var(--color-warning);
+  color: #000;
+}
+
+.file-tree .git-status-badge.added {
+  background-color: var(--color-success);
+  color: #000;
+}
+
+.file-tree .git-status-badge.deleted {
+  background-color: var(--color-error);
+  color: #fff;
+}
+
+/* Side panel header */
+.side-panel-header {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Status bar - compact */
+.status-bar .n-button {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 0;
+}
+
+.status-bar .n-badge {
+  font-size: 10px;
+}
+
+/* Build log - monospace */
+.build-log .n-log {
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Commit input - larger textarea */
+.commit-form .n-input--textarea .n-input__textarea-el {
+  min-height: 80px;
+}
+
+/* Modal dialogs - consistent sizing */
+.n-modal {
+  max-width: 90vw;
+}
+
+/* Input dialog */
+.input-dialog .n-modal {
+  width: 400px;
+}
+
+/* Confirm dialog */
+.confirm-dialog .n-modal {
+  width: 360px;
+}
+
+/* Dropdown menus - compact */
+.n-dropdown-option {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* Checkbox list in git panel */
+.git-staging-list .n-checkbox {
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.git-staging-list .n-checkbox:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Progress bar in build panel */
+.build-progress .n-progress {
+  margin-bottom: 8px;
+}
+
+/* Scrollbar styling for panels */
+.side-panel::-webkit-scrollbar,
+.file-tree::-webkit-scrollbar {
+  width: 8px;
+}
+
+.side-panel::-webkit-scrollbar-track,
+.file-tree::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.side-panel::-webkit-scrollbar-thumb,
+.file-tree::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.side-panel::-webkit-scrollbar-thumb:hover,
+.file-tree::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Tooltip adjustments */
+.n-tooltip {
+  font-size: 12px;
+}
+
+/* Upload drag area */
+.image-upload .n-upload-dragger {
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  background-color: transparent;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.image-upload .n-upload-dragger:hover,
+.image-upload .n-upload-dragger.n-upload-dragger--dragover {
+  border-color: var(--color-primary);
+  background-color: rgba(233, 69, 96, 0.05);
+}
+
+/* Notification adjustments */
+.n-notification {
+  backdrop-filter: blur(8px);
+}
+
+/* Select dropdown in branch selector */
+.branch-select .n-base-selection {
+  font-size: 13px;
+}
+
+.branch-select .n-base-select-option {
+  font-size: 13px;
+}
+
+/* Empty state styling */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 32px;
+}
+
+.empty-state .n-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+
+.empty-state p {
+  font-size: 13px;
+  max-width: 300px;
+}

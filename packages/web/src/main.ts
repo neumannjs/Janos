@@ -1,10 +1,228 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory } from 'vue-router';
+import {
+  create,
+  NConfigProvider,
+  NNotificationProvider,
+  NDialogProvider,
+  NMessageProvider,
+  NLoadingBarProvider,
+} from 'naive-ui';
+import type { GlobalThemeOverrides } from 'naive-ui';
 import App from './App.vue';
+
+// Import styles
+import './styles/naive-overrides.css';
+
+// Create Naive UI instance with required components
+const naive = create({
+  components: [
+    NConfigProvider,
+    NNotificationProvider,
+    NDialogProvider,
+    NMessageProvider,
+    NLoadingBarProvider,
+  ],
+});
+
+// Janos theme overrides mapping to CSS variables
+export const janosThemeOverrides: GlobalThemeOverrides = {
+  common: {
+    primaryColor: '#e94560',
+    primaryColorHover: '#ff5a7a',
+    primaryColorPressed: '#c93a52',
+    primaryColorSuppl: '#e94560',
+    infoColor: '#0f3460',
+    successColor: '#00d26a',
+    warningColor: '#ffaa00',
+    errorColor: '#ff4757',
+    textColorBase: '#eaeaea',
+    textColor1: '#eaeaea',
+    textColor2: '#a0a0a0',
+    textColor3: '#808080',
+    textColorDisabled: '#606060',
+    placeholderColor: '#606060',
+    placeholderColorDisabled: '#404040',
+    iconColor: '#a0a0a0',
+    iconColorHover: '#eaeaea',
+    iconColorPressed: '#e94560',
+    iconColorDisabled: '#606060',
+    dividerColor: '#2a2a4a',
+    borderColor: '#2a2a4a',
+    closeIconColor: '#a0a0a0',
+    closeIconColorHover: '#eaeaea',
+    closeIconColorPressed: '#e94560',
+    closeColorHover: 'rgba(255, 255, 255, 0.1)',
+    closeColorPressed: 'rgba(255, 255, 255, 0.15)',
+    clearColor: '#a0a0a0',
+    clearColorHover: '#eaeaea',
+    clearColorPressed: '#e94560',
+    scrollbarColor: 'rgba(255, 255, 255, 0.2)',
+    scrollbarColorHover: 'rgba(255, 255, 255, 0.3)',
+    scrollbarWidth: '8px',
+    scrollbarHeight: '8px',
+    scrollbarBorderRadius: '4px',
+    progressRailColor: '#2a2a4a',
+    railColor: '#2a2a4a',
+    popoverColor: '#16213e',
+    tableColor: '#16213e',
+    cardColor: '#16213e',
+    modalColor: '#16213e',
+    bodyColor: '#1a1a2e',
+    tagColor: '#0f3460',
+    avatarColor: '#0f3460',
+    invertedColor: '#eaeaea',
+    inputColor: '#1a1a2e',
+    codeColor: '#0f3460',
+    tabColor: '#16213e',
+    actionColor: '#16213e',
+    tableHeaderColor: '#0f3460',
+    hoverColor: 'rgba(233, 69, 96, 0.1)',
+    tableColorHover: 'rgba(233, 69, 96, 0.08)',
+    tableColorStriped: 'rgba(15, 52, 96, 0.5)',
+    pressedColor: 'rgba(233, 69, 96, 0.15)',
+    opacityDisabled: '0.5',
+    boxShadow1: '0 1px 2px -2px rgba(0, 0, 0, 0.24), 0 3px 6px 0 rgba(0, 0, 0, 0.18), 0 5px 12px 4px rgba(0, 0, 0, 0.12)',
+    boxShadow2: '0 3px 6px -4px rgba(0, 0, 0, 0.24), 0 6px 12px 0 rgba(0, 0, 0, 0.18), 0 9px 18px 8px rgba(0, 0, 0, 0.12)',
+    boxShadow3: '0 6px 16px -9px rgba(0, 0, 0, 0.24), 0 9px 28px 0 rgba(0, 0, 0, 0.18), 0 12px 48px 16px rgba(0, 0, 0, 0.12)',
+  },
+  Button: {
+    textColorPrimary: '#ffffff',
+    textColorHoverPrimary: '#ffffff',
+    textColorPressedPrimary: '#ffffff',
+    textColorFocusPrimary: '#ffffff',
+    textColorDisabledPrimary: 'rgba(255, 255, 255, 0.5)',
+    colorQuaternary: 'transparent',
+    colorQuaternaryHover: 'rgba(255, 255, 255, 0.1)',
+    colorQuaternaryPressed: 'rgba(255, 255, 255, 0.15)',
+    textColorQuaternary: '#a0a0a0',
+    textColorQuaternaryHover: '#eaeaea',
+    textColorQuaternaryPressed: '#e94560',
+    borderRadiusMedium: '4px',
+  },
+  Card: {
+    colorEmbedded: '#1a1a2e',
+    borderColor: '#2a2a4a',
+    borderRadius: '8px',
+  },
+  Input: {
+    color: '#1a1a2e',
+    colorFocus: '#1a1a2e',
+    border: '1px solid #2a2a4a',
+    borderHover: '1px solid #e94560',
+    borderFocus: '1px solid #e94560',
+    boxShadowFocus: '0 0 0 2px rgba(233, 69, 96, 0.2)',
+    textColor: '#eaeaea',
+    placeholderColor: '#606060',
+    caretColor: '#e94560',
+    borderRadius: '4px',
+  },
+  Tabs: {
+    tabTextColorCard: '#a0a0a0',
+    tabTextColorActiveCard: '#eaeaea',
+    tabTextColorHoverCard: '#eaeaea',
+    tabColorSegment: '#0f3460',
+    colorSegment: '#16213e',
+    tabBorderColor: '#2a2a4a',
+    tabGapSmallCard: '0',
+    tabGapMediumCard: '0',
+    tabGapLargeCard: '0',
+    panePaddingSmall: '0',
+    panePaddingMedium: '0',
+    panePaddingLarge: '0',
+  },
+  Tree: {
+    nodeTextColor: '#a0a0a0',
+    nodeTextColorHover: '#eaeaea',
+    nodeColorHover: 'rgba(233, 69, 96, 0.1)',
+    nodeColorPressed: 'rgba(233, 69, 96, 0.15)',
+    nodeColorActive: 'rgba(233, 69, 96, 0.2)',
+  },
+  Dropdown: {
+    color: '#16213e',
+    optionColorHover: 'rgba(233, 69, 96, 0.1)',
+    optionColorActive: 'rgba(233, 69, 96, 0.15)',
+    optionTextColor: '#a0a0a0',
+    optionTextColorHover: '#eaeaea',
+    optionTextColorActive: '#e94560',
+    dividerColor: '#2a2a4a',
+    borderRadius: '4px',
+  },
+  Modal: {
+    color: '#16213e',
+    textColor: '#eaeaea',
+    borderRadius: '8px',
+  },
+  Notification: {
+    color: '#16213e',
+    textColor: '#eaeaea',
+    borderRadius: '8px',
+  },
+  Message: {
+    color: '#16213e',
+    textColor: '#eaeaea',
+    borderRadius: '4px',
+  },
+  Select: {
+    peers: {
+      InternalSelection: {
+        color: '#1a1a2e',
+        colorActive: '#1a1a2e',
+        textColor: '#eaeaea',
+        border: '1px solid #2a2a4a',
+        borderHover: '1px solid #e94560',
+        borderActive: '1px solid #e94560',
+        borderFocus: '1px solid #e94560',
+        boxShadowFocus: '0 0 0 2px rgba(233, 69, 96, 0.2)',
+        borderRadius: '4px',
+        placeholderColor: '#606060',
+        caretColor: '#e94560',
+      },
+    },
+  },
+  Checkbox: {
+    color: '#1a1a2e',
+    colorChecked: '#e94560',
+    border: '1px solid #2a2a4a',
+    borderChecked: '1px solid #e94560',
+    borderFocus: '1px solid #e94560',
+    boxShadowFocus: '0 0 0 2px rgba(233, 69, 96, 0.2)',
+    checkMarkColor: '#ffffff',
+    textColor: '#a0a0a0',
+    borderRadius: '4px',
+  },
+  Progress: {
+    railColor: '#2a2a4a',
+    textColorLineInner: '#eaeaea',
+  },
+  Log: {
+    color: '#1a1a2e',
+    textColor: '#a0a0a0',
+    borderRadius: '4px',
+  },
+  Tooltip: {
+    color: '#0f3460',
+    textColor: '#eaeaea',
+    borderRadius: '4px',
+  },
+  List: {
+    color: 'transparent',
+    colorHover: 'rgba(233, 69, 96, 0.1)',
+    textColor: '#a0a0a0',
+    borderColor: '#2a2a4a',
+  },
+  Scrollbar: {
+    color: 'rgba(255, 255, 255, 0.2)',
+    colorHover: 'rgba(255, 255, 255, 0.3)',
+  },
+};
 
 // Create Vue app
 const app = createApp(App);
+
+// Use Naive UI
+app.use(naive);
 
 // Create Pinia store
 const pinia = createPinia();
