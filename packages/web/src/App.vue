@@ -9,7 +9,7 @@ import {
   darkTheme,
 } from 'naive-ui';
 import { useAuthStore } from './stores/auth';
-import { janosThemeOverrides } from './main';
+import { janosThemeOverrides } from './theme';
 
 const authStore = useAuthStore();
 
@@ -55,8 +55,12 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 
-html, body {
+html, body, #app {
   height: 100%;
+  overflow: hidden;
+}
+
+body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -66,6 +70,7 @@ html, body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 a {
