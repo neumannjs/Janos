@@ -305,6 +305,22 @@ VS Code-inspired editor interface using Naive UI and CodeMirror 6.
 - [x] Mobile responsive adjustments (icons-only activity bar)
 - [ ] Keyboard navigation (advanced)
 
+### 4K: Editor Settings & Preferences
+
+- [ ] Settings dialog (accessible via profile dropdown in top-right)
+- [ ] Auto-save option (save changes automatically on edit)
+- [ ] Editor preferences: font size, tab width, word wrap
+- [ ] Persist settings to localStorage or git repo
+
+### 4L: Simplified Git Flow for Non-Technical Users
+
+- [ ] Wizard-style interface abstracting git operations
+  - "Publish changes" instead of stage/commit/push
+  - Guided flow for common tasks (new post, edit, delete)
+  - Hide branch/commit complexity behind simple actions
+- [ ] Setting to toggle between simple/advanced git UI
+- [ ] Automatic commit messages based on changes made
+
 ### Quick Post UI
 
 Native support for posting shorter content types:
