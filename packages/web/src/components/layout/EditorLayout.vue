@@ -1,16 +1,81 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { NModal, NCard, NButton, NSpace } from 'naive-ui';
 import { useUIStore } from '../../stores/ui';
+import { useEditorStore } from '../../stores/editor';
+import { useNotificationsStore } from '../../stores/notifications';
 import ActivityBar from './ActivityBar.vue';
 import SidePanel from './SidePanel.vue';
 import TabBar from './TabBar.vue';
 import StatusBar from './StatusBar.vue';
 
 const uiStore = useUIStore();
+const editorStore = useEditorStore();
+const notificationsStore = useNotificationsStore();
 
 const sidePanelWidth = computed(() =>
   uiStore.sidePanelCollapsed ? '0px' : '250px'
 );
+
+// Unsaved changes modal state
+const showUnsavedModal = ref(false);
+const pendingCloseTabId = ref<string | null>(null);
+const pendingCloseTabName = ref('');
+
+function handleCloseTabRequest(tabId: string): void {
+  const tab = editorStore.tabs.find((t) => t.id === tabId);
+  if (tab) {
+    pendingCloseTabId.value = tabId;
+    pendingCloseTabName.value = tab.name;
+    showUnsavedModal.value = true;
+  }
+}
+
+async function handleSaveAndClose(): Promise<void> {
+  if (pendingCloseTabId.value) {
+    try {
+      await editorStore.saveTab(pendingCloseTabId.value);
+      notificationsStore.success('Saved', `${pendingCloseTabName.value} saved`);
+      editorStore.forceCloseTab(pendingCloseTabId.value);
+    } catch (err) {
+      notificationsStore.error(
+        'Save Failed',
+        err instanceof Error ? err.message : 'Unknown error'
+      );
+    }
+  }
+  closeModal();
+}
+
+function handleDiscardAndClose(): void {
+  if (pendingCloseTabId.value) {
+    editorStore.forceCloseTab(pendingCloseTabId.value);
+  }
+  closeModal();
+}
+
+function closeModal(): void {
+  showUnsavedModal.value = false;
+  pendingCloseTabId.value = null;
+  pendingCloseTabName.value = '';
+}
+
+// Warn before leaving page with unsaved changes
+function handleBeforeUnload(event: BeforeUnloadEvent): void {
+  if (editorStore.hasUnsavedChanges) {
+    event.preventDefault();
+    // Most browsers ignore custom messages, but this is required
+    event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+});
 </script>
 
 <template>
@@ -18,12 +83,35 @@ const sidePanelWidth = computed(() =>
     <ActivityBar class="activity-bar" />
     <SidePanel class="side-panel" />
     <div class="main-area">
-      <TabBar class="tab-bar" />
+      <TabBar class="tab-bar" @close-tab-request="handleCloseTabRequest" />
       <div class="editor-content">
         <slot></slot>
       </div>
     </div>
     <StatusBar class="status-bar" />
+
+    <!-- Unsaved changes modal -->
+    <NModal v-model:show="showUnsavedModal" :mask-closable="false">
+      <NCard
+        style="width: 400px"
+        title="Unsaved Changes"
+        :bordered="false"
+        role="dialog"
+        aria-modal="true"
+      >
+        <p>
+          <strong>{{ pendingCloseTabName }}</strong> has unsaved changes.
+          Do you want to save before closing?
+        </p>
+        <template #footer>
+          <NSpace justify="end">
+            <NButton @click="closeModal">Cancel</NButton>
+            <NButton @click="handleDiscardAndClose">Don't Save</NButton>
+            <NButton type="primary" @click="handleSaveAndClose">Save</NButton>
+          </NSpace>
+        </template>
+      </NCard>
+    </NModal>
   </div>
 </template>
 
