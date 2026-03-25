@@ -7,11 +7,23 @@ import {
   CheckmarkCircleOutline,
   AlertCircleOutline,
   NotificationsOutline,
+  TrashOutline,
 } from '@vicons/ionicons5';
 import { useGitStore } from '../../stores/git';
 import { useBuildStore } from '../../stores/build';
 import { useNotificationsStore } from '../../stores/notifications';
 import { useEditorStore } from '../../stores/editor';
+
+const isDev = import.meta.env.DEV;
+
+async function resetFilesystem() {
+  if (!confirm('Delete the janos-fs IndexedDB and reload?')) return;
+  const dbs = await indexedDB.databases();
+  for (const db of dbs) {
+    if (db.name) indexedDB.deleteDatabase(db.name);
+  }
+  window.location.reload();
+}
 
 const gitStore = useGitStore();
 const buildStore = useBuildStore();
@@ -116,6 +128,19 @@ const fileLanguage = computed(() => {
         {{ fileLanguage }}
       </span>
 
+      <!-- Dev: Reset filesystem -->
+      <NTooltip v-if="isDev" placement="top">
+        <template #trigger>
+          <NButton text size="tiny" class="status-item status-dev" @click="resetFilesystem">
+            <template #icon>
+              <TrashOutline />
+            </template>
+            Reset FS
+          </NButton>
+        </template>
+        Delete IndexedDB and reload
+      </NTooltip>
+
       <!-- Notifications -->
       <NTooltip placement="top">
         <template #trigger>
@@ -183,6 +208,10 @@ const fileLanguage = computed(() => {
 
 .status-error {
   color: var(--color-error);
+}
+
+.status-dev {
+  color: var(--color-warning);
 }
 
 .spin {
