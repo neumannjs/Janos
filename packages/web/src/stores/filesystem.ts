@@ -52,6 +52,7 @@ export const useFileSystemStore = defineStore('filesystem', () => {
     const nodes: FileTreeNode[] = [];
 
     for (const entry of entries) {
+      if (entry.name === '.git') continue;
       const fullPath = path === '/' ? `/${entry.name}` : `${path}/${entry.name}`;
       const node: FileTreeNode = {
         name: entry.name,
