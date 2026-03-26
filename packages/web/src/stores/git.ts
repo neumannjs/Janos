@@ -20,6 +20,7 @@ export const useGitStore = defineStore('git', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const repoPath = ref<string>('/repo');
+  const repoName = ref<string | null>(null);
   const status = ref<GitFileStatus[]>([]);
   const branches = ref<GitBranch[]>([]);
   const currentBranch = ref<string | null>(null);
@@ -69,6 +70,19 @@ export const useGitStore = defineStore('git', () => {
 
     repoPath.value = path;
     initialized.value = true;
+
+    // Resolve repo name from remote URL for existing repos
+    if (!repoName.value) {
+      try {
+        const remotes = await git.value.listRemotes();
+        const origin = remotes.find((r) => r.name === 'origin');
+        if (origin) {
+          repoName.value = origin.url.replace(/\.git$/, '').split('/').pop() ?? null;
+        }
+      } catch {
+        // Not a repo yet, or no remotes
+      }
+    }
   }
 
   // Clone a repository
@@ -96,6 +110,9 @@ export const useGitStore = defineStore('git', () => {
         depth: options?.depth,
         singleBranch: true,
       });
+
+      // Extract repo name from clone URL
+      repoName.value = url.replace(/\.git$/, '').split('/').pop() ?? null;
 
       // Fetch all remote refs so branch listing shows all branches
       await git.value.fetch({ remote: 'origin' });
@@ -304,6 +321,7 @@ export const useGitStore = defineStore('git', () => {
     loading,
     error,
     repoPath,
+    repoName,
     status,
     branches,
     currentBranch,

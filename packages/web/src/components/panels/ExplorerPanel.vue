@@ -205,7 +205,7 @@ async function refresh(): Promise<void> {
   <div class="explorer-panel">
     <div class="explorer-header">
       <span class="repo-name" v-if="gitStore.isRepo">
-        {{ gitStore.repoPath.split('/').pop() }}
+        {{ gitStore.repoName ?? gitStore.repoPath.split('/').pop() }}
       </span>
       <div class="explorer-actions">
         <NButton quaternary size="tiny" @click="refresh" title="Refresh">
