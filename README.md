@@ -2,7 +2,7 @@
 
 A static site generator that runs entirely in the browser. Clone a GitHub repository, edit content, build your site, and push changes — all without installing anything locally.
 
-This is the source code repository for Janos itself. If you're looking to build a website with Janos, visit [janos.dev](https://janos.dev).
+This is the source code repository for Janos itself. If you're looking to build a website with Janos, visit [neumannjs.github.io/Janos-starter/](https://neumannjs.github.io/Janos-starter/).
 
 Janos is currently undergoing a major rewrite, transitioning from Nuxt.js 2 + Metalsmith to Vue 3 + Vite with a shared TypeScript core. The application is not in a working state — expect broken features and incomplete functionality.
 
@@ -45,21 +45,21 @@ The config file defines site metadata, template directories, and the plugin pipe
 
 The pipeline processes files through a configurable sequence of plugins:
 
-| Plugin | Description |
-|--------|-------------|
-| `markdown` | Converts Markdown to HTML |
-| `publish` | Filters drafts and future-dated content |
-| `tags` | Extracts and indexes tags from front matter |
-| `excerpts` | Generates content excerpts from a marker |
+| Plugin        | Description                                         |
+| ------------- | --------------------------------------------------- |
+| `markdown`    | Converts Markdown to HTML                           |
+| `publish`     | Filters drafts and future-dated content             |
+| `tags`        | Extracts and indexes tags from front matter         |
+| `excerpts`    | Generates content excerpts from a marker            |
 | `collections` | Groups files into named collections by glob pattern |
-| `pagination` | Generates paginated index pages |
-| `tag-pages` | Generates per-tag listing pages |
-| `permalinks` | Rewrites output paths using URL patterns |
-| `webmentions` | Processes incoming/outgoing webmentions |
-| `layouts` | Applies Nunjucks templates |
-| `rss` | Generates RSS/Atom feeds |
-| `sitemap` | Generates sitemap.xml |
-| `assets` | Copies static assets to the output |
+| `pagination`  | Generates paginated index pages                     |
+| `tag-pages`   | Generates per-tag listing pages                     |
+| `permalinks`  | Rewrites output paths using URL patterns            |
+| `webmentions` | Processes incoming/outgoing webmentions             |
+| `layouts`     | Applies Nunjucks templates                          |
+| `rss`         | Generates RSS/Atom feeds                            |
+| `sitemap`     | Generates sitemap.xml                               |
+| `assets`      | Copies static assets to the output                  |
 
 ## Environment Variables
 
