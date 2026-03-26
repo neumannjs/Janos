@@ -368,7 +368,7 @@ export interface IGitProvider {
    * @param options - Merge options
    * @returns Merge commit SHA
    */
-  merge(ref: string, options?: { message?: string; noFastForward?: boolean }): Promise<string>;
+  merge(ref: string, options?: { message?: string; noFastForward?: boolean; fastForwardOnly?: boolean }): Promise<string>;
 
   /**
    * Fetch from remote

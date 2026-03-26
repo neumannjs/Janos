@@ -17,6 +17,7 @@ import {
   CloudDownloadOutline,
   AddOutline,
   RemoveOutline,
+  GitMergeOutline,
 } from '@vicons/ionicons5';
 import { useGitStore } from '../../stores/git';
 import { useEditorStore } from '../../stores/editor';
@@ -27,6 +28,7 @@ const editorStore = useEditorStore();
 const notificationsStore = useNotificationsStore();
 
 const commitMessage = ref('');
+const mergeBranch = ref<string | null>(null);
 
 // Branch options for select
 const branchOptions = computed(() =>
@@ -144,6 +146,40 @@ async function pull(): Promise<void> {
       'Pull Failed',
       err instanceof Error ? err.message : 'Unknown error'
     );
+  }
+}
+
+// Merge options (branches other than current)
+const mergeOptions = computed(() =>
+  gitStore.branches
+    .filter((b) => !b.isCurrent)
+    .map((b) => ({
+      label: b.name,
+      value: b.name,
+    }))
+);
+
+// Merge branch into current
+async function mergeBranchIntoCurrent(): Promise<void> {
+  if (!mergeBranch.value) return;
+
+  try {
+    await gitStore.merge(mergeBranch.value);
+    notificationsStore.success(
+      'Merged',
+      `Merged ${mergeBranch.value} into ${gitStore.currentBranch}`
+    );
+    mergeBranch.value = null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    if (message.includes('conflict') || message.includes('CONFLICT')) {
+      notificationsStore.error(
+        'Merge Conflict',
+        'Merge has conflicts. Please resolve them outside of Janos.'
+      );
+    } else {
+      notificationsStore.error('Merge Failed', message);
+    }
   }
 }
 
@@ -297,6 +333,32 @@ async function refresh(): Promise<void> {
             </NButton>
           </NSpace>
         </div>
+
+        <!-- Merge -->
+        <div class="git-section" v-if="mergeOptions.length > 0">
+          <div class="section-header">
+            <span>Merge into {{ gitStore.currentBranch }}</span>
+          </div>
+          <div class="merge-controls">
+            <NSelect
+              v-model:value="mergeBranch"
+              :options="mergeOptions"
+              placeholder="Select branch"
+              size="small"
+              clearable
+            />
+            <NButton
+              size="small"
+              :disabled="!mergeBranch"
+              @click="mergeBranchIntoCurrent"
+            >
+              <template #icon>
+                <GitMergeOutline />
+              </template>
+              Merge
+            </NButton>
+          </div>
+        </div>
       </template>
     </NSpin>
   </div>
@@ -379,6 +441,16 @@ async function refresh(): Promise<void> {
 .git-actions {
   padding-top: 8px;
   border-top: 1px solid var(--color-border);
+}
+
+.merge-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.merge-controls .n-select {
+  flex: 1;
 }
 
 .empty-state {

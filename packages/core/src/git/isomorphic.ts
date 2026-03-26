@@ -440,7 +440,7 @@ export class IsomorphicGitProvider implements IGitProvider {
     }
   }
 
-  async merge(ref: string, options?: { message?: string; noFastForward?: boolean }): Promise<string> {
+  async merge(ref: string, options?: { message?: string; noFastForward?: boolean; fastForwardOnly?: boolean }): Promise<string> {
     try {
       const result = await git.merge({
         fs: this.fsAdapter,
@@ -448,6 +448,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         ours: await this.currentBranch() ?? 'HEAD',
         theirs: ref,
         fastForward: !options?.noFastForward,
+        fastForwardOnly: options?.fastForwardOnly,
         message: options?.message,
         author: {
           name: this.authorName ?? (await this.getConfig('user.name'))!,

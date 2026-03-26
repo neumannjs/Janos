@@ -313,6 +313,32 @@ export const useGitStore = defineStore('git', () => {
     }
   }
 
+  // Merge a branch into the current branch (no fast-forward)
+  async function merge(ref: string): Promise<void> {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      if (!git.value) {
+        throw new Error('Git not initialized');
+      }
+
+      await git.value.merge(ref, { noFastForward: true });
+      await fsStore.loadDirectory(repoPath.value);
+      await Promise.all([
+        refreshStatus(),
+        refreshBranches(),
+        loadCommits(),
+      ]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Merge failed';
+      error.value = message;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     // State
     git,
@@ -345,5 +371,6 @@ export const useGitStore = defineStore('git', () => {
     push,
     pull,
     checkout,
+    merge,
   };
 });
