@@ -289,23 +289,22 @@ export const useGitStore = defineStore('git', () => {
         throw new Error('Git not initialized');
       }
 
-      // Fetch branch tree data (needed for shallow/singleBranch clones)
-      await git.value.fetch({ ref });
-
       // Clean working directory before checkout — isomorphic-git's checkout
       // doesn't remove files that don't exist in the target branch
       const entries = await fsStore.fs!.readdir(repoPath.value);
-      for (const entry of entries) {
-        if (entry !== '.git') {
-          await fsStore.fs!.rm(`${repoPath.value}/${entry}`, { recursive: true, force: true });
-        }
-      }
+      await Promise.all(
+        entries
+          .filter((entry) => entry !== '.git')
+          .map((entry) => fsStore.fs!.rm(`${repoPath.value}/${entry}`, { recursive: true, force: true }))
+      );
 
       await git.value.checkout(ref, { ...options, force: true });
-      await fsStore.loadDirectory(repoPath.value);
-      await refreshStatus();
-      await refreshBranches();
-      await loadCommits();
+      await Promise.all([
+        fsStore.loadDirectory(repoPath.value),
+        refreshStatus(),
+        refreshBranches(),
+        loadCommits(),
+      ]);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Checkout failed';
       throw err;
