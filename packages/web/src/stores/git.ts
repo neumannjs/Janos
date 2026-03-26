@@ -97,6 +97,9 @@ export const useGitStore = defineStore('git', () => {
         singleBranch: true,
       });
 
+      // Fetch all remote refs so branch listing shows all branches
+      await git.value.fetch({ remote: 'origin' });
+
       await refreshStatus();
       await refreshBranches();
     } catch (err) {

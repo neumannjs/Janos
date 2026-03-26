@@ -376,8 +376,9 @@ export class IsomorphicGitProvider implements IGitProvider {
       const result: GitBranch[] = [];
       const seen = new Set<string>();
 
-      // Add local branches
+      // Add local branches (filter out HEAD which isomorphic-git includes)
       for (const name of localBranches) {
+        if (name === 'HEAD') continue;
         if (seen.has(name)) continue;
         seen.add(name);
         try {
@@ -399,6 +400,7 @@ export class IsomorphicGitProvider implements IGitProvider {
 
       // Add remote branches that don't have local counterparts
       for (const name of remoteBranches) {
+        if (name === 'HEAD') continue;
         if (seen.has(name)) continue;
         seen.add(name);
         try {
