@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { NButton, NBadge, NTooltip } from 'naive-ui';
+import { ref, computed } from 'vue';
+import { NButton, NBadge, NTooltip, NPopover } from 'naive-ui';
 import {
   GitBranchOutline,
   SyncOutline,
@@ -8,6 +8,7 @@ import {
   AlertCircleOutline,
   NotificationsOutline,
   TrashOutline,
+  CloseOutline,
 } from '@vicons/ionicons5';
 import { useGitStore } from '../../stores/git';
 import { useBuildStore } from '../../stores/build';
@@ -15,6 +16,7 @@ import { useNotificationsStore } from '../../stores/notifications';
 import { useEditorStore } from '../../stores/editor';
 
 const isDev = import.meta.env.DEV;
+const showNotifications = ref(false);
 
 async function resetFilesystem() {
   if (!confirm('Delete the janos-fs IndexedDB and reload?')) return;
@@ -142,7 +144,13 @@ const fileLanguage = computed(() => {
       </NTooltip>
 
       <!-- Notifications -->
-      <NTooltip placement="top">
+      <NPopover
+        v-model:show="showNotifications"
+        placement="top-end"
+        trigger="click"
+        :show-arrow="false"
+        style="padding: 0;"
+      >
         <template #trigger>
           <NBadge
             :value="notificationsStore.count"
@@ -157,8 +165,46 @@ const fileLanguage = computed(() => {
             </NButton>
           </NBadge>
         </template>
-        {{ notificationsStore.count }} notification{{ notificationsStore.count !== 1 ? 's' : '' }}
-      </NTooltip>
+        <div class="notifications-panel">
+          <div class="notifications-header">
+            <span>Notifications</span>
+            <NButton
+              v-if="notificationsStore.hasNotifications"
+              text
+              size="tiny"
+              @click="notificationsStore.clearAll()"
+            >
+              Clear all
+            </NButton>
+          </div>
+          <div v-if="!notificationsStore.hasNotifications" class="notifications-empty">
+            No notifications
+          </div>
+          <div v-else class="notifications-list">
+            <div
+              v-for="n in notificationsStore.notifications"
+              :key="n.id"
+              class="notification-item"
+              :class="`notification-${n.type}`"
+            >
+              <div class="notification-content">
+                <span class="notification-title">{{ n.title }}</span>
+                <span v-if="n.message" class="notification-message">{{ n.message }}</span>
+              </div>
+              <NButton
+                text
+                size="tiny"
+                class="notification-dismiss"
+                @click="notificationsStore.dismiss(n.id)"
+              >
+                <template #icon>
+                  <CloseOutline />
+                </template>
+              </NButton>
+            </div>
+          </div>
+        </div>
+      </NPopover>
     </div>
   </div>
 </template>
@@ -212,6 +258,89 @@ const fileLanguage = computed(() => {
 
 .status-dev {
   color: var(--color-warning);
+}
+
+.notifications-panel {
+  width: 320px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notifications-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.notifications-list {
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+  border-left: 3px solid transparent;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-info {
+  border-left-color: var(--color-info, #70c0e8);
+}
+
+.notification-success {
+  border-left-color: var(--color-success);
+}
+
+.notification-warning {
+  border-left-color: var(--color-warning);
+}
+
+.notification-error {
+  border-left-color: var(--color-error);
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notification-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.notification-message {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
+.notification-dismiss {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
 }
 
 .spin {
