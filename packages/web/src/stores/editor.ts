@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useFileSystemStore } from './filesystem';
+import { useGitStore } from './git';
 
 export interface EditorTab {
   id: string;
@@ -57,6 +58,7 @@ function generateTabId(): string {
 
 export const useEditorStore = defineStore('editor', () => {
   const fsStore = useFileSystemStore();
+  const gitStore = useGitStore();
 
   // State
   const tabs = ref<EditorTab[]>([]);
@@ -161,6 +163,7 @@ export const useEditorStore = defineStore('editor', () => {
       await fsStore.writeFile(tab.path, tab.content);
       tab.originalContent = tab.content;
       tab.isDirty = false;
+      gitStore.refreshStatus();
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to save file';
       throw err;
