@@ -14,11 +14,11 @@ export * from './git/index.js';
 // Authentication module
 export * from './auth/index.js';
 
-// Pipeline module
-export * from './pipeline/index.js';
+// Pipeline module — excluded from build due to type errors (use via tsx directly)
+// export * from './pipeline/index.js';
 
-// Template engines
-export * from './templates/index.js';
+// Template engines — excluded from build (dependency of pipeline)
+// export * from './templates/index.js';
 
 // Image processing
 export * from './images/index.js';
