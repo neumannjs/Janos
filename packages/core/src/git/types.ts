@@ -122,6 +122,8 @@ export interface FetchOptions {
   remote?: string;
   /** Branch to fetch */
   ref?: string;
+  /** Shallow fetch depth */
+  depth?: number;
   /** Fetch tags */
   tags?: boolean;
   /** Prune deleted remote branches */

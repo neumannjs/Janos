@@ -115,7 +115,7 @@ export const useGitStore = defineStore('git', () => {
       repoName.value = url.replace(/\.git$/, '').split('/').pop() ?? null;
 
       // Fetch all remote refs so branch listing shows all branches
-      await git.value.fetch({ remote: 'origin' });
+      await git.value.fetch({ remote: 'origin', depth: 1 });
 
       await refreshStatus();
       await refreshBranches();

@@ -470,6 +470,7 @@ export class IsomorphicGitProvider implements IGitProvider {
         dir: this.dir,
         remote: options?.remote ?? 'origin',
         ref: options?.ref,
+        depth: options?.depth,
         tags: options?.tags,
         prune: options?.prune,
         corsProxy: this.corsProxy,
