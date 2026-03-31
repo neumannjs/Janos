@@ -41,7 +41,13 @@ function createFsAdapter(fs: IFileSystem): git.PromiseFsClient {
         return Buffer.from(data);
       },
       writeFile: async (filepath: string, data: string | Uint8Array) => {
-        await fs.writeFile(filepath, typeof data === 'string' ? data : new Uint8Array(data));
+        try {
+          await fs.writeFile(filepath, typeof data === 'string' ? data : new Uint8Array(data));
+        } catch (err: unknown) {
+          // Git objects are content-addressed — writing an existing object is a no-op
+          if (err && typeof err === 'object' && 'code' in err && err.code === 'EEXIST') return;
+          throw err;
+        }
       },
       unlink: async (filepath: string) => {
         await fs.unlink(filepath);
@@ -50,8 +56,13 @@ function createFsAdapter(fs: IFileSystem): git.PromiseFsClient {
         return await fs.readdir(filepath);
       },
       mkdir: async (filepath: string, options?: { mode?: number }) => {
-        const mkdirOptions = options?.mode !== undefined ? { mode: options.mode } : undefined;
-        await fs.mkdir(filepath, mkdirOptions);
+        try {
+          const mkdirOptions = options?.mode !== undefined ? { mode: options.mode } : undefined;
+          await fs.mkdir(filepath, mkdirOptions);
+        } catch (err: unknown) {
+          if (err && typeof err === 'object' && 'code' in err && err.code === 'EEXIST') return;
+          throw err;
+        }
       },
       rmdir: async (filepath: string) => {
         await fs.rmdir(filepath);
