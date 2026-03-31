@@ -51,9 +51,12 @@ export const useGitStore = defineStore('git', () => {
 
     const path = dir ?? repoPath.value;
 
+    const user = authStore.user;
     git.value = createIsomorphicGit({
       fs,
       dir: path,
+      authorName: user?.name ?? 'Janos User',
+      authorEmail: user?.email ?? 'user@janos.app',
       // Use CORS proxy for browser-based git operations
       corsProxy: 'https://cors.isomorphic-git.org',
       onAuth: () => {
@@ -229,6 +232,8 @@ export const useGitStore = defineStore('git', () => {
   }
 
   // Load commit history
+  const remoteHeadOid = ref<string | null>(null);
+
   async function loadCommits(options?: { depth?: number }): Promise<void> {
     if (!git.value) return;
 
@@ -236,6 +241,29 @@ export const useGitStore = defineStore('git', () => {
       commits.value = await git.value.log({ depth: options?.depth ?? 20 });
     } catch (err) {
       // Ignore log errors for empty repos
+    }
+
+    // Resolve remote branch tip
+    if (currentBranch.value) {
+      try {
+        remoteHeadOid.value = await git.value.resolveRef(`refs/remotes/origin/${currentBranch.value}`);
+      } catch {
+        remoteHeadOid.value = null;
+      }
+    }
+  }
+
+  async function loadMoreCommits(): Promise<void> {
+    if (!git.value || commits.value.length === 0) return;
+
+    try {
+      // Deepen the shallow clone to get more history
+      const newDepth = commits.value.length + 20;
+      await git.value.fetch({ remote: 'origin', depth: newDepth });
+      const more = await git.value.log({ depth: newDepth });
+      commits.value = more;
+    } catch {
+      // Ignore — may fail if full history is already fetched
     }
   }
 
@@ -351,6 +379,7 @@ export const useGitStore = defineStore('git', () => {
     branches,
     currentBranch,
     commits,
+    remoteHeadOid,
 
     // Computed
     isRepo,
@@ -368,6 +397,7 @@ export const useGitStore = defineStore('git', () => {
     unstage,
     commit,
     loadCommits,
+    loadMoreCommits,
     push,
     pull,
     checkout,

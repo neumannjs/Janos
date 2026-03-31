@@ -10,6 +10,7 @@ import {
   NSpace,
   NTag,
   NSpin,
+  NPopover,
 } from 'naive-ui';
 import {
   SyncOutline,
@@ -18,6 +19,7 @@ import {
   AddOutline,
   RemoveOutline,
   GitMergeOutline,
+  GitCommitOutline,
 } from '@vicons/ionicons5';
 import { useGitStore } from '../../stores/git';
 import { useEditorStore } from '../../stores/editor';
@@ -207,6 +209,39 @@ async function switchBranch(branchName: string): Promise<void> {
   }
 }
 
+// Commit log helpers
+const loadingMore = ref(false);
+
+function commitTitle(message: string): string {
+  return message.split('\n')[0];
+}
+
+function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function branchLabels(oid: string): Array<{ label: string; type: 'local' | 'remote' }> {
+  const labels: Array<{ label: string; type: 'local' | 'remote' }> = [];
+  const branch = gitStore.currentBranch;
+  if (branch && gitStore.commits.length > 0 && gitStore.commits[0].oid === oid) {
+    labels.push({ label: branch, type: 'local' });
+  }
+  if (gitStore.remoteHeadOid === oid && branch) {
+    labels.push({ label: `origin/${branch}`, type: 'remote' });
+  }
+  return labels;
+}
+
+async function loadMore(): Promise<void> {
+  if (loadingMore.value) return;
+  loadingMore.value = true;
+  await gitStore.loadMoreCommits();
+  loadingMore.value = false;
+}
+
 // Refresh status
 async function refresh(): Promise<void> {
   await gitStore.refreshStatus();
@@ -359,6 +394,51 @@ async function refresh(): Promise<void> {
             </NButton>
           </div>
         </div>
+
+        <!-- Commit log -->
+        <div class="git-section commit-log-section" v-if="gitStore.commits.length > 0">
+          <div class="section-header">
+            <span>Commits</span>
+          </div>
+          <div class="commit-log">
+            <NPopover
+              v-for="c in gitStore.commits"
+              :key="c.oid"
+              placement="left"
+              trigger="hover"
+              :delay="300"
+              :show-arrow="false"
+            >
+              <template #trigger>
+                <div class="commit-item">
+                  <GitCommitOutline class="commit-icon" />
+                  <span class="commit-title">{{ commitTitle(c.message) }}</span>
+                  <NTag
+                    v-for="label in branchLabels(c.oid)"
+                    :key="label.label"
+                    size="tiny"
+                    :type="label.type === 'local' ? 'success' : 'info'"
+                    round
+                    class="branch-pill"
+                  >
+                    {{ label.label }}
+                  </NTag>
+                </div>
+              </template>
+              <div class="commit-detail">
+                <div class="commit-detail-message">{{ c.message.trim() }}</div>
+                <div class="commit-detail-meta">
+                  <span>{{ c.oid.substring(0, 10) }}</span>
+                  <span>{{ c.authorName }}</span>
+                  <span>{{ formatDate(c.timestamp) }}</span>
+                </div>
+              </div>
+            </NPopover>
+            <!-- TODO: "Load older commits" button needs research —
+                 deepening a shallow clone via fetch is too slow.
+                 Consider fetching in background or using listServerRefs. -->
+          </div>
+        </div>
       </template>
     </NSpin>
   </div>
@@ -451,6 +531,79 @@ async function refresh(): Promise<void> {
 
 .merge-controls .n-select {
   flex: 1;
+}
+
+.commit-log-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.commit-log {
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.commit-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px;
+  cursor: default;
+  border-radius: 3px;
+}
+
+.commit-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.commit-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-secondary);
+}
+
+.commit-title {
+  font-size: 12px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.branch-pill {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+.commit-detail {
+  max-width: 350px;
+}
+
+.commit-detail-message {
+  font-size: 12px;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+
+.commit-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.commit-load-more {
+  padding: 8px;
+  text-align: center;
 }
 
 .empty-state {
